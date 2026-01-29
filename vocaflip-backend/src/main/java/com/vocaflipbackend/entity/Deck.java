@@ -23,13 +23,13 @@ public class Deck {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false,columnDefinition = "NVARCHAR(255)")
+    @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false,columnDefinition = "NVARCHAR(100)")
+    @Column(nullable = false)
     private String category;
 
     @Column(name = "cover_image_url")

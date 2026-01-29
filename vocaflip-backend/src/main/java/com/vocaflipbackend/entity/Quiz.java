@@ -22,7 +22,7 @@ public class Quiz {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
+    @Column(nullable = false)
     private String title;
 
     @Column(name = "total_questions", nullable = false)

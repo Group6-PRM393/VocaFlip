@@ -41,7 +41,7 @@ public class QuizAttempt {
     @Builder.Default
     private Integer timeTakenSeconds = 0;
 
-    @Column(name = "answers_json", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "answers_json", columnDefinition = "TEXT")
     private String answersJson; // Storing as JSON string for now
 
     @Column(name = "completed_at")
