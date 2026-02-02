@@ -1,12 +1,12 @@
 package com.vocaflipbackend.repository;
 
-import com.vocaflipbackend.entity.Card;
+import com.vocaflipbackend.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface CardRepository extends JpaRepository<Card, String> {
-    List<Card> findByDeckIdAndIsRemovedFalse(String deckId);
+public interface CategoryRepository extends JpaRepository<Category, String> {
+    List<Category> findByUserIdAndIsRemovedFalse(String userId);
 }

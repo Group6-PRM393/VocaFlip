@@ -40,7 +40,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public List<CardResponse> getCardsByDeckId(String deckId) {
-        return cardRepository.findByDeckId(deckId).stream()
+        return cardRepository.findByDeckIdAndIsRemovedFalse(deckId).stream()
                 .map(cardMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -63,14 +63,17 @@ public class CardServiceImpl implements CardService {
     @Override
     public void deleteCard(String id) {
         Card card = cardRepository.findById(id).orElseThrow(() -> new RuntimeException("Card not found"));
+        
+        // Soft delete
+        card.setRemoved(true);
+        cardRepository.save(card);
+        
         Deck deck = card.getDeck();
-        
-        cardRepository.deleteById(id);
-        
         if (deck != null) {
-            // Need to reload deck or manually decrement to ensure partial update not overwritten
-            // Ideally: fetch deck fresh or trust cascade, but here we just update count
-            deck.setTotalCards(deck.getTotalCards() > 0 ? deck.getTotalCards() - 1 : 0);
+            // Update total cards count (excluding removed)
+            // Ideally should query count of non-removed cards, but simple decrement works if we assume consistency
+            int newTotal = deck.getTotalCards() > 0 ? deck.getTotalCards() - 1 : 0;
+            deck.setTotalCards(newTotal);
             deckRepository.save(deck);
         }
     }

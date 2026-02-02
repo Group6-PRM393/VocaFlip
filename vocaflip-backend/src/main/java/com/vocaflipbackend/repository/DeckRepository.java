@@ -9,5 +9,7 @@ import java.util.List;
 @Repository
 public interface DeckRepository extends JpaRepository<Deck, String> {
 
-    List<Deck> findByUserId(String userId);
+    List<Deck> findByUserIdAndIsRemovedFalse(String userId);
+
+     // Optional: if generic findById needed with soft delete check, need custom implementation or use service logic
 }

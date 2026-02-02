@@ -3,8 +3,11 @@ package com.vocaflipbackend.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +16,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "decks")
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,14 +28,19 @@ public class Deck {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(name = "is_removed")
+    @Builder.Default
+    private boolean isRemoved = false;
+
     @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @Column(name = "cover_image_url")
     private String coverImageUrl;

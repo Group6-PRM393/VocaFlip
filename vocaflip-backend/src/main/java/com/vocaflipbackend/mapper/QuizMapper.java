@@ -6,7 +6,9 @@ import com.vocaflipbackend.entity.Quiz;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+import org.mapstruct.ReportingPolicy;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface QuizMapper {
     Quiz toEntity(QuizRequest request);
     

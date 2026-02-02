@@ -5,7 +5,9 @@ import com.vocaflipbackend.entity.UserProgress;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+import org.mapstruct.ReportingPolicy;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserProgressMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "cardId", source = "card.id")
