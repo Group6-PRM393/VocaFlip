@@ -7,7 +7,9 @@ import com.vocaflipbackend.dto.response.PageResponse;
 import com.vocaflipbackend.service.DeckService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -35,12 +37,14 @@ public class DeckController {
     }
 
     // Create Deck
-    @PostMapping
-    public ApiResponse<DeckResponse> createDeck(@Valid @RequestBody DeckRequest request,
-                                                @RequestParam String userId) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<DeckResponse> createDeck(
+            @Valid @RequestPart("deck") DeckRequest request,
+            @RequestParam String userId,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
         return ApiResponse.<DeckResponse>builder()
                 .message("Deck created successfully")
-                .result(deckService.createDeck(request, userId))
+                .result(deckService.createDeck(request, userId, coverImage))
                 .build();
     }
 
@@ -54,12 +58,14 @@ public class DeckController {
     }
 
     // Update Deck
-    @PutMapping("/{id}")
-    public ApiResponse<DeckResponse> updateDeck(@PathVariable String id,
-                                                @Valid @RequestBody DeckRequest request) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<DeckResponse> updateDeck(
+            @PathVariable String id,
+            @Valid @RequestPart("deck") DeckRequest request,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
         return ApiResponse.<DeckResponse>builder()
                 .message("Deck updated successfully")
-                .result(deckService.updateDeck(id, request))
+                .result(deckService.updateDeck(id, request, coverImage))
                 .build();
     }
 
@@ -74,4 +80,5 @@ public class DeckController {
                 .build();
     }
 }
+
 

@@ -1,5 +1,6 @@
 package com.vocaflipbackend.service.impl;
 
+import com.vocaflipbackend.constants.CloudinaryConstants;
 import com.vocaflipbackend.dto.request.DeckRequest;
 import com.vocaflipbackend.dto.response.DeckResponse;
 import com.vocaflipbackend.dto.response.PageResponse;
@@ -12,6 +13,7 @@ import com.vocaflipbackend.mapper.DeckMapper;
 import com.vocaflipbackend.repository.CategoryRepository;
 import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserRepository;
+import com.vocaflipbackend.service.CloudinaryService;
 import com.vocaflipbackend.service.DeckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,8 +21,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,9 +35,15 @@ public class DeckServiceImpl implements DeckService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final DeckMapper deckMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public DeckResponse createDeck(DeckRequest request, String userId) {
+        return createDeck(request, userId, null);
+    }
+
+    @Override
+    public DeckResponse createDeck(DeckRequest request, String userId, MultipartFile coverImage) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Deck deck = deckMapper.toEntity(request);
@@ -46,6 +56,13 @@ public class DeckServiceImpl implements DeckService {
         } else {
             throw new AppException(ErrorCode.CATEGORY_REQUIRED);
         }
+
+        // Upload cover image lên Cloudinary nếu có
+        if (coverImage != null && !coverImage.isEmpty()) {
+            String coverUrl = uploadCoverImage(coverImage);
+            deck.setCoverImageUrl(coverUrl);
+        }
+
         Deck savedDeck = deckRepository.save(deck);
         return deckMapper.toResponse(savedDeck);
     }
@@ -58,9 +75,13 @@ public class DeckServiceImpl implements DeckService {
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
     }
 
-
     @Override
     public DeckResponse updateDeck(String id, DeckRequest request) {
+        return updateDeck(id, request, null);
+    }
+
+    @Override
+    public DeckResponse updateDeck(String id, DeckRequest request, MultipartFile coverImage) {
         Deck deck = deckRepository.findById(id)
                 .filter(d -> !d.isRemoved())
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
@@ -77,12 +98,18 @@ public class DeckServiceImpl implements DeckService {
             deck.setCategory(category);
         }
 
-        deck.setCoverImageUrl(request.getCoverImageUrl());
+        // Upload cover image mới nếu có
+        if (coverImage != null && !coverImage.isEmpty()) {
+            String coverUrl = uploadCoverImage(coverImage);
+            deck.setCoverImageUrl(coverUrl);
+        } else if (request.getCoverImageUrl() != null) {
+            // Nếu không upload ảnh mới, sử dụng URL từ request
+            deck.setCoverImageUrl(request.getCoverImageUrl());
+        }
 
         Deck updatedDeck = deckRepository.save(deck);
         return deckMapper.toResponse(updatedDeck);
     }
-
 
     @Override
     public List<DeckResponse> getDecksByUserId(String userId) {
@@ -98,7 +125,6 @@ public class DeckServiceImpl implements DeckService {
         deck.setRemoved(true);
         deckRepository.save(deck);
     }
-
 
     @Override
     public PageResponse<DeckResponse> searchDecks(String keyword, int page, int pageSize) {
@@ -126,5 +152,17 @@ public class DeckServiceImpl implements DeckService {
                 .last(deckPage.isLast())
                 .build();
     }
+
+    // Helper method để upload cover image
+    private String uploadCoverImage(MultipartFile coverImage) {
+        Map<String, Object> uploadResult = cloudinaryService.uploadImage(
+                coverImage, 
+                CloudinaryConstants.DECK_COVER_FOLDER, 
+                CloudinaryConstants.COVER_WIDTH, 
+                CloudinaryConstants.COVER_HEIGHT);
+        return (String) uploadResult.get("secure_url");
+    }
 }
+
+
 
