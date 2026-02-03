@@ -2,19 +2,25 @@ package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.request.DeckRequest;
 import com.vocaflipbackend.dto.response.DeckResponse;
+import com.vocaflipbackend.dto.response.PageResponse;
+import com.vocaflipbackend.entity.Category;
 import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.exception.AppException;
+import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.DeckMapper;
-import com.vocaflipbackend.entity.Category;
 import com.vocaflipbackend.repository.CategoryRepository;
 import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.DeckService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,27 +35,52 @@ public class DeckServiceImpl implements DeckService {
     @Override
     public DeckResponse createDeck(DeckRequest request, String userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Deck deck = deckMapper.toEntity(request);
         deck.setUser(user);
 
         if (request.getCategory() != null) {
-            // Assuming request.category is the Category ID
             Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
             deck.setCategory(category);
         } else {
-             throw new RuntimeException("Category is required");
+            throw new AppException(ErrorCode.CATEGORY_REQUIRED);
         }
-        // Default totalCards is 0 via builder/entity default
         Deck savedDeck = deckRepository.save(deck);
         return deckMapper.toResponse(savedDeck);
     }
 
     @Override
-    public Optional<DeckResponse> getDeckById(String id) {
-        return deckRepository.findById(id).map(deckMapper::toResponse);
+    public DeckResponse getDeckById(String id) {
+        return deckRepository.findById(id)
+                .filter(deck -> !deck.isRemoved())
+                .map(deckMapper::toResponse)
+                .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
+    }
+
+
+    @Override
+    public DeckResponse updateDeck(String id, DeckRequest request) {
+        Deck deck = deckRepository.findById(id)
+                .filter(d -> !d.isRemoved())
+                .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
+
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            deck.setTitle(request.getTitle());
+        }
+
+        deck.setDescription(request.getDescription());
+
+        if (request.getCategory() != null) {
+            Category category = categoryRepository.findById(request.getCategory())
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+            deck.setCategory(category);
+        }
+
+        deck.setCoverImageUrl(request.getCoverImageUrl());
+
+        Deck updatedDeck = deckRepository.save(deck);
+        return deckMapper.toResponse(updatedDeck);
     }
 
 
@@ -63,8 +94,37 @@ public class DeckServiceImpl implements DeckService {
     @Override
     public void deleteDeck(String id) {
         Deck deck = deckRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Deck not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
         deck.setRemoved(true);
         deckRepository.save(deck);
     }
+
+
+    @Override
+    public PageResponse<DeckResponse> searchDecks(String keyword, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Deck> deckPage;
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            deckPage = deckRepository.findByIsRemovedFalse(pageable);
+        } else {
+            deckPage = deckRepository.searchDecks(keyword.trim(), pageable);
+        }
+
+        List<DeckResponse> content = deckPage.getContent().stream()
+                .map(deckMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<DeckResponse>builder()
+                .content(content)
+                .page(deckPage.getNumber())
+                .pageSize(deckPage.getSize())
+                .totalElements(deckPage.getTotalElements())
+                .totalPages(deckPage.getTotalPages())
+                .first(deckPage.isFirst())
+                .last(deckPage.isLast())
+                .build();
+    }
 }
+

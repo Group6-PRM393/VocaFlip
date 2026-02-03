@@ -18,7 +18,6 @@ import java.util.List;
 @Table(name = "decks")
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

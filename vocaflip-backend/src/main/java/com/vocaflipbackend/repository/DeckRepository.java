@@ -1,7 +1,11 @@
 package com.vocaflipbackend.repository;
 
 import com.vocaflipbackend.entity.Deck;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,5 +15,12 @@ public interface DeckRepository extends JpaRepository<Deck, String> {
 
     List<Deck> findByUserIdAndIsRemovedFalse(String userId);
 
-     // Optional: if generic findById needed with soft delete check, need custom implementation or use service logic
+
+    @Query("SELECT d FROM Deck d WHERE d.isRemoved = false " +
+            "AND (LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(d.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Deck> searchDecks(@Param("keyword") String keyword, Pageable pageable);
+
+
+    Page<Deck> findByIsRemovedFalse(Pageable pageable);
 }
