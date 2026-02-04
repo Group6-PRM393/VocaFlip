@@ -6,7 +6,6 @@ import com.vocaflipbackend.dto.response.PageResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface DeckService {
     DeckResponse createDeck(DeckRequest request, String userId);

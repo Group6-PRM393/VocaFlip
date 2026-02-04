@@ -1,0 +1,34 @@
+# ===========================================
+# .dockerignore cho VocaFlip Backend
+# Loại bỏ các file không cần thiết khi build Docker
+# ===========================================
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Build output
+target/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (sensitive data)
+.env
+.env.local
+.env.*.local
