@@ -113,6 +113,9 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public List<DeckResponse> getDecksByUserId(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
         return deckRepository.findByUserIdAndIsRemovedFalse(userId).stream()
                 .map(deckMapper::toResponse)
                 .collect(Collectors.toList());
