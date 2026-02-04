@@ -74,11 +74,13 @@ public class DeckController {
     public ApiResponse<PageResponse<DeckResponse>> searchDecks(
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "5") int pageSize) {
-        return ApiResponse.<PageResponse<DeckResponse>>builder()
-                .result(deckService.searchDecks(keyword, page, pageSize))
-                .build();
+                    @RequestParam(required = false, defaultValue = "5") int pageSize) {
+            return ApiResponse.<PageResponse<DeckResponse>>builder()
+                            .result(deckService.searchDecks(keyword, page, pageSize))
+                            .build();
     }
+
+    //note test
 }
 
 
