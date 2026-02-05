@@ -1,6 +1,6 @@
 package com.vocaflipbackend.service.impl;
 
-import com.cloudinary.Cloudinary;
+import com.cloudinary.*;
 import com.cloudinary.utils.ObjectUtils;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.vocaflipbackend.constants.CloudinaryConstants;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,6 +27,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         try {
             if (file.isEmpty()) {
                 throw new AppException(ErrorCode.FILE_EMPTY);
+            }
+
+            // Kiểm tra kích thước file
+            if (file.getSize() > CloudinaryConstants.MAX_FILE_SIZE) {
+                throw new AppException(ErrorCode.FILE_SIZE_EXCEEDED);
             }
 
             Map<String, Object> options = ObjectUtils.asMap(
@@ -50,6 +57,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
                 throw new AppException(ErrorCode.FILE_EMPTY);
             }
 
+            // Kiểm tra kích thước file
+            if (file.getSize() > CloudinaryConstants.MAX_FILE_SIZE) {
+                throw new AppException(ErrorCode.FILE_SIZE_EXCEEDED);
+            }
+
             // Validate file type is image
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
@@ -59,7 +71,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             Map<String, Object> options = ObjectUtils.asMap(
                     "folder", folder,
                     "resource_type", "image",
-                    "transformation", new com.cloudinary.Transformation()
+                    "transformation", new Transformation()
                             .width(width)
                             .height(height)
                             .crop("fill")

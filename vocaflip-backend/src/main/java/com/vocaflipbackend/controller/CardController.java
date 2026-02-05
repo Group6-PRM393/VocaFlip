@@ -5,8 +5,6 @@ import com.vocaflipbackend.dto.response.CardResponse;
 import com.vocaflipbackend.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +25,6 @@ public class CardController {
     private final CardService cardService;
 
     @Operation(summary = "Tạo thẻ mới", description = "Tạo một thẻ flashcard mới trong bộ thẻ")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tạo thành công"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy Deck")
-    })
     @PostMapping
     public ResponseEntity<CardResponse> createCard(
             @Parameter(description = "Thông tin thẻ") @Valid @RequestBody CardRequest request, 
@@ -41,10 +34,6 @@ public class CardController {
 
     @Operation(summary = "Lấy danh sách thẻ trong Deck", 
                description = "Trả về tất cả các thẻ thuộc một bộ thẻ cụ thể")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy Deck")
-    })
     @GetMapping("/deck/{deckId}")
     public ResponseEntity<List<CardResponse>> getCardsByDeck(
             @Parameter(description = "ID của Deck") @PathVariable String deckId) {
@@ -52,11 +41,6 @@ public class CardController {
     }
 
     @Operation(summary = "Cập nhật thẻ", description = "Cập nhật thông tin của một thẻ flashcard")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy thẻ"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
-    })
     @PutMapping("/{id}")
     public ResponseEntity<CardResponse> updateCard(
             @Parameter(description = "ID của thẻ") @PathVariable String id, 
@@ -65,10 +49,6 @@ public class CardController {
     }
 
     @Operation(summary = "Xóa thẻ", description = "Xóa một thẻ flashcard khỏi bộ thẻ")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Xóa thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy thẻ")
-    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCard(
             @Parameter(description = "ID của thẻ cần xóa") @PathVariable String id) {

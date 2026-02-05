@@ -7,8 +7,6 @@ import com.vocaflipbackend.dto.response.QuizResponse;
 import com.vocaflipbackend.service.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +25,6 @@ public class QuizController {
     private final QuizService quizService;
 
     @Operation(summary = "Tạo Quiz mới", description = "Tạo một bài kiểm tra mới từ bộ thẻ")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tạo thành công"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy Deck")
-    })
     @PostMapping
     public ResponseEntity<QuizResponse> createQuiz(
             @Parameter(description = "Thông tin Quiz") @Valid @RequestBody QuizRequest request, 
@@ -41,10 +34,6 @@ public class QuizController {
 
     @Operation(summary = "Bắt đầu làm Quiz", 
                description = "Tạo một phiên làm bài quiz mới cho người dùng")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Bắt đầu thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy Quiz hoặc người dùng")
-    })
     @PostMapping("/{quizId}/start")
     public ResponseEntity<QuizAttemptResponse> startAttempt(
             @Parameter(description = "ID của Quiz") @PathVariable String quizId, 
@@ -53,11 +42,6 @@ public class QuizController {
     }
 
     @Operation(summary = "Nộp bài Quiz", description = "Nộp kết quả sau khi hoàn thành bài quiz")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Nộp bài thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy phiên làm bài"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu đáp án không hợp lệ")
-    })
     @PostMapping("/attempt/{attemptId}/submit")
     public ResponseEntity<QuizAttemptResponse> submitAttempt(
             @Parameter(description = "ID của phiên làm bài") @PathVariable String attemptId, 

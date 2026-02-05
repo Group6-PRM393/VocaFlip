@@ -1,9 +1,14 @@
 package com.vocaflipbackend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DeckRequest {
     @NotBlank(message = "Title is required")
     private String title;
@@ -12,7 +17,5 @@ public class DeckRequest {
     
     @NotBlank(message = "Category is required")
     private String category;
-    
-    private String coverImageUrl;
 
 }
