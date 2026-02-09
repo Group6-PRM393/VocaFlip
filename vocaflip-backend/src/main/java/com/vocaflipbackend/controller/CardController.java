@@ -29,7 +29,9 @@ public class CardController {
     public ResponseEntity<CardResponse> createCard(
             @Parameter(description = "Thông tin thẻ") @Valid @RequestBody CardRequest request, 
             @Parameter(description = "ID của Deck chứa thẻ") @RequestParam String deckId) {
-        return ResponseEntity.ok(cardService.createCard(request, deckId));
+        String userId = "u001"; // Hardcoded user ID for demonstration ==> Wait for authentication implementation
+        
+        return ResponseEntity.ok(cardService.createCard(request, userId,deckId));
     }
 
     @Operation(summary = "Lấy danh sách thẻ trong Deck", 

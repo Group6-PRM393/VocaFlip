@@ -6,7 +6,7 @@ import com.vocaflipbackend.dto.response.CardResponse;
 import java.util.List;
 
 public interface CardService {
-    CardResponse createCard(CardRequest request, String deckId);
+    CardResponse createCard(CardRequest request, String userId, String deckId); // added userId for scale purposes in future
     List<CardResponse> getCardsByDeckId(String deckId);
     CardResponse updateCard(String id, CardRequest request);
     void deleteCard(String id);
