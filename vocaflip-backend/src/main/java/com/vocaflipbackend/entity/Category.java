@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
 import java.util.List;
 
 @Entity
@@ -25,6 +26,12 @@ public class Category extends BaseEntity {
 
     @Column(name = "category_name", nullable = false)
     private String categoryName;
+
+    @Column(name = "icon_code")
+    private String iconCode;
+
+    @Column(name = "color_hex")
+    private String colorHex;
 
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)

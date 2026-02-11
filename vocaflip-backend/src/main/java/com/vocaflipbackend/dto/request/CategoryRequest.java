@@ -13,4 +13,6 @@ import lombok.NoArgsConstructor;
 public class CategoryRequest {
     @NotBlank(message = "Category name is required")
     private String categoryName;
+    private String iconCode;
+    private String colorHex;
 }
