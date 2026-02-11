@@ -5,8 +5,6 @@ import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.service.ProgressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +23,6 @@ public class ProgressController {
 
     @Operation(summary = "Cập nhật tiến độ học", 
                description = "Cập nhật trạng thái học tập của một thẻ cho người dùng")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
-            @ApiResponse(responseCode = "400", description = "Trạng thái không hợp lệ"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng hoặc thẻ")
-    })
     @PostMapping("/update")
     public ResponseEntity<Void> updateProgress(
             @Parameter(description = "ID của người dùng") @RequestParam String userId,
@@ -42,10 +35,6 @@ public class ProgressController {
 
     @Operation(summary = "Lấy tiến độ học thẻ", 
                description = "Trả về tiến độ học tập của một thẻ cụ thể cho người dùng")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Thành công"),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy tiến độ")
-    })
     @GetMapping
     public ResponseEntity<UserProgressResponse> getProgress(
             @Parameter(description = "ID của người dùng") @RequestParam String userId,

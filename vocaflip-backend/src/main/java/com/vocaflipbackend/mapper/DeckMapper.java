@@ -10,6 +10,7 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface DeckMapper {
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "coverImageUrl", ignore = true)
     Deck toEntity(DeckRequest request);
 
     @Mapping(target = "userId", source = "user.id")

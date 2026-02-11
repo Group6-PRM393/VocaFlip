@@ -2,14 +2,11 @@ package com.vocaflipbackend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "session_cards")
@@ -18,8 +15,8 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class SessionCard {
+@SuperBuilder
+public class SessionCard extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,10 +27,6 @@ public class SessionCard {
 
     @Column(name = "response_time_seconds")
     private Integer responseTimeSeconds;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
 
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)

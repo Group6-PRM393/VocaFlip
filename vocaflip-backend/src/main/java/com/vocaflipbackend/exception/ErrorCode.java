@@ -22,6 +22,8 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(1012, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED(1013, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_FILE_TYPE(1014, "Invalid file type", HttpStatus.BAD_REQUEST),
+    FILE_SIZE_EXCEEDED(1015, "File size exceeds the maximum allowed size (5MB)", HttpStatus.BAD_REQUEST),
+    CARD_NOT_FOUND(1016, "Card not found", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

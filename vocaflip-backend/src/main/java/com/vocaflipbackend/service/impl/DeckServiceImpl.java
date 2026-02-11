@@ -37,10 +37,6 @@ public class DeckServiceImpl implements DeckService {
     private final DeckMapper deckMapper;
     private final CloudinaryService cloudinaryService;
 
-    @Override
-    public DeckResponse createDeck(DeckRequest request, String userId) {
-        return createDeck(request, userId, null);
-    }
 
     @Override
     public DeckResponse createDeck(DeckRequest request, String userId, MultipartFile coverImage) {
@@ -75,10 +71,6 @@ public class DeckServiceImpl implements DeckService {
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
     }
 
-    @Override
-    public DeckResponse updateDeck(String id, DeckRequest request) {
-        return updateDeck(id, request, null);
-    }
 
     @Override
     public DeckResponse updateDeck(String id, DeckRequest request, MultipartFile coverImage) {
@@ -102,9 +94,6 @@ public class DeckServiceImpl implements DeckService {
         if (coverImage != null && !coverImage.isEmpty()) {
             String coverUrl = uploadCoverImage(coverImage);
             deck.setCoverImageUrl(coverUrl);
-        } else if (request.getCoverImageUrl() != null) {
-            // Nếu không upload ảnh mới, sử dụng URL từ request
-            deck.setCoverImageUrl(request.getCoverImageUrl());
         }
 
         Deck updatedDeck = deckRepository.save(deck);
@@ -159,9 +148,9 @@ public class DeckServiceImpl implements DeckService {
     // Helper method để upload cover image
     private String uploadCoverImage(MultipartFile coverImage) {
         Map<String, Object> uploadResult = cloudinaryService.uploadImage(
-                coverImage, 
-                CloudinaryConstants.DECK_COVER_FOLDER, 
-                CloudinaryConstants.COVER_WIDTH, 
+                coverImage,
+                CloudinaryConstants.DECK_COVER_FOLDER,
+                CloudinaryConstants.COVER_WIDTH,
                 CloudinaryConstants.COVER_HEIGHT);
         return (String) uploadResult.get("secure_url");
     }
