@@ -61,7 +61,7 @@ public class QuizAttempt {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
+    @JoinColumn(name = "quiz_id", nullable = true)
     private Quiz quiz;
 
     @ManyToOne(fetch = FetchType.LAZY)

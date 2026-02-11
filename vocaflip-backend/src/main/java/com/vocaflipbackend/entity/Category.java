@@ -29,6 +29,12 @@ public class Category {
     @Column(name = "category_name", nullable = false)
     private String categoryName;
 
+    @Column(name = "icon_code",  nullable = false)
+    private String iconCode;
+
+    @Column(name = "color_hex",  nullable = false)
+    private String colorHex;
+
     @Column(name = "is_removed")
     @Builder.Default
     private boolean isRemoved = false;
