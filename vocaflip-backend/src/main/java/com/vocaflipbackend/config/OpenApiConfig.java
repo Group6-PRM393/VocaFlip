@@ -21,7 +21,7 @@ public class OpenApiConfig {
 
     @Value("${server.port:8080}")
     private String serverPort;
-    @Value("${URL_DEPLOY}")
+    @Value("${URL_DEPLOY:https://vocaflip-api.onrender.com}")
     private String urlDeploy;
 
     @Bean

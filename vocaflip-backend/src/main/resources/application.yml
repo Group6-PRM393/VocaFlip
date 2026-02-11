@@ -9,8 +9,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: postgres.toesjpoqupllxjeopalh
+    password: Uniquepass123@@.
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -22,12 +22,14 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 server:
   port: 8080
+  address: 0.0.0.0
+
 
 # Cloudinary Configuration
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  cloud-name: dwo1zbn0c
+  api-key: 696844879617656
+  api-secret: -Z-WlZMbEaTQD0q0O3fWthYcE7c
 
 # Actuator Configuration for Health Check
 management:
