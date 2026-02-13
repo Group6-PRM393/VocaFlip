@@ -17,4 +17,6 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Stri
 
     /** Lấy tất cả thẻ đến hạn ôn tập (nextReviewAt <= now) và chưa bị xóa */
     List<UserProgress> findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(String userId, LocalDateTime dateTime);
+
+    List<Object[]> countByStatus(String userId);
 }

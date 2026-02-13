@@ -24,6 +24,8 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(1014, "Invalid file type", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED(1015, "File size exceeds the maximum allowed size (5MB)", HttpStatus.BAD_REQUEST),
     CARD_NOT_FOUND(1016, "Card not found", HttpStatus.NOT_FOUND),
+    CARD_FRONT_REQUIRED(1017, "Front content is required", HttpStatus.BAD_REQUEST),
+    CARD_BACK_REQUIRED(1018, "Back content is required", HttpStatus.BAD_REQUEST),
     // Study session errors
     SESSION_NOT_FOUND(1017, "Study session not found", HttpStatus.NOT_FOUND),
     DECK_EMPTY(1018, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
