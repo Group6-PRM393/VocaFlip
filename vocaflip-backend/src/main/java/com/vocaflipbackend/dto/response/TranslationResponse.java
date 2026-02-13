@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TranslationResponse {
     private String word;
-    private String translation;
+    private String meaning;
     private String phonetic;
     private String exampleSentence;
+    private String audioUrl;
 }

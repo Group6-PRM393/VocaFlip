@@ -12,5 +12,5 @@ public interface CardService {
     List<CardResponse> getCardsByDeckId(String deckId);
     CardResponse updateCard(String id, CardRequest request, MultipartFile image);
     void deleteCard(String id);
-    TranslationResponse translate(String word);
+    TranslationResponse fetchDictionaryData(String word);
 }

@@ -95,7 +95,7 @@ public class CardController {
     public ApiResponse<TranslationResponse> translate(
             @Parameter(description = "Từ cần dịch") @RequestParam String word) {
         return ApiResponse.<TranslationResponse>builder()
-                .result(cardService.translate(word))
+                .result(cardService.fetchDictionaryData(word))
                 .build();
     }
 

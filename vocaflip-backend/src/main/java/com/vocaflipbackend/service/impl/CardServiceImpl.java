@@ -1,5 +1,6 @@
 package com.vocaflipbackend.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.vocaflipbackend.constants.CloudinaryConstants;
 import com.vocaflipbackend.dto.request.CardRequest;
 import com.vocaflipbackend.dto.response.CardResponse;
@@ -17,7 +18,10 @@ import com.vocaflipbackend.service.CardService;
 import com.vocaflipbackend.service.CloudinaryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -27,6 +31,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CardServiceImpl implements CardService {
 
     private final CardRepository cardRepository;
@@ -34,6 +39,7 @@ public class CardServiceImpl implements CardService {
     private final UserRepository userRepository;
     private final CardMapper cardMapper;
     private final CloudinaryService cloudinaryService;
+    private final RestTemplate restTemplate;
 
     @Override
     public CardResponse createCard(CardRequest request, MultipartFile image, String userId, String deckId) {
@@ -43,17 +49,17 @@ public class CardServiceImpl implements CardService {
 
         Deck deck = deckRepository.findById(deckId)
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
-        
+
         // Check if deck is removed
         if (deck.isRemoved()) {
             throw new AppException(ErrorCode.DECK_NOT_FOUND);
         }
-        
+
         // Validate ownership: user must be owner of the deck
         if (!deck.getUser().getId().equals(userId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        
+
         Card card = cardMapper.toEntity(request);
         card.setDeck(deck);
 
@@ -64,14 +70,14 @@ public class CardServiceImpl implements CardService {
         }
 
         Card savedCard = cardRepository.save(card);
-        
+
         // Update deck total cards & update by user
         int currentTotal = deck.getTotalCards() != null ? deck.getTotalCards() : 0;
         deck.setTotalCards(currentTotal + 1);
 
         // after have Sercurity context will not need pass userId
         deck.setUpdatedBy(user.getId());
-        
+
         return cardMapper.toResponse(savedCard);
     }
 
@@ -114,7 +120,7 @@ public class CardServiceImpl implements CardService {
         if (request.getAudioUrl() != null) {
             card.setAudioUrl(request.getAudioUrl());
         }
-        
+
         // Handle image update - prioritize uploaded file over URL
         if (image != null && !image.isEmpty()) {
             String imageUrl = uploadCardImage(image);
@@ -130,12 +136,12 @@ public class CardServiceImpl implements CardService {
     public void deleteCard(String id) {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CARD_NOT_FOUND));
-        
+
         // Check if card is already removed to prevent double deletion
         if (card.isRemoved()) {
             throw new AppException(ErrorCode.CARD_NOT_FOUND);
         }
-        
+
         // Soft delete
         card.setRemoved(true);
 
@@ -149,33 +155,86 @@ public class CardServiceImpl implements CardService {
 
 
     @Override
-    public TranslationResponse translate(String word) {
-        // TODO: Implement real translation API (Google Translate or Gemini)
-        // For now, return a placeholder response
-        return TranslationResponse.builder()
-                .word(word)
-                .translation("Nghĩa của từ '" + word + "'")
-                .phonetic("/" + word + "/")
-                .exampleSentence("This is an example sentence for '" + word + "'.")
-                .build();
+    public TranslationResponse fetchDictionaryData(String word) {
+        try {
+            String url = "https://api.dictionaryapi.dev/api/v2/entries/en/" + word;
+            log.info("Calling dictionary API: {}", url);
+
+            // Get response as String first to debug
+            String jsonResponse = restTemplate.getForObject(url, String.class);
+            log.info("API response (raw): {}", jsonResponse);
+
+            if (jsonResponse == null || jsonResponse.isEmpty()) {
+                log.warn("API returned empty response for word: {}", word);
+                return null;
+            }
+
+            // Parse JSON manually
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            JsonNode root = mapper.readTree(jsonResponse);
+            log.info("Parsed JSON: {}", root);
+
+            if (!root.isArray() || root.size() == 0) {
+                log.warn("API response is not a valid array for word: {}", word);
+                return null;
+            }
+
+            JsonNode first = root.get(0);
+            String wordResult = first.path("word").asText(word);
+            String phonetic = first.path("phonetic").asText("");
+
+            // Find audio URL
+            String audio = "";
+            JsonNode phonetics = first.path("phonetics");
+            if (phonetics.isArray()) {
+                for (JsonNode p : phonetics) {
+                    String audioUrl = p.path("audio").asText("");
+                    if (!audioUrl.isEmpty()) {
+                        audio = audioUrl;
+                        break;
+                    }
+                }
+            }
+
+            // Get meaning and example
+            String meaning = "";
+            String exampleSentence = "";
+
+            JsonNode meanings = first.path("meanings");
+            if (meanings.isArray() && meanings.size() > 0) {
+                JsonNode firstMeaning = meanings.get(0);
+                JsonNode definitions = firstMeaning.path("definitions");
+                if (definitions.isArray() && definitions.size() > 0) {
+                    JsonNode firstDef = definitions.get(0);
+                    meaning = firstDef.path("definition").asText("");
+                    exampleSentence = firstDef.path("example").asText("");
+                }
+            }
+
+            TranslationResponse response = TranslationResponse.builder()
+                    .word(wordResult)
+                    .phonetic(phonetic)
+                    .audioUrl(audio)
+                    .meaning(meaning)
+                    .exampleSentence(exampleSentence)
+                    .build();
+
+            log.info("Successfully fetched dictionary data for: {}", word);
+            return response;
+        } catch (Exception e) {
+            log.error("Error fetching dictionary data for word: {}", word, e);
+            return null;
+        }
     }
 
     private String uploadCardImage(MultipartFile image) {
         Map<String, Object> uploadResult = cloudinaryService.uploadImage(
                 image,
                 CloudinaryConstants.CARDS_FOLDER,
-                500, // Custom width for cards
-                500  // Custom height for cards
+                CloudinaryConstants.COVER_WIDTH, // Custom width for cards
+                CloudinaryConstants.COVER_HEIGHT // Custom height for cards
         );
         return (String) uploadResult.get("secure_url");
     }
 
-    private String uploadCoverImage(MultipartFile coverImage) {
-        Map<String, Object> uploadResult = cloudinaryService.uploadImage(
-                coverImage,
-                CloudinaryConstants.CARDS_FOLDER,
-                CloudinaryConstants.COVER_WIDTH,
-                CloudinaryConstants.COVER_HEIGHT);
-        return (String) uploadResult.get("secure_url");
-    }
 }
