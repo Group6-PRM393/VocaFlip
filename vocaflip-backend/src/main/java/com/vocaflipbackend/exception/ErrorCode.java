@@ -27,9 +27,9 @@ public enum ErrorCode {
     CARD_FRONT_REQUIRED(1017, "Front content is required", HttpStatus.BAD_REQUEST),
     CARD_BACK_REQUIRED(1018, "Back content is required", HttpStatus.BAD_REQUEST),
     // Study session errors
-    SESSION_NOT_FOUND(1017, "Study session not found", HttpStatus.NOT_FOUND),
-    DECK_EMPTY(1018, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
-    NO_CARDS_DUE(1019, "No cards are due for review", HttpStatus.OK),
+    SESSION_NOT_FOUND(1019, "Study session not found", HttpStatus.NOT_FOUND),
+    DECK_EMPTY(1020, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
+    NO_CARDS_DUE(1021, "No cards are due for review", HttpStatus.OK),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

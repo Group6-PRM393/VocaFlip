@@ -3,6 +3,8 @@ package com.vocaflipbackend.service.impl;
 import com.vocaflipbackend.dto.request.QuizSubmissionRequest;
 import com.vocaflipbackend.dto.response.*;
 import com.vocaflipbackend.entity.*;
+import com.vocaflipbackend.exception.AppException;
+import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.repository.*;
 import com.vocaflipbackend.service.QuizService;
 import jakarta.transaction.Transactional;
@@ -30,9 +32,9 @@ public class QuizServiceImpl implements QuizService {
     @Transactional
     public QuizSessionResponse generateQuiz(String userId, String deckId, int numberOfQuestions, int timeLimitSeconds) {
         Deck deck = deckRepository.findByIdAndIsRemovedFalse(deckId)
-                .orElseThrow(() -> new RuntimeException("Deck not found"));
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         List<Card> questions = cardRepository.findRandomCardsByDeckId(deckId, numberOfQuestions);
         if (questions.isEmpty()) {
