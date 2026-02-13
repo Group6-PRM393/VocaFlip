@@ -24,6 +24,8 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(1014, "Invalid file type", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED(1015, "File size exceeds the maximum allowed size (5MB)", HttpStatus.BAD_REQUEST),
     CARD_NOT_FOUND(1016, "Card not found", HttpStatus.NOT_FOUND),
+    CARD_FRONT_REQUIRED(1017, "Front content is required", HttpStatus.BAD_REQUEST),
+    CARD_BACK_REQUIRED(1018, "Back content is required", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
