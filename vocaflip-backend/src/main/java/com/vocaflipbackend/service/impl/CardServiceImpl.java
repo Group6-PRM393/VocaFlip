@@ -1,7 +1,9 @@
 package com.vocaflipbackend.service.impl;
 
+import com.vocaflipbackend.constants.CloudinaryConstants;
 import com.vocaflipbackend.dto.request.CardRequest;
 import com.vocaflipbackend.dto.response.CardResponse;
+import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
@@ -12,11 +14,14 @@ import com.vocaflipbackend.repository.CardRepository;
 import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CardService;
+import com.vocaflipbackend.service.CloudinaryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,9 +33,10 @@ public class CardServiceImpl implements CardService {
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
     private final CardMapper cardMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
-    public CardResponse createCard(CardRequest request, String userId, String deckId) {
+    public CardResponse createCard(CardRequest request, MultipartFile image, String userId, String deckId) {
         // after have Sercurity context will not need pass userId
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -50,7 +56,14 @@ public class CardServiceImpl implements CardService {
         
         Card card = cardMapper.toEntity(request);
         card.setDeck(deck);
-        Card savedCard = cardRepository.save(card); // Need save() for new entity (transient state)
+
+        // Upload image if provided
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = uploadCardImage(image);
+            card.setImageUrl(imageUrl);
+        }
+
+        Card savedCard = cardRepository.save(card);
         
         // Update deck total cards & update by user
         int currentTotal = deck.getTotalCards() != null ? deck.getTotalCards() : 0;
@@ -77,7 +90,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public CardResponse updateCard(String id, CardRequest request) {
+    public CardResponse updateCard(String id, CardRequest request, MultipartFile image) {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CARD_NOT_FOUND));
 
@@ -101,10 +114,15 @@ public class CardServiceImpl implements CardService {
         if (request.getAudioUrl() != null) {
             card.setAudioUrl(request.getAudioUrl());
         }
-        if (request.getImageUrl() != null) {
+        
+        // Handle image update - prioritize uploaded file over URL
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = uploadCardImage(image);
+            card.setImageUrl(imageUrl);
+        } else if (request.getImageUrl() != null) {
             card.setImageUrl(request.getImageUrl());
         }
-        
+
         return cardMapper.toResponse(card);
     }
 
@@ -127,5 +145,37 @@ public class CardServiceImpl implements CardService {
             int newTotal = deck.getTotalCards() > 0 ? deck.getTotalCards() - 1 : 0;
             deck.setTotalCards(newTotal);
         }
+    }
+
+
+    @Override
+    public TranslationResponse translate(String word) {
+        // TODO: Implement real translation API (Google Translate or Gemini)
+        // For now, return a placeholder response
+        return TranslationResponse.builder()
+                .word(word)
+                .translation("Nghĩa của từ '" + word + "'")
+                .phonetic("/" + word + "/")
+                .exampleSentence("This is an example sentence for '" + word + "'.")
+                .build();
+    }
+
+    private String uploadCardImage(MultipartFile image) {
+        Map<String, Object> uploadResult = cloudinaryService.uploadImage(
+                image,
+                CloudinaryConstants.CARDS_FOLDER,
+                500, // Custom width for cards
+                500  // Custom height for cards
+        );
+        return (String) uploadResult.get("secure_url");
+    }
+
+    private String uploadCoverImage(MultipartFile coverImage) {
+        Map<String, Object> uploadResult = cloudinaryService.uploadImage(
+                coverImage,
+                CloudinaryConstants.CARDS_FOLDER,
+                CloudinaryConstants.COVER_WIDTH,
+                CloudinaryConstants.COVER_HEIGHT);
+        return (String) uploadResult.get("secure_url");
     }
 }

@@ -6,6 +6,7 @@ public class CloudinaryConstants {
     }
 
     public static final String DECK_COVER_FOLDER = "vocaflip/deck-covers";
+    public static final String CARDS_FOLDER = "vocaflip/card-images";
     public static final int COVER_WIDTH = 800;
     public static final int COVER_HEIGHT = 600;
     
