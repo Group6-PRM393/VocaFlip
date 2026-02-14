@@ -47,3 +47,9 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 86400000  # 1 day in milliseconds
+  refresh-token-expiration: 604800000  # 7 days in milliseconds

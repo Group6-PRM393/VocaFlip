@@ -12,6 +12,8 @@ import org.mapstruct.ReportingPolicy;
 public interface UserMapper {
     @Mapping(target = "passwordHash", source = "password") // Temporary mapping logic placeholder
     User toEntity(UserRegisterRequest request);
-    
+
     UserResponse toResponse(User user);
+
+    UserResponse toUserResponse(User user);
 }
