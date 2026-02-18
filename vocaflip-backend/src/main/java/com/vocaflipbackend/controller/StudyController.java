@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @RequestMapping("/api/study")
 @RequiredArgsConstructor
@@ -22,22 +21,20 @@ public class StudyController {
                description = "Tạo phiên học mới và trả về danh sách tất cả thẻ trong Deck")
     @PostMapping("/start")
     public ApiResponse<StudySessionResponse> startSession(
-            @Parameter(description = "ID của người dùng") @RequestParam String userId,
             @Parameter(description = "ID của Deck để học") @RequestParam String deckId) {
         return ApiResponse.<StudySessionResponse>builder()
                 .message("Phiên học đã được tạo thành công")
-                .result(studyService.startSession(userId, deckId))
+                .result(studyService.startSession(deckId))
                 .build();
     }
 
     @Operation(summary = "Ôn tập hàng ngày",
                description = "Tổng hợp tất cả thẻ đến hạn ôn tập (từ mọi Deck) và tạo phiên học mới")
     @PostMapping("/daily-review")
-    public ApiResponse<StudySessionResponse> startDailyReview(
-            @Parameter(description = "ID của người dùng") @RequestParam String userId) {
+    public ApiResponse<StudySessionResponse> startDailyReview() {
         return ApiResponse.<StudySessionResponse>builder()
                 .message("Phiên ôn tập hàng ngày đã được tạo")
-                .result(studyService.startDailyReview(userId))
+                .result(studyService.startDailyReview())
                 .build();
     }
 
@@ -66,5 +63,3 @@ public class StudyController {
                 .build();
     }
 }
-
-

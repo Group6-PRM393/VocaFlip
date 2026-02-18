@@ -15,7 +15,7 @@ public class DeckRequest {
     
     private String description;
     
-    @NotBlank(message = "Category is required")
-    private String category;
+    @NotBlank(message = "Category ID is required")
+    private String categoryId;
 
 }

@@ -8,9 +8,9 @@ spring:
       max-request-size: 10MB
 
   datasource:
-    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require
-    username: postgres.toesjpoqupllxjeopalh
-    password: Uniquepass123@@.
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -51,5 +51,5 @@ springdoc:
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET}
-  access-token-expiration: 86400000  # 1 day in milliseconds
-  refresh-token-expiration: 604800000  # 7 days in milliseconds
+  access-token-expiration: 86400000 # 1 day in milliseconds
+  refresh-token-expiration: 604800000 # 7 days in milliseconds

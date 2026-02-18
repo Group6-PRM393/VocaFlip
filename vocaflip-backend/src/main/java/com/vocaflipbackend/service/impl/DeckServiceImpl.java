@@ -15,6 +15,7 @@ import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CloudinaryService;
 import com.vocaflipbackend.service.DeckService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,21 +40,21 @@ public class DeckServiceImpl implements DeckService {
 
 
     @Override
-    public DeckResponse createDeck(DeckRequest request, String userId, MultipartFile coverImage) {
+    public DeckResponse createDeck(DeckRequest request, MultipartFile coverImage) {
+        String userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Deck deck = deckMapper.toEntity(request);
         deck.setUser(user);
 
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
             deck.setCategory(category);
         } else {
             throw new AppException(ErrorCode.CATEGORY_REQUIRED);
         }
 
-        // Upload cover image lên Cloudinary nếu có
         if (coverImage != null && !coverImage.isEmpty()) {
             String coverUrl = uploadCoverImage(coverImage);
             deck.setCoverImageUrl(coverUrl);
@@ -65,8 +66,11 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public DeckResponse getDeckById(String id) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
+
         return deckRepository.findById(id)
                 .filter(deck -> !deck.isRemoved())
+                .filter(deck -> deck.getUser().getId().equals(currentUserId))
                 .map(deckMapper::toResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
     }
@@ -74,23 +78,29 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public DeckResponse updateDeck(String id, DeckRequest request, MultipartFile coverImage) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
         Deck deck = deckRepository.findById(id)
                 .filter(d -> !d.isRemoved())
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
+
+        if (!deck.getUser().getId().equals(currentUserId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
 
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
             deck.setTitle(request.getTitle());
         }
 
-        deck.setDescription(request.getDescription());
+        if (request.getDescription() != null) {
+            deck.setDescription(request.getDescription());
+        }
 
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
             deck.setCategory(category);
         }
 
-        // Upload cover image mới nếu có
         if (coverImage != null && !coverImage.isEmpty()) {
             String coverUrl = uploadCoverImage(coverImage);
             deck.setCoverImageUrl(coverUrl);
@@ -101,7 +111,8 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    public List<DeckResponse> getDecksByUserId(String userId) {
+    public List<DeckResponse> getMyDecks() {
+        String userId = SecurityUtils.getCurrentUserId();
         if (!userRepository.existsById(userId)) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
@@ -112,22 +123,29 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     public void deleteDeck(String id) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
+
+        if (!deck.getUser().getId().equals(currentUserId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         deck.setRemoved(true);
         deckRepository.save(deck);
     }
 
     @Override
     public PageResponse<DeckResponse> searchDecks(String keyword, int page, int pageSize) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Deck> deckPage;
 
         if (keyword == null || keyword.trim().isEmpty()) {
-            deckPage = deckRepository.findByIsRemovedFalse(pageable);
+            deckPage = deckRepository.findByUserIdAndIsRemovedFalse(currentUserId, pageable);
         } else {
-            deckPage = deckRepository.searchDecks(keyword.trim(), pageable);
+            deckPage = deckRepository.searchDecks(keyword.trim(), currentUserId, pageable);
         }
 
         List<DeckResponse> content = deckPage.getContent().stream()

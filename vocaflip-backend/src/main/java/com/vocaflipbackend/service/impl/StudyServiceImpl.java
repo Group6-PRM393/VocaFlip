@@ -10,6 +10,7 @@ import com.vocaflipbackend.mapper.StudyMapper;
 import com.vocaflipbackend.repository.*;
 import com.vocaflipbackend.service.LearningEngineService;
 import com.vocaflipbackend.service.StudyService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +37,8 @@ public class StudyServiceImpl implements StudyService {
 
     @Override
     @Transactional
-    public StudySessionResponse startSession(String userId, String deckId) {
+    public StudySessionResponse startSession(String deckId) {
+        String userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Deck deck = deckRepository.findById(deckId)
@@ -80,7 +82,8 @@ public class StudyServiceImpl implements StudyService {
 
     @Override
     @Transactional
-    public StudySessionResponse startDailyReview(String userId) {
+    public StudySessionResponse startDailyReview() {
+        String userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
@@ -114,8 +117,14 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public void submitCardResult(String sessionId, String cardId, int grade, int responseTimeSeconds) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
         StudySession session = studySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_FOUND));
+
+        // Kiểm tra quyền sở hữu: Session phải thuộc về user đang đăng nhập
+        if (!session.getUser().getId().equals(currentUserId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
 
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new AppException(ErrorCode.CARD_NOT_FOUND));
@@ -188,8 +197,14 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public StudySessionResponse completeSession(String sessionId) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
         StudySession session = studySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_FOUND));
+
+        // Kiểm tra quyền sở hữu
+        if (!session.getUser().getId().equals(currentUserId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
 
         session.setCompletedAt(LocalDateTime.now());
 

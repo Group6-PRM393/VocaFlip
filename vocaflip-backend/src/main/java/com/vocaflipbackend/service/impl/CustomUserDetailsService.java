@@ -1,18 +1,17 @@
 package com.vocaflipbackend.service.impl;
 
+import com.vocaflipbackend.config.CustomUserDetails;
 import com.vocaflipbackend.entity.User;
 import com.vocaflipbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-
 /**
- * Custom UserDetailsService - Load user từ database cho Spring Security
+ * Custom UserDetailsService - Load user từ database cho Spring Security.
+ * Trả về CustomUserDetails chứa đầy đủ thông tin User entity (bao gồm userId).
  */
 @Service
 @RequiredArgsConstructor
@@ -25,14 +24,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-    return org.springframework.security.core.userdetails.User.builder()
-        .username(user.getEmail())
-        .password(user.getPasswordHash())
-        .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")))
-        .accountExpired(false)
-        .accountLocked(false)
-        .credentialsExpired(false)
-        .disabled(false)
-        .build();
+    // Trả về CustomUserDetails chứa User entity
+    // -> SecurityContext sẽ lưu trữ userId, email, name,...
+    return new CustomUserDetails(user);
   }
 }
+
