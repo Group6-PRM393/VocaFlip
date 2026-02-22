@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
-import '../../../data/models/card_model.dart';
+import '../../../data/models/responses/study_card_response.dart';
+import '../../../data/services/tts_service.dart';
 
-/// Widget hiển thị mặt sau (Back Side) của thẻ Flashcard.
-///
-/// Theo design Stitch (Flashcard Study Session):
-/// - Header Image 1/3 trên (gradient overlay) + nút Audio.
-/// - Nội dung 2/3 dưới: Term (bold), IPA, Definition, Example box.
-/// - Bo góc 24px, shadow nhẹ, border slate-100.
 class FlashcardBackSide extends StatelessWidget {
-  /// Dữ liệu thẻ cần hiển thị
-  final FlashcardModel card;
+  final StudyCardResponse card;
 
   const FlashcardBackSide({super.key, required this.card});
 
@@ -43,14 +37,9 @@ class FlashcardBackSide extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // ── Nội dung chính (Image + Text) ──
             Column(
               children: [
-                // Header Image (nếu có)
                 if (card.imageUrl != null) _buildHeaderImage(),
-
-                // Nội dung text (Term, Def...)
-                // Nếu không có ảnh, nội dung sẽ được căn giữa theo chiều dọc
                 Expanded(
                   child: card.imageUrl == null
                       ? Center(child: _buildContent())
@@ -59,7 +48,6 @@ class FlashcardBackSide extends StatelessWidget {
               ],
             ),
 
-            // ── Nút Audio (Luôn hiện ở góc phải trên) ──
             Positioned(top: 12, right: 12, child: _buildAudioButton()),
           ],
         ),
@@ -67,7 +55,6 @@ class FlashcardBackSide extends StatelessWidget {
     );
   }
 
-  /// Header Image: hiển thị ảnh rõ nét
   Widget _buildHeaderImage() {
     return SizedBox(
       height: 140,
@@ -80,15 +67,12 @@ class FlashcardBackSide extends StatelessWidget {
     );
   }
 
-  /// Nút Audio
   Widget _buildAudioButton() {
     return Material(
       color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap: () {
-          // TODO: Phát âm từ vựng
-        },
+        onTap: () => TtsService().speak(card.phonetic!),
         borderRadius: BorderRadius.circular(20),
         child: Container(
           width: 40,
@@ -118,16 +102,14 @@ class FlashcardBackSide extends StatelessWidget {
     );
   }
 
-  /// Nội dung chính: Term, IPA, Definition, Example
   Widget _buildContent() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── Term (to, đậm) ──
           Text(
-            card.term,
+            card.front,
             style: GoogleFonts.lexend(
               fontSize: 32,
               fontWeight: FontWeight.w700,
@@ -137,11 +119,10 @@ class FlashcardBackSide extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
 
-          // ── IPA ──
-          if (card.ipa != null) ...[
+          if (card.phonetic != null) ...[
             const SizedBox(height: 4),
             Text(
-              card.ipa!,
+              card.phonetic!,
               style: GoogleFonts.notoSans(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -153,7 +134,6 @@ class FlashcardBackSide extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Divider ──
           Container(
             width: 48,
             height: 3,
@@ -165,7 +145,6 @@ class FlashcardBackSide extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── Definition Label ──
           Text(
             'DEFINITION',
             style: GoogleFonts.lexend(
@@ -177,20 +156,18 @@ class FlashcardBackSide extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // ── Definition Text ──
           Text(
-            card.definition,
+            card.back,
             style: GoogleFonts.lexend(
               fontSize: 20,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF1E293B), // Slate 800
+              color: const Color(0xFF1E293B),
               height: 1.4,
             ),
             textAlign: TextAlign.center,
           ),
 
-          // ── Example Box ──
-          if (card.example != null) ...[
+          if (card.exampleSentence != null) ...[
             const SizedBox(height: 16),
             _buildExampleBox(),
           ],
@@ -201,16 +178,15 @@ class FlashcardBackSide extends StatelessWidget {
     );
   }
 
-  /// Box ví dụ: nền xanh nhạt, italic, highlight từ chính
   Widget _buildExampleBox() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF), // Blue 50
+        color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFDBEAFE), // Blue 100
+          color: const Color(0xFFDBEAFE),
           width: 1,
         ),
       ),
@@ -221,34 +197,31 @@ class FlashcardBackSide extends StatelessWidget {
     );
   }
 
-  /// RichText cho example — highlight từ chính (term) bằng màu primary + bold
   TextSpan _buildExampleRichText() {
-    final example = card.example!;
-    final termLower = card.term.toLowerCase();
+    final example = card.exampleSentence!;
+    final termLower = card.front.toLowerCase();
     final exampleLower = example.toLowerCase();
     final termIndex = exampleLower.indexOf(termLower);
 
     if (termIndex == -1) {
-      // Nếu term không có trong example, hiển thị bình thường
       return TextSpan(
         text: '"$example"',
         style: GoogleFonts.notoSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           fontStyle: FontStyle.italic,
-          color: const Color(0xFF475569), // Slate 600
+          color: const Color(0xFF475569),
           height: 1.5,
         ),
       );
     }
 
-    // Tách example thành 3 phần: trước term, term, sau term
     final before = example.substring(0, termIndex);
     final termInExample = example.substring(
       termIndex,
-      termIndex + card.term.length,
+      termIndex + card.front.length,
     );
-    final after = example.substring(termIndex + card.term.length);
+    final after = example.substring(termIndex + card.front.length);
 
     final baseStyle = GoogleFonts.notoSans(
       fontSize: 14,

@@ -1,29 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
+import 'study_screen.dart';
 
-/// Màn hình "Study Session Completed" — hiển thị khi người dùng hoàn thành
-/// tất cả các thẻ trong phiên học.
-///
-/// Theo design Stitch (VocaFlip Screen):
-/// - Header: icon kỷ niệm + "Great Job!" + "Deck Completed!"
-/// - Stats: Forgot, Remembered, Accuracy
-/// - Buttons: "Study Again" + "Back to Home"
 class StudyResultScreen extends StatelessWidget {
-  /// Số thẻ đã quên (Forgot)
   final int forgotCount;
 
-  /// Số thẻ đã nhớ (Remembered = Hard + Good + Easy)
   final int rememberedCount;
 
-  /// Tỷ lệ chính xác (%)
   final double accuracy;
+
+  final String? deckId;
 
   const StudyResultScreen({
     super.key,
     required this.forgotCount,
     required this.rememberedCount,
     required this.accuracy,
+    this.deckId,
   });
 
   @override
@@ -37,20 +31,16 @@ class StudyResultScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 24),
 
-              // ── Nút đóng (góc phải trên) ──
               Align(
                 alignment: Alignment.centerRight,
                 child: _buildCloseButton(context),
               ),
 
-              // ── Khoảng trống phía trên ──
               const Spacer(flex: 2),
 
-              // ── Icon kỷ niệm ──
               _buildCelebrationIcon(),
               const SizedBox(height: 24),
 
-              // ── Tiêu đề chính ──
               Text(
                 'Great Job!',
                 style: GoogleFonts.lexend(
@@ -63,7 +53,6 @@ class StudyResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
 
-              // ── Phụ đề ──
               Text(
                 'Deck Completed!',
                 style: GoogleFonts.lexend(
@@ -76,13 +65,10 @@ class StudyResultScreen extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // ── Stats Grid ──
               _buildStatsRow(),
 
-              // ── Khoảng trống phía dưới ──
               const Spacer(flex: 3),
 
-              // ── Buttons ──
               _buildStudyAgainButton(context),
               const SizedBox(height: 12),
               _buildBackToHomeButton(context),
@@ -94,7 +80,6 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Nút đóng (X) góc phải trên
   Widget _buildCloseButton(BuildContext context) {
     return Material(
       color: Colors.transparent,
@@ -120,7 +105,6 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Icon kỷ niệm — vòng tròn gradient + icon ngôi sao
   Widget _buildCelebrationIcon() {
     return Container(
       width: 100,
@@ -148,7 +132,6 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Hàng thống kê: Forgot | Remembered | Accuracy
   Widget _buildStatsRow() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -170,7 +153,6 @@ class StudyResultScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Forgot ──
           Expanded(
             child: _buildStatItem(
               value: forgotCount.toString(),
@@ -178,9 +160,7 @@ class StudyResultScreen extends StatelessWidget {
               valueColor: AppColors.buttonForgot,
             ),
           ),
-          // ── Divider dọc ──
           Container(width: 1, height: 48, color: AppColors.divider),
-          // ── Remembered ──
           Expanded(
             child: _buildStatItem(
               value: rememberedCount.toString(),
@@ -188,9 +168,7 @@ class StudyResultScreen extends StatelessWidget {
               valueColor: Colors.green,
             ),
           ),
-          // ── Divider dọc ──
           Container(width: 1, height: 48, color: AppColors.divider),
-          // ── Accuracy ──
           Expanded(
             child: _buildStatItem(
               value: '${accuracy.toStringAsFixed(0)}%',
@@ -203,7 +181,6 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Từng mục thống kê (số + label)
   Widget _buildStatItem({
     required String value,
     required String label,
@@ -232,15 +209,16 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Nút "Study Again" — primary filled
   Widget _buildStudyAgainButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
         onPressed: () {
-          // Quay lại và bắt đầu lại phiên học
-          Navigator.of(context).pop();
+          // Tạo phiên học mới cho cùng deck
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => StudyScreen(deckId: deckId)),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -258,14 +236,12 @@ class StudyResultScreen extends StatelessWidget {
     );
   }
 
-  /// Nút "Back to Home" — outlined
   Widget _buildBackToHomeButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton(
         onPressed: () {
-          // Quay về màn hình Home (pop hết stack)
           Navigator.of(context).popUntil((route) => route.isFirst);
         },
         style: OutlinedButton.styleFrom(

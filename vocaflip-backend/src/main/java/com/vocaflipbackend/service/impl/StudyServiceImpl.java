@@ -237,5 +237,36 @@ public class StudyServiceImpl implements StudyService {
                 .reviewCount(progress != null ? progress.getReviewCount() : 0)
                 .build();
     }
+
+    
+    @Override
+    @Transactional
+    public int cleanupAbandonedSessions() {
+        // Lấy các session chưa hoàn thành và tạo trước 2 giờ
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(2);
+        List<StudySession> abandonedSessions =
+                studySessionRepository.findByCompletedAtIsNullAndCreatedAtBefore(cutoff);
+
+        for (StudySession session : abandonedSessions) {
+            // Gán completed_at = updated_at (thời điểm submit thẻ cuối)
+            // Nếu chưa bao giờ update (chưa submit thẻ nào) → dùng created_at
+            LocalDateTime completedTime = session.getUpdatedAt() != null
+                    ? session.getUpdatedAt()
+                    : session.getCreatedAt();
+            session.setCompletedAt(completedTime);
+
+            // Tính thời gian học
+            if (session.getCreatedAt() != null && completedTime != null) {
+                long durationSeconds = Duration.between(
+                        session.getCreatedAt(), completedTime
+                ).getSeconds();
+                session.setDurationSeconds((int) durationSeconds);
+            }
+        }
+
+        // Lưu tất cả thay đổi
+        studySessionRepository.saveAll(abandonedSessions);
+        return abandonedSessions.size();
+    }
 }
 

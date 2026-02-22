@@ -1,88 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
-import '../../data/models/card_model.dart';
+import 'study_notifier.dart';
 import 'study_result_screen.dart';
 import 'widgets/flashcard_front_side.dart';
 import 'widgets/flashcard_back_side.dart';
 
-/// Màn hình học Flashcard (Study Session).
-///
-/// Theo design Stitch (Variant 899 + Back Side):
-/// - Header: nút Close (trái) + "STUDY SESSION" (giữa).
-/// - Progress section: Label "PROGRESS" + counter + progress bar.
-/// - FlipCard: Mặt trước (term) ↔ Mặt sau (definition, IPA, example).
-/// - Bottom:
-///   * Chưa lật → Navigation Arrows (Back/Forward).
-///   * Đã lật → SRS Rating Buttons (Forgot, Hard, Good, Easy).
+
 class StudyScreen extends StatefulWidget {
-  const StudyScreen({super.key});
+  final String? deckId;
+
+  const StudyScreen({super.key, this.deckId});
 
   @override
   State<StudyScreen> createState() => _StudyScreenState();
 }
 
 class _StudyScreenState extends State<StudyScreen> {
-  // ── Dữ liệu mock để preview ──
-  final List<FlashcardModel> _mockCards = const [
-    FlashcardModel(
-      id: '1',
-      term: 'Serendipity',
-      definition: 'Sự tình cờ may mắn',
-      ipa: '/ˌser.ənˈdɪp.ə.ti/',
-      example:
-          'Finding this restaurant was pure serendipity, we just took a wrong turn.',
-      // imageUrl:
-      //     'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=400&h=300&fit=crop',
-    ),
-    FlashcardModel(
-      id: '2',
-      term: 'Ephemeral',
-      definition: 'Tồn tại trong thời gian rất ngắn',
-      ipa: '/ɪˈfem.ər.əl/',
-      example: 'The ephemeral beauty of cherry blossoms.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=300&fit=crop',
-    ),
-    FlashcardModel(
-      id: '3',
-      term: 'Ubiquitous',
-      definition: 'Có mặt ở khắp nơi',
-      ipa: '/juːˈbɪk.wɪ.təs/',
-      example: 'Smartphones have become ubiquitous in modern life.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop',
-    ),
-    FlashcardModel(
-      id: '4',
-      term: 'Resilience',
-      definition: 'Khả năng phục hồi nhanh chóng',
-      ipa: '/rɪˈzɪl.i.əns/',
-      example: 'She showed great resilience after the setback.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&h=300&fit=crop',
-    ),
-    FlashcardModel(
-      id: '5',
-      term: 'Pragmatic',
-      definition: 'Thực tế, thiết thực',
-      ipa: '/præɡˈmæt.ɪk/',
-      example: 'A pragmatic approach to problem solving.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=300&fit=crop',
-    ),
-  ];
-
-  /// Chỉ số thẻ hiện tại
-  int _currentIndex = 0;
-
-  /// Trạng thái lật thẻ (true = đang hiện mặt sau)
-  bool _isFlipped = false;
-
-  /// Đếm số lần đánh giá Forgot và Remembered
-  int _forgotCount = 0;
-  int _rememberedCount = 0;
+  StudyNotifier? _notifier;
 
   /// Key cho FlipCard để điều khiển lật bằng code
   final GlobalKey<FlipCardState> _flipCardKey = GlobalKey<FlipCardState>();
@@ -90,76 +27,184 @@ class _StudyScreenState extends State<StudyScreen> {
   @override
   void initState() {
     super.initState();
+    _init();
   }
 
-  /// Xử lý khi tap vào thẻ → lật thẻ
-  /// [isFront] = true khi thẻ vừa lật xong về mặt trước
-  void _onCardFlip(bool isFront) {
+  ///  SharedPreferences → tạo StudyNotifier → startSession
+  Future<void> _init() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    final notifier = StudyNotifier(prefs);
+    notifier.addListener(_onStateChanged);
+
     setState(() {
-      _isFlipped = !isFront;
+      _notifier = notifier;
     });
+
+    if (widget.deckId != null) {
+      notifier.startSession(widget.deckId!);
+    }
   }
 
-  /// Chuyển sang thẻ tiếp theo sau khi đánh giá SRS
-  void _onSrsRating(String rating) {
-    // Đếm kết quả đánh giá
-    if (rating == 'forgot') {
-      _forgotCount++;
-    } else {
-      // hard, good, easy đều tính là "remembered"
-      _rememberedCount++;
-    }
+  @override
+  void dispose() {
+    _notifier?.removeListener(_onStateChanged);
+    _notifier?.dispose();
+    super.dispose();
+  }
 
-    // Kiểm tra đã hết thẻ chưa
-    if (_currentIndex >= _mockCards.length - 1) {
-      // Tính accuracy
-      final total = _forgotCount + _rememberedCount;
-      final accuracy = total > 0 ? (_rememberedCount / total) * 100 : 0.0;
+  void _onStateChanged() {
+    if (!mounted) return;
+    final n = _notifier;
+    if (n == null) return;
 
-      // Chuyển sang màn hình kết quả
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => StudyResultScreen(
-            forgotCount: _forgotCount,
-            rememberedCount: _rememberedCount,
-            accuracy: accuracy,
-          ),
-        ),
-      );
+    if (n.status == StudyStatus.completed) {
+      _navigateToResult(n);
       return;
     }
 
-    setState(() {
-      // Reset trạng thái lật
-      _isFlipped = false;
-      // Chuyển sang thẻ tiếp theo
-      _currentIndex++;
-    });
+    setState(() {});
+  }
 
-    // Reset FlipCard về mặt trước (nếu đang ở mặt sau)
-    final flipCardState = _flipCardKey.currentState;
-    if (flipCardState != null && !flipCardState.isFront) {
-      flipCardState.toggleCard();
+  void _navigateToResult(StudyNotifier n) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => StudyResultScreen(
+          forgotCount: n.forgotCount,
+          rememberedCount: n.rememberedCount,
+          accuracy: n.accuracy,
+          deckId: widget.deckId,
+        ),
+      ),
+    );
+  }
+
+  void _onCardFlip(bool isFront) {
+    _notifier?.onCardFlip(isFront);
+  }
+
+  void _onSrsRating(int grade) async {
+    final n = _notifier;
+    if (n == null) return;
+
+    await n.submitRating(grade);
+
+    if (n.status == StudyStatus.studying) {
+      final flipCardState = _flipCardKey.currentState;
+      if (flipCardState != null && !flipCardState.isFront) {
+        flipCardState.toggleCard();
+      }
+    }
+  }
+
+  /// diaglog for exit
+  Future<void> _showExitConfirmation() async {
+    final n = _notifier;
+
+    if (n == null || n.session == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Exit Study Session?'),
+        content: const Text(
+          'Your learning progress will be saved. Are you sure you want to exit?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Continue studying'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldExit == true && mounted) {
+      await n.forceCompleteSession();
+      if (mounted) Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentCard = _mockCards[_currentIndex];
-    final progress = (_currentIndex + 1) / _mockCards.length;
+    final n = _notifier;
+
+    if (n == null || n.status == StudyStatus.loading) {
+      return Scaffold(
+        backgroundColor: AppColors.scaffoldBackground,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (n.status == StudyStatus.error) {
+      return Scaffold(
+        backgroundColor: AppColors.scaffoldBackground,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Không thể bắt đầu phiên học',
+                  style: AppTextStyles.headerLabel,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  n.errorMessage ?? 'Lỗi không xác định',
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    if (widget.deckId != null) {
+                      n.startSession(widget.deckId!);
+                    }
+                  },
+                  child: const Text('Thử lại'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Quay lại'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (n.status == StudyStatus.initial || n.currentCard == null) {
+      return Scaffold(
+        backgroundColor: AppColors.scaffoldBackground,
+        body: const Center(child: Text('Chưa có dữ liệu phiên học')),
+      );
+    }
+
+    final currentCard = n.currentCard!;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header: Close + Title ──
             _buildHeader(),
-
-            // ── Progress Section ──
-            _buildProgressSection(progress),
-
-            // ── FlipCard (chiếm phần lớn màn hình) ──
+            _buildProgressSection(n.progress),
             Expanded(
               child: Center(
                 child: FlipCard(
@@ -172,24 +217,16 @@ class _StudyScreenState extends State<StudyScreen> {
                 ),
               ),
             ),
-
-            // ── Bottom Buttons ──
-            // Chỉ hiện SRS Buttons khi đã lật thẻ (mặt sau)
-            if (_isFlipped) _buildSrsButtons() else const SizedBox.shrink(),
-
-            // Khoảng cách dưới cùng (chỉ khi có nút)
-            if (_isFlipped) const SizedBox(height: 16),
+            if (n.isFlipped) _buildSrsButtons(n) else const SizedBox.shrink(),
+            if (n.isFlipped) const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // HEADER
-  // ═══════════════════════════════════════════════════════════
 
-  /// Header: [Close]     STUDY SESSION     [_]
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -211,12 +248,7 @@ class _StudyScreenState extends State<StudyScreen> {
       ),
       child: Row(
         children: [
-          // Nút Close (trái)
-          _buildIconButton(Icons.close_rounded, () {
-            Navigator.of(context).maybePop();
-          }),
-
-          // Tiêu đề giữa
+          _buildIconButton(Icons.close_rounded, () => _showExitConfirmation()),
           Expanded(
             child: Text(
               'STUDY SESSION',
@@ -228,8 +260,6 @@ class _StudyScreenState extends State<StudyScreen> {
               ),
             ),
           ),
-
-          // Placeholder bên phải để cân bằng layout
           const SizedBox(width: 48),
         ],
       ),
@@ -252,11 +282,8 @@ class _StudyScreenState extends State<StudyScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // PROGRESS
-  // ═══════════════════════════════════════════════════════════
-
   Widget _buildProgressSection(double progress) {
+    final n = _notifier!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       child: Column(
@@ -269,11 +296,11 @@ class _StudyScreenState extends State<StudyScreen> {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: '${_currentIndex + 1} ',
+                      text: '${n.currentIndex + 1} ',
                       style: AppTextStyles.progressCounter,
                     ),
                     TextSpan(
-                      text: '/ ${_mockCards.length}',
+                      text: '/ ${n.totalCards}',
                       style: AppTextStyles.progressCounter.copyWith(
                         color: AppColors.divider,
                         fontWeight: FontWeight.w500,
@@ -301,48 +328,54 @@ class _StudyScreenState extends State<StudyScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // SRS RATING BUTTONS (Back Side)
-  // ═══════════════════════════════════════════════════════════
+  Widget _buildSrsButtons(StudyNotifier n) {
+    final isSubmitting = n.status == StudyStatus.submitting;
 
-  Widget _buildSrsButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        children: [
-          _buildSrsButton(
-            label: 'Forgot',
-            textColor: AppColors.buttonForgot,
-            bgColor: AppColors.buttonForgotBg,
-            borderColor: AppColors.buttonForgotBorder,
-            onTap: () => _onSrsRating('forgot'),
-          ),
-          const SizedBox(width: 10),
-          _buildSrsButton(
-            label: 'Hard',
-            textColor: AppColors.buttonHard,
-            bgColor: AppColors.buttonHardBg,
-            borderColor: AppColors.buttonHardBorder,
-            onTap: () => _onSrsRating('hard'),
-          ),
-          const SizedBox(width: 10),
-          _buildSrsButton(
-            label: 'Good',
-            textColor: AppColors.buttonGood,
-            bgColor: AppColors.buttonGoodBg,
-            borderColor: AppColors.buttonGoodBorder,
-            onTap: () => _onSrsRating('good'),
-          ),
-          const SizedBox(width: 10),
-          _buildSrsButton(
-            label: 'Easy',
-            textColor: AppColors.buttonEasy,
-            bgColor: AppColors.buttonEasyBg,
-            borderColor: AppColors.buttonEasyBorder,
-            onTap: () => _onSrsRating('easy'),
-          ),
-        ],
-      ),
+      child: isSubmitting
+          ? const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          : Row(
+              children: [
+                _buildSrsButton(
+                  label: 'Forgot',
+                  textColor: AppColors.buttonForgot,
+                  bgColor: AppColors.buttonForgotBg,
+                  borderColor: AppColors.buttonForgotBorder,
+                  onTap: () => _onSrsRating(0),
+                ),
+                const SizedBox(width: 10),
+                _buildSrsButton(
+                  label: 'Hard',
+                  textColor: AppColors.buttonHard,
+                  bgColor: AppColors.buttonHardBg,
+                  borderColor: AppColors.buttonHardBorder,
+                  onTap: () => _onSrsRating(1),
+                ),
+                const SizedBox(width: 10),
+                _buildSrsButton(
+                  label: 'Good',
+                  textColor: AppColors.buttonGood,
+                  bgColor: AppColors.buttonGoodBg,
+                  borderColor: AppColors.buttonGoodBorder,
+                  onTap: () => _onSrsRating(2),
+                ),
+                const SizedBox(width: 10),
+                _buildSrsButton(
+                  label: 'Easy',
+                  textColor: AppColors.buttonEasy,
+                  bgColor: AppColors.buttonEasyBg,
+                  borderColor: AppColors.buttonEasyBorder,
+                  onTap: () => _onSrsRating(3),
+                ),
+              ],
+            ),
     );
   }
 

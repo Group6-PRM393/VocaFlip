@@ -10,5 +10,7 @@ public interface StudyService {
     void submitCardResult(String sessionId, String cardId, int grade, int responseTimeSeconds);
 
     StudySessionResponse completeSession(String sessionId);
+
+    int cleanupAbandonedSessions();
 }
 
