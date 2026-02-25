@@ -8,11 +8,16 @@ import 'study_result_screen.dart';
 import 'widgets/flashcard_front_side.dart';
 import 'widgets/flashcard_back_side.dart';
 
+import '../../data/models/responses/study_session_response.dart';
 
 class StudyScreen extends StatefulWidget {
   final String? deckId;
 
-  const StudyScreen({super.key, this.deckId});
+  /// Du lieu session da tao san (VD: tu daily-review).
+  /// Neu co gia tri, se dung truc tiep thay vi goi API start.
+  final StudySessionResponse? sessionData;
+
+  const StudyScreen({super.key, this.deckId, this.sessionData});
 
   @override
   State<StudyScreen> createState() => _StudyScreenState();
@@ -21,7 +26,6 @@ class StudyScreen extends StatefulWidget {
 class _StudyScreenState extends State<StudyScreen> {
   StudyNotifier? _notifier;
 
-  /// Key cho FlipCard để điều khiển lật bằng code
   final GlobalKey<FlipCardState> _flipCardKey = GlobalKey<FlipCardState>();
 
   @override
@@ -30,7 +34,6 @@ class _StudyScreenState extends State<StudyScreen> {
     _init();
   }
 
-  ///  SharedPreferences → tạo StudyNotifier → startSession
   Future<void> _init() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -42,7 +45,11 @@ class _StudyScreenState extends State<StudyScreen> {
       _notifier = notifier;
     });
 
-    if (widget.deckId != null) {
+    if (widget.sessionData != null) {
+      // study due cards
+      notifier.loadFromResponse(widget.sessionData!);
+    } else if (widget.deckId != null) {
+      //study deck
       notifier.startSession(widget.deckId!);
     }
   }
@@ -224,8 +231,6 @@ class _StudyScreenState extends State<StudyScreen> {
       ),
     );
   }
-
-
 
   Widget _buildHeader() {
     return Container(

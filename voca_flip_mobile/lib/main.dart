@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
+import 'modules/auth/login_screen.dart';
 
 void main() {
   runApp(const VocaFlipApp());
@@ -25,7 +26,7 @@ class VocaFlipApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: const Scaffold(body: Center(child: Text('VocaFlip'))),
+      home: const LoginScreen(),
     );
   }
 }

@@ -1,5 +1,6 @@
 package com.vocaflipbackend.service.impl;
 
+import com.vocaflipbackend.config.CustomUserDetails;
 import com.vocaflipbackend.config.JwtUtils;
 import com.vocaflipbackend.dto.request.LoginRequest;
 import com.vocaflipbackend.dto.request.RefreshTokenRequest;
@@ -135,7 +136,8 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public UserResponse getCurrentUser() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    User user = (User) authentication.getPrincipal();
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    User user = userDetails.getUser();
     return userMapper.toUserResponse(user);
   }
 

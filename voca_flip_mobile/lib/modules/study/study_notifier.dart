@@ -80,6 +80,21 @@ class StudyNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Nap du lieu session da duoc tao san (VD: tu daily-review API).
+  /// Khong goi them API, chi set state tu du lieu co san.
+  void loadFromResponse(StudySessionResponse sessionResponse) {
+    _session = sessionResponse;
+    _cards = sessionResponse.cards;
+    _currentIndex = 0;
+    _isFlipped = false;
+    _forgotCount = 0;
+    _rememberedCount = 0;
+    _cardStartTime = DateTime.now();
+
+    _status = _cards.isNotEmpty ? StudyStatus.studying : StudyStatus.completed;
+    notifyListeners();
+  }
+
   /// lat the
   void flipCard() {
     _isFlipped = true;
@@ -160,7 +175,6 @@ class StudyNotifier extends ChangeNotifier {
     _status = _cards.isNotEmpty ? StudyStatus.studying : StudyStatus.initial;
     notifyListeners();
   }
-
 
   // thoat study session dot ngot
   Future<void> forceCompleteSession() async {

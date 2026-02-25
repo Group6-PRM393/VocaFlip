@@ -38,6 +38,16 @@ public class StudyController {
                 .build();
     }
 
+    @Operation(summary = "Đếm số thẻ đến hạn ôn tập",
+               description = "Trả về số lượng thẻ cần ôn tập hôm nay (dùng cho Dashboard)")
+    @GetMapping("/due-cards-count")
+    public ApiResponse<Integer> getDueCardsCount() {
+        return ApiResponse.<Integer>builder()
+                .message("Số thẻ đến hạn ôn tập")
+                .result(studyService.getDueCardsCount())
+                .build();
+    }
+
     @Operation(summary = "Ghi nhận kết quả ôn thẻ",
                description = "Ghi lại kết quả ôn tập một thẻ trong phiên học. Grade: 0=Forgot, 1=Hard, 2=Good, 3=Easy")
     @PostMapping("/{sessionId}/submit")

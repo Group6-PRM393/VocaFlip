@@ -11,6 +11,8 @@ public interface StudyService {
 
     StudySessionResponse completeSession(String sessionId);
 
+    int getDueCardsCount();
+
     int cleanupAbandonedSessions();
 }
 

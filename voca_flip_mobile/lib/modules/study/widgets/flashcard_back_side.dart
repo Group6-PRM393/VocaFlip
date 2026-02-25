@@ -72,7 +72,7 @@ class FlashcardBackSide extends StatelessWidget {
       color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap: () => TtsService().speak(card.phonetic!),
+        onTap: () => TtsService().speak(card.front),
         borderRadius: BorderRadius.circular(20),
         child: Container(
           width: 40,

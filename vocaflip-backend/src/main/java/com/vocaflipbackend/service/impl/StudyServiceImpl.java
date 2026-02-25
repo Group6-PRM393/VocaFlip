@@ -240,6 +240,14 @@ public class StudyServiceImpl implements StudyService {
 
     
     @Override
+    public int getDueCardsCount() {
+        String userId = SecurityUtils.getCurrentUserId();
+        List<UserProgress> dueProgress = userProgressRepository
+                .findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(userId, LocalDateTime.now());
+        return dueProgress.size();
+    }
+
+    @Override
     @Transactional
     public int cleanupAbandonedSessions() {
         // Lấy các session chưa hoàn thành và tạo trước 2 giờ
