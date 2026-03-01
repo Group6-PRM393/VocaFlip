@@ -16,116 +16,117 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * JWT Utility class - Xử lý tạo, validate và extract thông tin từ JWT tokens
+ * JWT Utility class — handles token generation, validation, and claims
+ * extraction.
  */
 @Component
 public class JwtUtils {
 
-  @Value("${jwt.secret}")
-  private String jwtSecret;
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-  @Value("${jwt.access-token-expiration}")
-  private long accessTokenExpiration;
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
 
-  @Value("${jwt.refresh-token-expiration}")
-  private long refreshTokenExpiration;
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
-  /**
-   * Extract username (email) từ token
-   */
-  public String extractUsername(String token) {
-    return extractClaim(token, Claims::getSubject);
-  }
+    /**
+     * Extract username (email) from token.
+     */
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 
-  /**
-   * Extract expiration date từ token
-   */
-  public Date extractExpiration(String token) {
-    return extractClaim(token, Claims::getExpiration);
-  }
+    /**
+     * Extract expiration date from token.
+     */
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
 
-  /**
-   * Extract một claim cụ thể từ token
-   */
-  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-    final Claims claims = extractAllClaims(token);
-    return claimsResolver.apply(claims);
-  }
+    /**
+     * Extract a specific claim from token.
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
 
-  /**
-   * Extract tất cả claims từ token
-   */
-  private Claims extractAllClaims(String token) {
-    return Jwts
-        .parser()
-        .verifyWith((javax.crypto.SecretKey) getSigningKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
-  }
+    /**
+     * Extract all claims from token.
+     */
+    private Claims extractAllClaims(String token) {
+        return Jwts
+                .parser()
+                .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
 
-  /**
-   * Kiểm tra token đã hết hạn chưa
-   */
-  private Boolean isTokenExpired(String token) {
-    return extractExpiration(token).before(new Date());
-  }
+    /**
+     * Check whether the token is expired.
+     */
+    private Boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
 
-  /**
-   * Validate token với UserDetails
-   */
-  public Boolean validateToken(String token, UserDetails userDetails) {
-    final String username = extractUsername(token);
-    return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-  }
+    /**
+     * Validate token against UserDetails (username match + not expired).
+     */
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
 
-  /**
-   * Generate access token cho user
-   */
-  public String generateAccessToken(UserDetails userDetails) {
-    return createToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiration);
-  }
+    /**
+     * Generate access token for the given user.
+     */
+    public String generateAccessToken(UserDetails userDetails) {
+        return createToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiration);
+    }
 
-  /**
-   * Generate refresh token cho user
-   */
-  public String generateRefreshToken(UserDetails userDetails) {
-    return createToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiration);
-  }
+    /**
+     * Generate refresh token for the given user.
+     */
+    public String generateRefreshToken(UserDetails userDetails) {
+        return createToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiration);
+    }
 
-  /**
-   * Tạo token với claims, subject và expiration time
-   */
-  private String createToken(Map<String, Object> claims, String subject, long expiration) {
-    return Jwts
-        .builder()
-        .setClaims(claims)
-        .setSubject(subject)
-        .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + expiration))
-        .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-        .compact();
-  }
+    /**
+     * Build a signed JWT with the given claims, subject, and expiration duration.
+     */
+    private String createToken(Map<String, Object> claims, String subject, long expiration) {
+        return Jwts
+                .builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
-  /**
-   * Get signing key từ secret
-   */
-  private Key getSigningKey() {
-    byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-    return Keys.hmacShaKeyFor(keyBytes);
-  }
+    /**
+     * Get signing key từ secret
+     */
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
-  /**
-   * Get access token expiration time (in milliseconds)
-   */
-  public long getAccessTokenExpiration() {
-    return accessTokenExpiration;
-  }
+    /**
+     * Get access token expiration time (in milliseconds)
+     */
+    public long getAccessTokenExpiration() {
+        return accessTokenExpiration;
+    }
 
-  /**
-   * Get refresh token expiration time (in milliseconds)
-   */
-  public long getRefreshTokenExpiration() {
-    return refreshTokenExpiration;
-  }
+    /**
+     * Get refresh token expiration time (in milliseconds)
+     */
+    public long getRefreshTokenExpiration() {
+        return refreshTokenExpiration;
+    }
 }

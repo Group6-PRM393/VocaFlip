@@ -36,122 +36,124 @@ import java.time.LocalDateTime;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
-  private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
-  private final JwtUtils jwtUtils;
-  private final AuthenticationManager authenticationManager;
-  private final UserDetailsService userDetailsService;
-  private final UserMapper userMapper;
-  private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
+    private final UserMapper userMapper;
+    private final RefreshTokenService refreshTokenService;
 
-  @Override
-  @Transactional
-  public AuthResponse register(UserRegisterRequest request) {
-    log.info("Registering new user with email: {}", request.getEmail());
+    @Override
+    @Transactional
+    public AuthResponse register(UserRegisterRequest request) {
+        log.info("Registering new user with email: {}", request.getEmail());
 
-    // Kiểm tra email đã tồn tại chưa
-    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-      throw new AppException(ErrorCode.USER_EXISTED);
+        // Reject if email is already registered
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+
+        // Build and persist the new user
+        User user = User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .totalWords(0)
+                .masteredWords(0)
+                .learningWords(0)
+                .streakDays(0)
+                .isConfirmedEmail(false)
+                .build();
+
+        user = userRepository.save(user);
+        log.info("User registered successfully with id: {}", user.getId());
+
+        // Generate tokens
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String accessToken = jwtUtils.generateAccessToken(userDetails);
+        String refreshTokenString = jwtUtils.generateRefreshToken(userDetails);
+
+        // Remove any existing refresh tokens before issuing a new one
+        refreshTokenService.deleteAllUserTokens(user);
+        refreshTokenService.createRefreshToken(user, refreshTokenString);
+
+        return buildAuthResponse(accessToken, refreshTokenString, user);
     }
 
-    // Tạo user mới
-    User user = User.builder()
-        .email(request.getEmail())
-        .name(request.getName())
-        .passwordHash(passwordEncoder.encode(request.getPassword()))
-        .totalWords(0)
-        .masteredWords(0)
-        .learningWords(0)
-        .streakDays(0)
-        .isConfirmedEmail(false)
-        .build();
+    @Override
+    public AuthResponse login(LoginRequest request) {
+        log.info("Attempting login for email: {}", request.getEmail());
 
-    user = userRepository.save(user);
-    log.info("User registered successfully with id: {}", user.getId());
+        // Authenticate user
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()));
 
-    // Generate tokens
-    UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-    String accessToken = jwtUtils.generateAccessToken(userDetails);
-    String refreshTokenString = jwtUtils.generateRefreshToken(userDetails);
+        // Load user
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    // Lưu refresh token vào database
-    refreshTokenService.createRefreshToken(user, refreshTokenString);
+        // Generate tokens
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String accessToken = jwtUtils.generateAccessToken(userDetails);
+        String refreshTokenString = jwtUtils.generateRefreshToken(userDetails);
 
-    return buildAuthResponse(accessToken, refreshTokenString, user);
-  }
+        // Remove stale tokens before issuing new one (prevent token litter)
+        refreshTokenService.deleteAllUserTokens(user);
+        refreshTokenService.createRefreshToken(user, refreshTokenString);
 
-  @Override
-  public AuthResponse login(LoginRequest request) {
-    log.info("Attempting login for email: {}", request.getEmail());
+        log.info("User logged in successfully: {}", user.getEmail());
 
-    // Authenticate user
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            request.getEmail(),
-            request.getPassword()));
+        return buildAuthResponse(accessToken, refreshTokenString, user);
+    }
 
-    // Load user
-    User user = userRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        log.info("Attempting to refresh token");
 
-    // Generate tokens
-    UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-    String accessToken = jwtUtils.generateAccessToken(userDetails);
-    String refreshTokenString = jwtUtils.generateRefreshToken(userDetails);
+        String refreshTokenString = request.getRefreshToken();
 
-    // Lưu refresh token vào database
-    refreshTokenService.createRefreshToken(user, refreshTokenString);
+        // Validate refresh token from database
+        var refreshToken = refreshTokenService.validateRefreshToken(refreshTokenString);
+        User user = refreshToken.getUser();
 
-    log.info("User logged in successfully: {}", user.getEmail());
+        // Generate new access token
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String newAccessToken = jwtUtils.generateAccessToken(userDetails);
 
-    return buildAuthResponse(accessToken, refreshTokenString, user);
-  }
+        log.info("Token refreshed successfully for user: {}", user.getEmail());
 
-  @Override
-  public AuthResponse refreshToken(RefreshTokenRequest request) {
-    log.info("Attempting to refresh token");
+        return buildAuthResponse(newAccessToken, refreshTokenString, user);
+    }
 
-    String refreshTokenString = request.getRefreshToken();
+    @Override
+    public void logout(String token) {
+        // Delete the refresh token from DB on logout
+        refreshTokenService.deleteRefreshToken(token);
+        log.info("User logged out - refresh token deleted");
+    }
 
-    // Validate refresh token from database
-    var refreshToken = refreshTokenService.validateRefreshToken(refreshTokenString);
-    User user = refreshToken.getUser();
+    @Override
+    public UserResponse getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
+        return userMapper.toUserResponse(user);
+    }
 
-    // Generate new access token
-    UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-    String newAccessToken = jwtUtils.generateAccessToken(userDetails);
-
-    log.info("Token refreshed successfully for user: {}", user.getEmail());
-
-    return buildAuthResponse(newAccessToken, refreshTokenString, user);
-  }
-
-  @Override
-  public void logout(String token) {
-    // Xóa refresh token khi logout
-    refreshTokenService.deleteRefreshToken(token);
-    log.info("User logged out - refresh token deleted");
-  }
-
-  @Override
-  public UserResponse getCurrentUser() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-    User user = userDetails.getUser();
-    return userMapper.toUserResponse(user);
-  }
-
-  /**
-   * Helper method để build AuthResponse - DRY principle
-   */
-  private AuthResponse buildAuthResponse(String accessToken, String refreshToken, User user) {
-    return AuthResponse.builder()
-        .accessToken(accessToken)
-        .refreshToken(refreshToken)
-        .tokenType("Bearer")
-        .expiresIn(jwtUtils.getAccessTokenExpiration() / 1000) // Convert to seconds
-        .user(userMapper.toUserResponse(user))
-        .issuedAt(LocalDateTime.now())
-        .build();
-  }
+    /**
+     * Helper to build a consistent AuthResponse — avoids duplication (DRY).
+     */
+    private AuthResponse buildAuthResponse(String accessToken, String refreshToken, User user) {
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtUtils.getAccessTokenExpiration() / 1000) // Convert to seconds
+                .user(userMapper.toUserResponse(user))
+                .issuedAt(LocalDateTime.now())
+                .build();
+    }
 }

@@ -1,7 +1,10 @@
 package com.vocaflipbackend.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * API Response DTO - Wrapper chuẩn cho tất cả API responses

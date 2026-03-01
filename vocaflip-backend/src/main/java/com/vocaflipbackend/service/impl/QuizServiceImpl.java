@@ -2,10 +2,16 @@ package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.request.QuizSubmissionRequest;
 import com.vocaflipbackend.dto.response.*;
-import com.vocaflipbackend.entity.*;
+import com.vocaflipbackend.entity.Card;
+import com.vocaflipbackend.entity.Deck;
+import com.vocaflipbackend.entity.QuizAttempt;
+import com.vocaflipbackend.entity.User;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
-import com.vocaflipbackend.repository.*;
+import com.vocaflipbackend.repository.CardRepository;
+import com.vocaflipbackend.repository.DeckRepository;
+import com.vocaflipbackend.repository.QuizAttemptRepository;
+import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.QuizService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

@@ -17,65 +17,63 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * JWT Authentication Filter - Filter mỗi request để authenticate user thông qua
- * JWT token
+ * JWT Authentication Filter — intercepts every request to authenticate
+ * the user via a JWT Bearer token.
  */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtUtils jwtUtils;
-  private final UserDetailsService userDetailsService;
+    private final JwtUtils jwtUtils;
+    private final UserDetailsService userDetailsService;
 
-  @Override
-  protected void doFilterInternal(
-      @Nonnull HttpServletRequest request,
-      @Nonnull HttpServletResponse response,
-      @Nonnull FilterChain filterChain) throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(
+            @Nonnull HttpServletRequest request,
+            @Nonnull HttpServletResponse response,
+            @Nonnull FilterChain filterChain) throws ServletException, IOException {
 
-    // Extract JWT token từ Authorization header
-    final String authHeader = request.getHeader("Authorization");
-    final String jwt;
-    final String userEmail;
+        // Extract JWT from Authorization header
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
 
-    // Kiểm tra header có tồn tại và đúng format không
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
-
-    // Extract token (bỏ prefix "Bearer ")
-    jwt = authHeader.substring(7);
-
-    try {
-      // Extract user email từ token
-      userEmail = jwtUtils.extractUsername(jwt);
-
-      // Nếu email tồn tại và chưa được authenticate
-      if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        // Load user details từ database
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
-        // Validate token
-        if (jwtUtils.validateToken(jwt, userDetails)) {
-          // Tạo authentication object
-          UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-              userDetails,
-              null,
-              userDetails.getAuthorities());
-
-          authToken.setDetails(
-              new WebAuthenticationDetailsSource().buildDetails(request));
-
-          // Set authentication vào SecurityContext
-          SecurityContextHolder.getContext().setAuthentication(authToken);
+        // Skip filter if header is missing or not a Bearer token
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-      }
-    } catch (Exception e) {
-      // Log lỗi nếu cần
-      logger.error("Cannot set user authentication: {}", e);
-    }
 
-    filterChain.doFilter(request, response);
-  }
+        // Strip the "Bearer " prefix to get the raw token
+        jwt = authHeader.substring(7);
+
+        try {
+            // Extract email (subject) from token
+            userEmail = jwtUtils.extractUsername(jwt);
+
+            // Proceed only if email is present and the context has no authentication yet
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Load user from database
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+                // Build and register authentication token if JWT is valid
+                if (jwtUtils.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    // Register authentication in SecurityContext
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Cannot set user authentication: {}", e);
+        }
+
+        filterChain.doFilter(request, response);
+    }
 }

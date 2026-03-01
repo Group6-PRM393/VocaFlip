@@ -18,7 +18,7 @@ public class StudyController {
     private final StudyService studyService;
 
     @Operation(summary = "Bắt đầu phiên học",
-               description = "Tạo phiên học mới và trả về danh sách tất cả thẻ trong Deck")
+            description = "Tạo phiên học mới và trả về danh sách tất cả thẻ trong Deck")
     @PostMapping("/start")
     public ApiResponse<StudySessionResponse> startSession(
             @Parameter(description = "ID của Deck để học") @RequestParam String deckId) {
@@ -29,7 +29,7 @@ public class StudyController {
     }
 
     @Operation(summary = "Ôn tập hàng ngày",
-               description = "Tổng hợp tất cả thẻ đến hạn ôn tập (từ mọi Deck) và tạo phiên học mới")
+            description = "Tổng hợp tất cả thẻ đến hạn ôn tập (từ mọi Deck) và tạo phiên học mới")
     @PostMapping("/daily-review")
     public ApiResponse<StudySessionResponse> startDailyReview() {
         return ApiResponse.<StudySessionResponse>builder()
@@ -39,7 +39,7 @@ public class StudyController {
     }
 
     @Operation(summary = "Đếm số thẻ đến hạn ôn tập",
-               description = "Trả về số lượng thẻ cần ôn tập hôm nay (dùng cho Dashboard)")
+            description = "Trả về số lượng thẻ cần ôn tập hôm nay (dùng cho Dashboard)")
     @GetMapping("/due-cards-count")
     public ApiResponse<Integer> getDueCardsCount() {
         return ApiResponse.<Integer>builder()
@@ -49,7 +49,7 @@ public class StudyController {
     }
 
     @Operation(summary = "Ghi nhận kết quả ôn thẻ",
-               description = "Ghi lại kết quả ôn tập một thẻ trong phiên học. Grade: 0=Forgot, 1=Hard, 2=Good, 3=Easy")
+            description = "Ghi lại kết quả ôn tập một thẻ trong phiên học. Grade: 0=Forgot, 1=Hard, 2=Good, 3=Easy")
     @PostMapping("/{sessionId}/submit")
     public ApiResponse<Void> submitResult(
             @Parameter(description = "ID của phiên học") @PathVariable String sessionId,
@@ -63,7 +63,7 @@ public class StudyController {
     }
 
     @Operation(summary = "Hoàn thành phiên học",
-               description = "Kết thúc và lưu lại kết quả của phiên học")
+            description = "Kết thúc và lưu lại kết quả của phiên học")
     @PostMapping("/{sessionId}/complete")
     public ApiResponse<StudySessionResponse> completeSession(
             @Parameter(description = "ID của phiên học") @PathVariable String sessionId) {

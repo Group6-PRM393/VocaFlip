@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 public class DeckRequest {
     @NotBlank(message = "Title is required")
     private String title;
-    
+
     private String description;
-    
+
     @NotBlank(message = "Category ID is required")
     private String categoryId;
 
