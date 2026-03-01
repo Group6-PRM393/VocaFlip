@@ -19,15 +19,15 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthResponse {
 
-  private String accessToken;
+    private String accessToken;
 
-  private String refreshToken;
+    private String refreshToken;
 
-  private String tokenType;
+    private String tokenType;
 
-  private Long expiresIn; // Thời gian hết hạn tính bằng giây
+    private Long expiresIn; // Thời gian hết hạn tính bằng giây
 
-  private UserResponse user;
+    private UserResponse user;
 
-  private LocalDateTime issuedAt;
+    private LocalDateTime issuedAt;
 }

@@ -11,28 +11,28 @@ import com.vocaflipbackend.dto.response.UserResponse;
  */
 public interface AuthService {
 
-  /**
-   * Đăng ký user mới
-   */
-  AuthResponse register(UserRegisterRequest request);
+    /**
+     * register
+     */
+    AuthResponse register(UserRegisterRequest request);
 
-  /**
-   * Đăng nhập
-   */
-  AuthResponse login(LoginRequest request);
+    /**
+     * login
+     */
+    AuthResponse login(LoginRequest request);
 
-  /**
-   * Refresh access token
-   */
-  AuthResponse refreshToken(RefreshTokenRequest request);
+    /**
+     * Refresh access token
+     */
+    AuthResponse refreshToken(RefreshTokenRequest request);
 
-  /**
-   * Logout (optional - có thể implement token blacklist nếu cần)
-   */
-  void logout(String token);
+    /**
+     * Logout
+     */
+    void logout(String token);
 
-  /**
-   * Lấy thông tin user hiện tại
-   */
-  UserResponse getCurrentUser();
+    /**
+     * Get current user's information
+     */
+    UserResponse getCurrentUser();
 }

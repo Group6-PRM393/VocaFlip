@@ -5,7 +5,6 @@ import com.vocaflipbackend.dto.request.RefreshTokenRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.AuthResponse;
-import com.vocaflipbackend.dto.response.UserResponse;
 import com.vocaflipbackend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,10 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Authentication Controller - Xử lý các endpoint liên quan đến authentication
+ * Authentication Controller
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -29,15 +31,13 @@ public class AuthController {
     private final AuthService authService;
 
     /**
-     * Đăng ký tài khoản mới
+     * Register
      */
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản mới", description = "Tạo tài khoản người dùng mới với email, mật khẩu và tên")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody UserRegisterRequest request) {
         log.info("Register request received for email: {}", request.getEmail());
-
         AuthResponse authResponse = authService.register(request);
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<AuthResponse>builder()
@@ -48,15 +48,13 @@ public class AuthController {
     }
 
     /**
-     * Đăng nhập
+     * Login
      */
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập", description = "Đăng nhập vào hệ thống với email và mật khẩu")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         log.info("Login request received for email: {}", request.getEmail());
-
         AuthResponse authResponse = authService.login(request);
-
         return ResponseEntity
                 .ok()
                 .body(ApiResponse.<AuthResponse>builder()
@@ -73,9 +71,7 @@ public class AuthController {
     @Operation(summary = "Refresh access token", description = "Tạo access token mới từ refresh token")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         log.info("Refresh token request received");
-
         AuthResponse authResponse = authService.refreshToken(request);
-
         return ResponseEntity
                 .ok()
                 .body(ApiResponse.<AuthResponse>builder()
@@ -86,38 +82,19 @@ public class AuthController {
     }
 
     /**
-     * Đăng xuất (optional)
+     * Logout — client gửi refreshToken trong body để server xóa khỏi DB.
+     * Access token sẽ tự hết hạn sau 1 ngày (stateless — không thể revoke sớm hơn).
      */
     @PostMapping("/logout")
-    @Operation(summary = "Đăng xuất", description = "Đăng xuất khỏi hệ thống và vô hiệu hóa token")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String authHeader) {
+    @Operation(summary = "Đăng xuất", description = "Xóa refresh token khỏi DB. Client cần tự xóa access token ở local storage / secure storage.")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequest request) {
         log.info("Logout request received");
-
-        // Extract token from "Bearer <token>"
-        String token = authHeader.substring(7);
-        authService.logout(token);
-
+        authService.logout(request.getRefreshToken());
         return ResponseEntity
                 .ok()
                 .body(ApiResponse.<Void>builder()
                         .code(1000)
                         .message("Logout successful")
-                        .build());
-    }
-
-    /**
-     * Kiểm tra trạng thái authentication
-     */
-    @GetMapping("/check-me")
-    @Operation(summary = "Lấy thông tin user hiện tại", description = "Lấy thông tin của user đang đăng nhập")
-    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
-        // User info sẽ được lấy từ SecurityContext trong service layer
-        return ResponseEntity
-                .ok()
-                .body(ApiResponse.<UserResponse>builder()
-                        .code(1000)
-                        .message("Authenticated")
-                        .result(authService.getCurrentUser())
                         .build());
     }
 }

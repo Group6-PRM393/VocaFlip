@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Scheduler tự động dọn dẹp các phiên học bị bỏ dở.
- *
+ * <p>
  * Chạy lúc 3h sáng mỗi ngày, tìm các session có completed_at = null
  * và tạo trước 2 giờ → tự động gán completed_at.
  */

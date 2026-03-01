@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 /**
- * Implementation của RefreshTokenService - đơn giản hóa
+ * RefreshTokenService implementation — stores and manages refresh tokens in the
+ * database.
  */
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   public RefreshToken createRefreshToken(User user, String tokenString) {
     log.info("Creating refresh token for user: {}", user.getEmail());
 
-    // Tính thời gian hết hạn
+    // Calculate expiry timestamp from config (ms → seconds)
     LocalDateTime expiresAt = LocalDateTime.now()
         .plusSeconds(refreshTokenExpiration / 1000);
 
@@ -47,6 +48,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public RefreshToken validateRefreshToken(String token) {
     log.debug("Validating refresh token");
 
@@ -77,7 +79,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
   @Override
   @Transactional
-  @Scheduled(cron = "0 0 2 * * ?") // Chạy lúc 2h sáng mỗi ngày
+  @Scheduled(cron = "0 0 2 * * ?") // Runs daily at 02:00
   public void cleanupExpiredTokens() {
     log.info("Cleaning up expired refresh tokens");
     refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
