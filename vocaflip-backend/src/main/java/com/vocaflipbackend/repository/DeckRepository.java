@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface DeckRepository extends JpaRepository<Deck, String> {
 
     List<Deck> findByUserIdAndIsRemovedFalse(String userId);
+
     Optional<Deck> findByIdAndIsRemovedFalse(String id);
 
     @Query("SELECT d FROM Deck d WHERE d.isRemoved = false " +

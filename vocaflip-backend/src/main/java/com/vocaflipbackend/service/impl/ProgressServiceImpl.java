@@ -2,7 +2,8 @@ package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.response.DashboardStatsResponse;
 import com.vocaflipbackend.entity.StudySession;
-import com.vocaflipbackend.repository.*;
+import com.vocaflipbackend.repository.StudySessionRepository;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.service.ProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

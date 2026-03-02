@@ -9,8 +9,12 @@ import java.util.List;
 
 public interface CardService {
     CardResponse createCard(CardRequest request, MultipartFile image, String userId, String deckId);
+
     List<CardResponse> getCardsByDeckId(String deckId);
+
     CardResponse updateCard(String id, CardRequest request, MultipartFile image);
+
     void deleteCard(String id);
+
     TranslationResponse fetchDictionaryData(String word);
 }

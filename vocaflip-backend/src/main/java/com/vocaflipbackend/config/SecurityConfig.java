@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
- * Security Configuration - Cấu hình Spring Security cho ứng dụng
+ * Security Configuration — configures Spring Security for the application.
  */
 @Configuration
 @EnableWebSecurity
@@ -32,7 +32,7 @@ public class SecurityConfig {
     private final CorsConfigurationSource corsConfigurationSource;
 
     /**
-     * Cấu hình Security Filter Chain
+     * Configure the security filter chain.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Public endpoints - không cần authentication
+                        // Public endpoints — no authentication required
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
@@ -51,7 +51,7 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/error")
                         .permitAll()
-                        // Tất cả các endpoints khác đều cần authentication
+                        // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -74,7 +74,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Password Encoder - sử dụng BCrypt
+     * Password encoder — uses BCrypt hashing.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

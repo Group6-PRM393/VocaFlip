@@ -1,7 +1,9 @@
 package com.vocaflipbackend.service.impl;
 
-import com.cloudinary.*;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
+import com.vocaflipbackend.constants.CloudinaryConstants;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.service.CloudinaryService;
@@ -9,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.vocaflipbackend.constants.CloudinaryConstants;
 
 import java.io.IOException;
 import java.util.Map;

@@ -20,32 +20,32 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class RefreshToken {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(nullable = false, unique = true, length = 500)
-  private String token;
+    @Column(nullable = false, unique = true, length = 500)
+    private String token;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false)
-  private LocalDateTime expiresAt;
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
 
-  @Column(nullable = false)
-  private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
-  /**
-   * Kiểm tra token đã hết hạn chưa
-   */
-  public boolean isExpired() {
-    return LocalDateTime.now().isAfter(expiresAt);
-  }
+    /**
+     * Kiểm tra token đã hết hạn chưa
+     */
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(expiresAt);
+    }
 
-  @PrePersist
-  protected void onCreate() {
-    createdAt = LocalDateTime.now();
-  }
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

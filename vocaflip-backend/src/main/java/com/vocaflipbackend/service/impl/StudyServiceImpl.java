@@ -238,7 +238,7 @@ public class StudyServiceImpl implements StudyService {
                 .build();
     }
 
-    
+
     @Override
     public int getDueCardsCount() {
         String userId = SecurityUtils.getCurrentUserId();

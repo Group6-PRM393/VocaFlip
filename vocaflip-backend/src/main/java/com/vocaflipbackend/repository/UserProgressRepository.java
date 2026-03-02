@@ -12,10 +12,14 @@ import java.util.Optional;
 public interface UserProgressRepository extends JpaRepository<UserProgress, String> {
     Optional<UserProgress> findByUserIdAndCardId(String userId, String cardId);
 
-    /** Lấy tiến độ học của user cho danh sách thẻ */
+    /**
+     * Lấy tiến độ học của user cho danh sách thẻ
+     */
     List<UserProgress> findByUserIdAndCardIdIn(String userId, List<String> cardIds);
 
-    /** Lấy tất cả thẻ đến hạn ôn tập (nextReviewAt <= now) và chưa bị xóa */
+    /**
+     * Lấy tất cả thẻ đến hạn ôn tập (nextReviewAt <= now) và chưa bị xóa
+     */
     List<UserProgress> findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(String userId, LocalDateTime dateTime);
 
     List<Object[]> countByStatus(String userId);
