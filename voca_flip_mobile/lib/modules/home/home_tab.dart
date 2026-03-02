@@ -47,7 +47,7 @@ class _HomeTabState extends State<HomeTab> {
       final api = ApiService(prefs);
 
       final results = await Future.wait([
-        api.get('/api/auth/check-me'),
+        api.get('/api/user/me'),
         api.get('/api/decks/my-decks'),
         api.get('/api/study/due-cards-count'),
       ]);
