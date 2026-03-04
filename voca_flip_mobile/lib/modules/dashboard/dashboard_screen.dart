@@ -27,13 +27,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  /* Code ban đầu của Huy
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         return const HomeTab();
-      default:
-        // Cập nhật phần này để hiển thị nút Test Quiz ở các tab 1, 2, 3
+      case 1:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -45,17 +43,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 20), // Khoảng cách giữa chữ và nút
-              // --- NÚT TEST QUIZ CỦA BẠN ĐÂY ---
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const QuizSettingsScreen(
-                        deckId:
-                            "deck-test", // THAY BẰNG ID DECK CÓ THẬT TRONG DB CỦA BẠN
-                      ),
+                      builder: (context) =>
+                          const QuizSettingsScreen(deckId: "deck-test"),
                     ),
                   );
                 },
@@ -71,30 +66,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
                 child: Text(
-                  "Vào Test Quiz",
+                  " Take Quiz",
                   style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
                 ),
               ),
               // ---------------------------------
             ],
-          ),
-        );
-    }
-  }
-  */
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return const HomeTab();
-      case 1:
-        return Center(
-          child: Text(
-            'Coming soon...',
-            style: GoogleFonts.lexend(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
           ),
         );
       case 2:
