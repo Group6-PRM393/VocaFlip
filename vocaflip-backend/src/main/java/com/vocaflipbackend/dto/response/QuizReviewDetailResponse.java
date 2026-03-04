@@ -1,5 +1,6 @@
 package com.vocaflipbackend.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -13,5 +14,6 @@ public class QuizReviewDetailResponse {
     String questionText;
     String userAnswerText;
     String correctAnswerText;
+    @JsonProperty("isCorrect")
     boolean isCorrect;
 }

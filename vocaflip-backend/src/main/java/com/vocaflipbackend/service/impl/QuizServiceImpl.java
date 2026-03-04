@@ -1,17 +1,12 @@
 package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.request.QuizSubmissionRequest;
+import com.vocaflipbackend.dto.request.UserAnswerRequest;
 import com.vocaflipbackend.dto.response.*;
-import com.vocaflipbackend.entity.Card;
-import com.vocaflipbackend.entity.Deck;
-import com.vocaflipbackend.entity.QuizAttempt;
-import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.entity.*;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
-import com.vocaflipbackend.repository.CardRepository;
-import com.vocaflipbackend.repository.DeckRepository;
-import com.vocaflipbackend.repository.QuizAttemptRepository;
-import com.vocaflipbackend.repository.UserRepository;
+import com.vocaflipbackend.repository.*;
 import com.vocaflipbackend.service.QuizService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +24,7 @@ import java.util.stream.Collectors;
 public class QuizServiceImpl implements QuizService {
 
     private final DeckRepository deckRepository;
+    private final QuizRepository quizRepository;
     private final UserRepository userRepository;
     private final CardRepository cardRepository;
     private final QuizAttemptRepository quizAttemptRepository;
@@ -46,8 +42,18 @@ public class QuizServiceImpl implements QuizService {
         if (questions.isEmpty()) {
             throw new RuntimeException("Deck is empty, please add more card to create quiz!");
         }
+        Quiz newQuiz = com.vocaflipbackend.entity.Quiz.builder()
+                .title("Practice: " + deck.getTitle())
+                .totalQuestions(questions.size())
+                .timeLimitSeconds(timeLimitSeconds)
+                .deck(deck)
+                .isRemoved(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        newQuiz = quizRepository.save(newQuiz);
 
         QuizAttempt attempt = QuizAttempt.builder()
+                .quiz(newQuiz)
                 .user(user)
                 .deck(deck)
                 .totalQuestions(questions.size())
@@ -86,7 +92,7 @@ public class QuizServiceImpl implements QuizService {
 
         return QuizSessionResponse.builder()
                 .attemptId(attempt.getId())
-                .quizTitle("Practice: " + deck.getTitle())
+                .quizTitle(newQuiz.getTitle())
                 .totalQuestions(questions.size())
                 .timeLimitSeconds(timeLimitSeconds)
                 .questions(questionsResponses)
@@ -98,18 +104,32 @@ public class QuizServiceImpl implements QuizService {
         QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
+        List<String> questionIds = request.getAnswers().stream()
+                .map(UserAnswerRequest::getQuestionId).toList();
+        Map<String, Card> cardMap = cardRepository.findAllById(questionIds).stream()
+                .collect(Collectors.toMap(Card::getId, c -> c));
+
         int correctCount = 0;
         List<Map<String, Object>> detailedResults = new ArrayList<>();
 
         for (var userAnswer : request.getAnswers()) {
-            boolean isCorrect = userAnswer.getSelectedOptionId().equals(userAnswer.getQuestionId());
-            if (isCorrect) {
-                correctCount++;
+            Card card = cardMap.get(userAnswer.getQuestionId());
+            String userInput = userAnswer.getSelectedOptionId() != null ? userAnswer.getSelectedOptionId().trim() : "";
+
+            boolean isCorrect = false;
+            if (card != null) {
+                if (userInput.equals(card.getId())) {
+                    isCorrect = true;
+                } else if (userInput.equalsIgnoreCase(card.getBack().trim())) {
+                    isCorrect = true;
+                }
             }
+
+            if (isCorrect) correctCount++;
 
             Map<String, Object> detail = new HashMap<>();
             detail.put("questionId", userAnswer.getQuestionId());
-            detail.put("selected", userAnswer.getSelectedOptionId());
+            detail.put("selected", userInput);
             detail.put("isCorrect", isCorrect);
             detailedResults.add(detail);
         }
@@ -153,42 +173,56 @@ public class QuizServiceImpl implements QuizService {
         try {
             List<Map<String, Object>> rawDetails = objectMapper.readValue(
                     attempt.getAnswersJson(),
-                    new TypeReference<>() {
+                    new TypeReference<List<Map<String, Object>>>() {
                     }
             );
 
-            Set<String> allCardIds = new HashSet<>();
+            Set<String> allPotentialIds = new HashSet<>();
             for (Map<String, Object> detail : rawDetails) {
-                allCardIds.add((String) detail.get("questionId"));
-                allCardIds.add((String) detail.get("selected"));
+                allPotentialIds.add((String) detail.get("questionId"));
+                String selected = (String) detail.get("selected");
+                if (selected != null && !selected.isEmpty()) {
+                    allPotentialIds.add(selected);
+                }
             }
 
-            List<Card> cards = cardRepository.findAllById(allCardIds);
-
-            Map<String, Card> cardMap = cards.stream()
+            Map<String, Card> cardMap = cardRepository.findAllById(allPotentialIds).stream()
                     .collect(Collectors.toMap(Card::getId, card -> card));
 
             for (Map<String, Object> detail : rawDetails) {
                 String questionId = (String) detail.get("questionId");
                 String selected = (String) detail.get("selected");
-                boolean isCorrect = (boolean) detail.get("isCorrect");
-
                 Card questionCard = cardMap.get(questionId);
-                Card selectedCard = cardMap.get(selected);
 
-                if (questionCard != null) {
-                    reviewDetails.add(QuizReviewDetailResponse.builder()
-                            .questionId(questionId)
-                            .questionText(questionCard.getFront())
-                            .correctAnswerText(questionCard.getBack())
-                            .userAnswerText(selectedCard != null ? selectedCard.getBack() : "No Answer")
-                            .isCorrect(isCorrect)
-                            .build());
+                if (questionCard == null) continue;
+
+                String userAnswerDisplay = "No Answer";
+                boolean isCorrect = false;
+
+                if (selected != null && !selected.isEmpty()) {
+                    Card selectedCard = cardMap.get(selected);
+
+                    if (selectedCard != null) {
+                        userAnswerDisplay = selectedCard.getBack();
+                        isCorrect = questionId.equals(selected);
+                    } else {
+                        userAnswerDisplay = selected;
+                        isCorrect = selected.trim().equalsIgnoreCase(questionCard.getBack().trim());
+                    }
                 }
+
+                reviewDetails.add(QuizReviewDetailResponse.builder()
+                        .questionId(questionId)
+                        .questionText(questionCard.getFront())
+                        .correctAnswerText(questionCard.getBack())
+                        .userAnswerText(userAnswerDisplay)
+                        .isCorrect(isCorrect)
+                        .build());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error processing quiz review data");
+            throw new RuntimeException("Error processing quiz review data: " + e.getMessage());
         }
+
         return QuizReviewResponse.builder()
                 .attemptId(attempt.getId())
                 .scorePercentage(attempt.getScorePercentage().doubleValue())

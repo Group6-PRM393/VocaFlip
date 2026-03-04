@@ -12,10 +12,9 @@ import java.util.List;
 public interface CardRepository extends JpaRepository<Card, String> {
     List<Card> findByDeckIdAndIsRemovedFalse(String deckId);
 
-    @Query(value = "select * from cards where deck_id = :deckId and is_removed = false order by rand() limit :limit", nativeQuery = true)
+    @Query(value = "select * from cards where deck_id = :deckId and is_removed = false order by random() limit :limit", nativeQuery = true)
     List<Card> findRandomCardsByDeckId(@Param("deckId") String deckId, @Param("limit") int limit);
 
-    @Query(value = "select * fromt cards where deck_id = :deckId and id != :correctCardId and is_removed = false order by rand() limit 3", nativeQuery = true)
+    @Query(value = "select * from cards where deck_id = :deckId and id != :correctCardId and is_removed = false order by random() limit 3", nativeQuery = true)
     List<Card> findDistractors(@Param("deckId") String deckId, @Param("correctCardId") String correctCardId);
-
 }

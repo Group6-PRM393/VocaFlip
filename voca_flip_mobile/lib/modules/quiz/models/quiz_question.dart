@@ -1,4 +1,4 @@
-import 'package:voca_flip_mobile/models/quiz/quiz_option.dart';
+import 'quiz_option.dart';
 
 class QuizQuestion {
   final String questionId;
@@ -17,13 +17,15 @@ class QuizQuestion {
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     return QuizQuestion(
-      questionId: json['questionId'],
-      questionText: json['questionText'],
+      questionId: json['questionId'] ?? '',
+      questionText: json['questionText'] ?? '',
+      questionType: json['questionType'] ?? '',
       audioUrl: json['audioUrl'],
-      questionType: json['questionType'] ?? "MULTIPLE_CHOICE",
-      options: (json['options'] as List)
-          .map((o) => QuizOption.fromJson(o))
-          .toList(),
+      options: json['options'] != null
+          ? List<QuizOption>.from(
+              json['options'].map((x) => QuizOption.fromJson(x)),
+            )
+          : [],
     );
   }
 }
