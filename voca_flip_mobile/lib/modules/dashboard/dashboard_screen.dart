@@ -108,9 +108,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         );
       case 3:
-        return const CategoryManagementScreen(); 
+        return const CategoryManagementScreen();
       case 4:
-        return const UserProfileScreen(); 
+        return const UserProfileScreen();
       default:
         return Center(
           child: Text(
@@ -191,7 +191,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _navItem(0, Icons.home_rounded, 'Home'),
               _navItem(1, Icons.history_rounded, 'History'),
               _navItem(2, Icons.bar_chart_rounded, 'Stats'),
-              _navItem(3, Icons.category_rounded, 'Category'), //Đông thêm Category
+              _navItem(
+                3,
+                Icons.category_rounded,
+                'Category',
+              ), //Đông thêm Category
               _navItem(4, Icons.person_rounded, 'Profile'),
             ],
           ),

@@ -7,18 +7,16 @@ class CardService {
   CardService(this.dio);
 
   Future<List<CardModel>> getCardsByDeck(String deckId) async {
-  final res = await dio.get('/api/cards/deck/$deckId');
-  final body = res.data;
+    final res = await dio.get('/api/cards/deck/$deckId');
+    final body = res.data;
 
-  if (body is List) {
-    return body
-        .whereType<Map<String, dynamic>>()
-        .map(CardModel.fromJson)
-        .toList();
+    if (body is List) {
+      return body
+          .whereType<Map<String, dynamic>>()
+          .map(CardModel.fromJson)
+          .toList();
+    }
+
+    throw Exception('Invalid cards response: ${body.runtimeType} - $body');
   }
-
-  throw Exception('Invalid cards response: ${body.runtimeType} - $body');
-}
-
-
 }
