@@ -1,49 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/modules/auth/login_screen.dart';
+import 'package:voca_flip_mobile/providers/auth_provider.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
 
-class UserProfileScreen extends StatefulWidget {
+class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({super.key});
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  ConsumerState<UserProfileScreen> createState() => _UserProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> {
+class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   // Màu sắc theo Tailwind config
   final Color primaryColor = const Color(0xFF135BEC);
   final Color textDark = const Color(0xFF111318);
   final Color surfaceLight = const Color(0xFFFFFFFF);
-  
+
   // Các hàm điều hướng (Chờ code màn hình tiếp theo)
   void _navigateToEditProfile() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const EditProfileScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
     );
   }
 
   void _navigateToChangePassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ChangePasswordScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
     );
   }
-  void _handleLogout() {
-    print("Xử lý Đăng xuất");
-    // TODO: Logic Logout
-  }
+  // void _handleLogout() {
+  //   print("Xử lý Đăng xuất");
+  //   // TODO: Logic Logout
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F8), // surface-light
       // Dùng extendBodyBehindAppBar để Appbar đè lên background gradient
-      extendBodyBehindAppBar: true, 
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -60,7 +59,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
         title: const Text(
           'Profile',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           Padding(
@@ -69,16 +72,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               onPressed: _navigateToEditProfile,
               style: TextButton.styleFrom(
                 backgroundColor: Colors.white.withOpacity(0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 minimumSize: Size.zero,
               ),
               child: const Text(
                 'Edit',
-                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -88,7 +100,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 60, // Padding cho status bar và appbar
+                top:
+                    MediaQuery.of(context).padding.top +
+                    60, // Padding cho status bar và appbar
                 bottom: 80, // pb-20 (tạo không gian kéo phần dưới lên)
               ),
               decoration: BoxDecoration(
@@ -114,11 +128,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 4),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
                           ],
                           image: const DecorationImage(
                             // Dùng ảnh mạng thay cho link googleusercontent bị lỗi
-                            image: NetworkImage('https://i.pravatar.cc/150?img=47'),
+                            image: NetworkImage(
+                              'https://i.pravatar.cc/150?img=47',
+                            ),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -139,16 +158,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Tên & Email
                   const Text(
                     'Sarah Smith',
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'sarah.smith@example.com',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -164,9 +191,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     // 1. STATS GRID (3 Cột)
                     Row(
                       children: [
-                        Expanded(child: _buildStatCard('1,240', 'Total Words', null)),
+                        Expanded(
+                          child: _buildStatCard('1,240', 'Total Words', null),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('14', 'Day Streak', Icons.local_fire_department, iconColor: Colors.orange)),
+                        Expanded(
+                          child: _buildStatCard(
+                            '14',
+                            'Day Streak',
+                            Icons.local_fire_department,
+                            iconColor: Colors.orange,
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(child: _buildStatCard('12', 'Decks', null)),
                       ],
@@ -180,7 +216,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                       ),
                       child: Material(
@@ -204,15 +244,32 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text('Change Password', style: TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w600)),
+                                      Text(
+                                        'Change Password',
+                                        style: TextStyle(
+                                          color: textDark,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                       const SizedBox(height: 2),
-                                      const Text('Update your security credentials', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                      const Text(
+                                        'Update your security credentials',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Colors.grey),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey,
+                                ),
                               ],
                             ),
                           ),
@@ -226,11 +283,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton.icon(
-                        onPressed: _handleLogout,
+                        onPressed: () async {
+                          await ref.read(authProvider.notifier).logout();
+                          if (!context.mounted) return;
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                            (_) => false,
+                          );
+                        },
                         icon: const Icon(Icons.logout, color: Colors.red),
                         label: const Text(
                           'Log Out',
-                          style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade50,
@@ -242,7 +312,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
                     // Version Text
                     const Text(
@@ -260,7 +330,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   // Hàm phụ (Widget) để vẽ 3 ô chữ nhật thống kê
-  Widget _buildStatCard(String value, String label, IconData? icon, {Color? iconColor}) {
+  Widget _buildStatCard(
+    String value,
+    String label,
+    IconData? icon, {
+    Color? iconColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -282,18 +357,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             children: [
               Text(
                 value,
-                style: TextStyle(color: primaryColor, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (icon != null) ...[
                 const SizedBox(width: 4),
                 Icon(icon, color: iconColor, size: 18),
-              ]
+              ],
             ],
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

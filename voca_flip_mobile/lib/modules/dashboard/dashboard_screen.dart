@@ -86,7 +86,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  Widget _buildFab() {
+  Widget? _buildFab() {
+    if (_selectedIndex == 3 || _selectedIndex == 4) return null;
     return FloatingActionButton(
       onPressed: () {
         showDialog(
