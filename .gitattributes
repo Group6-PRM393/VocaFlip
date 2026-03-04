@@ -1,0 +1,17 @@
+# Thống nhất line endings cho toàn bộ team (tránh conflict LF/CRLF)
+# Tất cả text file sẽ được normalize thành LF khi commit
+* text=auto eol=lf
+
+# File batch trên Windows cần CRLF để chạy đúng
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# File binary - không normalize
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
