@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../home/home_tab.dart';
+import '../category/category_management_screen.dart';
+import '../profile/user_profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,10 +25,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /* Code ban đầu của Huy
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         return const HomeTab();
+      default:
+        return Center(
+          child: Text(
+            'Coming soon...',
+            style: GoogleFonts.lexend(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+    }
+  }
+  */
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return const HomeTab();
+      case 1:
+        return Center(
+          child: Text(
+            'Coming soon...',
+            style: GoogleFonts.lexend(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+      case 2:
+        return Center(
+          child: Text(
+            'Coming soon...',
+            style: GoogleFonts.lexend(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+      case 3:
+        return const CategoryManagementScreen(); 
+      case 4:
+        return const UserProfileScreen(); 
       default:
         return Center(
           child: Text(
@@ -106,7 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _navItem(0, Icons.home_rounded, 'Home'),
               _navItem(1, Icons.history_rounded, 'History'),
               _navItem(2, Icons.bar_chart_rounded, 'Stats'),
-              _navItem(3, Icons.person_rounded, 'Profile'),
+              _navItem(3, Icons.category_rounded, 'Category'), //Đông thêm Category
+              _navItem(4, Icons.person_rounded, 'Profile'),
             ],
           ),
         ),
