@@ -24,6 +24,16 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(1014, "Invalid file type", HttpStatus.BAD_REQUEST),
     FILE_SIZE_EXCEEDED(1015, "File size exceeds the maximum allowed size (5MB)", HttpStatus.BAD_REQUEST),
     CARD_NOT_FOUND(1016, "Card not found", HttpStatus.NOT_FOUND),
+    CARD_FRONT_REQUIRED(1017, "Front content is required", HttpStatus.BAD_REQUEST),
+    CARD_BACK_REQUIRED(1018, "Back content is required", HttpStatus.BAD_REQUEST),
+    // Authentication errors
+    USER_NOT_EXISTED(1019, "User not found", HttpStatus.NOT_FOUND),
+    INVALID_TOKEN(1020, "Invalid or expired token", HttpStatus.UNAUTHORIZED),
+    INVALID_CREDENTIALS(1021, "Invalid email or password", HttpStatus.UNAUTHORIZED),
+    // Study session errors
+    SESSION_NOT_FOUND(1019, "Study session not found", HttpStatus.NOT_FOUND),
+    DECK_EMPTY(1020, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
+    NO_CARDS_DUE(1021, "No cards are due for review", HttpStatus.OK),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

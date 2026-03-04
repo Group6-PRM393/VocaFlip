@@ -8,10 +8,17 @@ spring:
       max-request-size: 10MB
 
   datasource:
-    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require
-    username: postgres.toesjpoqupllxjeopalh
-    password: Uniquepass123@@.
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-test-query: SELECT 1
+      idle-timeout: 600000
+      maximum-pool-size: 5
+      minimum-idle: 1
+      max-lifetime: 540000
+      connection-timeout: 30000
 
   jpa:
     hibernate:
@@ -47,3 +54,9 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 86400000 # 1 day in milliseconds
+  refresh-token-expiration: 604800000 # 7 days in milliseconds
