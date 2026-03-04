@@ -54,6 +54,8 @@ dependencies:
   flutter_form_builder: ^10.2.0
   intl: ^0.20.2
   uuid: ^4.5.2
+  http: ^1.6.0
+  fl_chart: ^0.70.0
 
 dev_dependencies:
   flutter_test:
