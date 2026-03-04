@@ -2,6 +2,7 @@ package com.vocaflipbackend.dto.response;
 
 import com.vocaflipbackend.enums.LearningStatus;
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

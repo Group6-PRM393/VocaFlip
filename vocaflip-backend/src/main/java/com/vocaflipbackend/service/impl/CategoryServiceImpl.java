@@ -4,12 +4,12 @@ import com.vocaflipbackend.dto.request.CategoryRequest;
 import com.vocaflipbackend.dto.response.CategoryResponse;
 import com.vocaflipbackend.entity.Category;
 import com.vocaflipbackend.entity.User;
-import com.vocaflipbackend.mapper.CategoryMapper;
 import com.vocaflipbackend.repository.CategoryRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,54 +20,74 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
-    private final CategoryMapper categoryMapper;
 
     @Override
-    public CategoryResponse createCategory(CategoryRequest request, String userId) {
+    @Transactional
+    public CategoryResponse createCategory(String userId, CategoryRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Category category = categoryMapper.toEntity(request);
-        category.setUser(user);
+        Category category = Category.builder()
+                .categoryName(request.getCategoryName())
+                .iconCode(request.getIconCode())
+                .colorHex(request.getColorHex())
+                .user(user)
+                .isRemoved(false)
+                .build();
 
         Category savedCategory = categoryRepository.save(category);
-        return categoryMapper.toResponse(savedCategory);
+        return mapToResponse(savedCategory);
     }
 
     @Override
-    public List<CategoryResponse> getCategoriesByUserId(String userId) {
-        // Find categories that are not removed
-        return categoryRepository.findByUserIdAndIsRemovedFalse(userId).stream()
-                .map(categoryMapper::toResponse)
+    public List<CategoryResponse> getAllCategories(String userId) {
+        List<Category> categories = categoryRepository.findByUserIdAndIsRemovedFalse(userId);
+
+        return categories.stream()
+                .filter(c -> !c.isRemoved())
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CategoryResponse getCategoryById(String id) {
-        Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Category not found"));
-        return categoryMapper.toResponse(category);
-    }
-
-    @Override
-    public CategoryResponse updateCategory(String id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id)
+    @Transactional
+    public CategoryResponse updateCategory(String categoryId, CategoryRequest request) {
+        Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        // Use mapper to update fields
-        categoryMapper.updateEntity(category, request);
-        
+        category.setCategoryName(request.getCategoryName());
+
+        if (request.getIconCode() != null) category.setIconCode(request.getIconCode());
+        if (request.getColorHex() != null) category.setColorHex(request.getColorHex());
+
         Category updatedCategory = categoryRepository.save(category);
-        return categoryMapper.toResponse(updatedCategory);
+        return mapToResponse(updatedCategory);
     }
 
     @Override
-    public void deleteCategory(String id) {
-        Category category = categoryRepository.findById(id)
+    @Transactional
+    public void deleteCategory(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        // Manual soft delete
         category.setRemoved(true);
         categoryRepository.save(category);
+    }
+
+    private CategoryResponse mapToResponse(Category category) {
+        int activeDeckCount = 0;
+        if (category.getDecks() != null) {
+            activeDeckCount = (int) category.getDecks().stream()
+                    .filter(d -> !d.isRemoved())
+                    .count();
+        }
+
+        return CategoryResponse.builder()
+                .id(category.getId())
+                .categoryName(category.getCategoryName())
+                .iconCode(category.getIconCode())
+                .colorHex(category.getColorHex())
+                .deckCount(activeDeckCount)
+                .build();
     }
 }

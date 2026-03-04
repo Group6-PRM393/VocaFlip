@@ -9,18 +9,20 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DeckRepository extends JpaRepository<Deck, String> {
 
     List<Deck> findByUserIdAndIsRemovedFalse(String userId);
 
+    Optional<Deck> findByIdAndIsRemovedFalse(String id);
 
     @Query("SELECT d FROM Deck d WHERE d.isRemoved = false " +
+            "AND d.user.id = :userId " +
             "AND (LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(d.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Deck> searchDecks(@Param("keyword") String keyword, Pageable pageable);
+    Page<Deck> searchDecks(@Param("keyword") String keyword, @Param("userId") String userId, Pageable pageable);
 
-
-    Page<Deck> findByIsRemovedFalse(Pageable pageable);
+    Page<Deck> findByUserIdAndIsRemovedFalse(String userId, Pageable pageable);
 }

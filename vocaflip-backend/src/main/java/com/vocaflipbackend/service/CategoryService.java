@@ -6,9 +6,11 @@ import com.vocaflipbackend.dto.response.CategoryResponse;
 import java.util.List;
 
 public interface CategoryService {
-    CategoryResponse createCategory(CategoryRequest request, String userId);
-    List<CategoryResponse> getCategoriesByUserId(String userId);
-    CategoryResponse getCategoryById(String id);
-    CategoryResponse updateCategory(String id, CategoryRequest request);
-    void deleteCategory(String id);
+    CategoryResponse createCategory(String userId, CategoryRequest request);
+
+    List<CategoryResponse> getAllCategories(String userId);
+
+    CategoryResponse updateCategory(String categoryId, CategoryRequest request);
+
+    void deleteCategory(String categoryId);
 }

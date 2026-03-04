@@ -15,9 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-/**
- * Controller quản lý các thao tác CRUD với Deck (Bộ thẻ)
- */
 @RestController
 @RequestMapping("/api/decks")
 @RequiredArgsConstructor
@@ -26,12 +23,12 @@ public class DeckController {
 
     private final DeckService deckService;
 
-    @Operation(summary = "Lấy danh sách Deck của người dùng",
-            description = "Trả về tất cả các bộ thẻ thuộc về một người dùng cụ thể")
-    @GetMapping("/user/{userId}")
-    public ApiResponse<List<DeckResponse>> getUserDecks(@Parameter(description = "ID của người dùng") @PathVariable String userId) {
+    @Operation(summary = "Lấy danh sách Deck của tôi",
+            description = "Trả về tất cả các bộ thẻ thuộc về user đang đăng nhập")
+    @GetMapping("/my-decks")
+    public ApiResponse<List<DeckResponse>> getMyDecks() {
         return ApiResponse.<List<DeckResponse>>builder()
-                .result(deckService.getDecksByUserId(userId))
+                .result(deckService.getMyDecks())
                 .build();
     }
 
@@ -45,26 +42,22 @@ public class DeckController {
     }
 
     @Operation(summary = "Tạo Deck mới",
-            description = "Tạo một bộ thẻ flashcard mới với tùy chọn upload ảnh bìa")
-    @PostMapping(value = "/user/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+            description = "Tạo một bộ thẻ flashcard mới cho user đang đăng nhập, với tùy chọn upload ảnh bìa")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<DeckResponse> createDeck(
-            @Parameter(description = "ID người dùng tạo Deck") @PathVariable String userId,
             @Parameter(description = "Tiêu đề của Deck") @RequestParam String title,
             @Parameter(description = "Mô tả của Deck") @RequestParam(required = false) String description,
-            @Parameter(description = "ID danh mục") @RequestParam String category,
+            @Parameter(description = "ID danh mục") @RequestParam String categoryId,
             @Parameter(description = "Ảnh bìa của Deck (tùy chọn)")
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
-        
-        // Tạo DeckRequest từ các tham số riêng lẻ
-        DeckRequest request = new DeckRequest(title, description, category);
-        
+        DeckRequest request = new DeckRequest(title, description, categoryId);
         return ApiResponse.<DeckResponse>builder()
                 .message("Deck created successfully")
-                .result(deckService.createDeck(request, userId, coverImage))
+                .result(deckService.createDeck(request, coverImage))
                 .build();
     }
 
-    @Operation(summary = "Xóa Deck", description = "Xóa mềm một bộ thẻ (soft delete)")
+    @Operation(summary = "Xóa Deck", description = "Xóa mềm một bộ thẻ (soft delete). Chỉ chủ sở hữu mới có quyền xóa.")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteDeck(
             @Parameter(description = "ID của Deck cần xóa") @PathVariable String id) {
@@ -75,19 +68,16 @@ public class DeckController {
     }
 
     @Operation(summary = "Cập nhật Deck",
-            description = "Cập nhật thông tin bộ thẻ với tùy chọn thay đổi ảnh bìa")
+            description = "Cập nhật thông tin bộ thẻ. Chỉ chủ sở hữu mới có quyền cập nhật.")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<DeckResponse> updateDeck(
             @Parameter(description = "ID của Deck") @PathVariable String id,
-            @Parameter(description = "Tiêu đề mới của Deck") @RequestParam(required = false) String title,
-            @Parameter(description = "Mô tả mới của Deck") @RequestParam(required = false) String description,
-            @Parameter(description = "ID danh mục mới") @RequestParam(required = false) String category,
+            @Parameter(description = "Tiêu đề mới") @RequestParam(required = false) String title,
+            @Parameter(description = "Mô tả mới") @RequestParam(required = false) String description,
+            @Parameter(description = "ID danh mục mới") @RequestParam(required = false) String categoryId,
             @Parameter(description = "Ảnh bìa mới (tùy chọn)")
             @RequestPart(value = "coverImage", required = false) MultipartFile coverImage) {
-        
-        // Tạo DeckRequest từ các tham số riêng lẻ
-        DeckRequest request = new DeckRequest(title, description, category);
-        
+        DeckRequest request = new DeckRequest(title, description, categoryId);
         return ApiResponse.<DeckResponse>builder()
                 .message("Deck updated successfully")
                 .result(deckService.updateDeck(id, request, coverImage))

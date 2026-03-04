@@ -1,51 +1,69 @@
 package com.vocaflipbackend.controller;
 
-import com.vocaflipbackend.dto.request.QuizAttemptRequest;
-import com.vocaflipbackend.dto.request.QuizRequest;
+import com.vocaflipbackend.dto.request.QuizSubmissionRequest;
+import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.QuizAttemptResponse;
-import com.vocaflipbackend.dto.response.QuizResponse;
+import com.vocaflipbackend.dto.response.QuizReviewResponse;
+import com.vocaflipbackend.dto.response.QuizSessionResponse;
 import com.vocaflipbackend.service.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Controller quản lý Quiz (Bài kiểm tra) và các lần làm quiz
- */
 @RestController
-@RequestMapping("/api/quizzes")
+@RequestMapping("/api/quiz")
 @RequiredArgsConstructor
-@Tag(name = "Quizzes", description = "Quản lý bài kiểm tra và ghi nhận kết quả làm bài")
+@Tag(name = "Quiz Controller", description = "Quản lý tạo đề và nộp bài Quiz")
 public class QuizController {
 
     private final QuizService quizService;
 
-    @Operation(summary = "Tạo Quiz mới", description = "Tạo một bài kiểm tra mới từ bộ thẻ")
-    @PostMapping
-    public ResponseEntity<QuizResponse> createQuiz(
-            @Parameter(description = "Thông tin Quiz") @Valid @RequestBody QuizRequest request, 
-            @Parameter(description = "ID của Deck để tạo Quiz") @RequestParam String deckId) {
-        return ResponseEntity.ok(quizService.createQuiz(request, deckId));
+    @PostMapping("/generate")
+    @Operation(summary = "Tạo đề thi mới", description = "Tạo ngẫu nhiên câu hỏi từ Deck, bao gồm cả đáp án nhiễu.")
+    public ApiResponse<QuizSessionResponse> generateQuiz(
+            @RequestParam String userId,
+            @RequestParam String deckId,
+            @RequestParam(defaultValue = "10") @Min(value = 1, message = "Minimum of number question is 1") int numberOfQuestions,
+            @RequestParam(defaultValue = "300") @Min(value = 10, message = "Minimum of time is 10 seconds") int timeLimitSeconds
+    ) {
+        QuizSessionResponse response = quizService.generateQuiz(userId, deckId, numberOfQuestions, timeLimitSeconds);
+
+        return ApiResponse.<QuizSessionResponse>builder()
+                .code(1000)
+                .result(response)
+                .message("Quiz session created successfully")
+                .build();
     }
 
-    @Operation(summary = "Bắt đầu làm Quiz", 
-               description = "Tạo một phiên làm bài quiz mới cho người dùng")
-    @PostMapping("/{quizId}/start")
-    public ResponseEntity<QuizAttemptResponse> startAttempt(
-            @Parameter(description = "ID của Quiz") @PathVariable String quizId, 
-            @Parameter(description = "ID của người dùng") @RequestParam String userId) {
-        return ResponseEntity.ok(quizService.startAttempt(userId, quizId));
+    @PostMapping("/{attemptId}/submit")
+    @Operation(summary = "Nộp bài và chấm điểm", description = "Gửi danh sách đáp án user chọn, server sẽ chấm điểm và trả về kết quả.")
+    public ApiResponse<QuizAttemptResponse> submitQuiz(
+            @PathVariable String attemptId,
+            @RequestBody @Valid QuizSubmissionRequest request
+    ) {
+        QuizAttemptResponse response = quizService.submitQuizAndGrade(attemptId, request);
+
+        return ApiResponse.<QuizAttemptResponse>builder()
+                .code(1000)
+                .result(response)
+                .message("Quiz submitted successfully")
+                .build();
     }
 
-    @Operation(summary = "Nộp bài Quiz", description = "Nộp kết quả sau khi hoàn thành bài quiz")
-    @PostMapping("/attempt/{attemptId}/submit")
-    public ResponseEntity<QuizAttemptResponse> submitAttempt(
-            @Parameter(description = "ID của phiên làm bài") @PathVariable String attemptId, 
-            @Parameter(description = "Kết quả làm bài") @RequestBody QuizAttemptRequest request) {
-        return ResponseEntity.ok(quizService.submitAttempt(attemptId, request));
+    @GetMapping("/{attemptId}/review")
+    @Operation(summary = "Xem lại kết quả bài thi", description = "Lấy chi tiết danh sách câu hỏi, đáp án đã chọn và đáp án đúng của một lần làm bài.")
+    public ApiResponse<QuizReviewResponse> getQuizReview(
+            @PathVariable String attemptId
+    ) {
+        QuizReviewResponse response = quizService.getQuizReview(attemptId);
+
+        return ApiResponse.<QuizReviewResponse>builder()
+                .code(1000)
+                .result(response)
+                .message("Quiz review retrieved successfully")
+                .build();
     }
 }

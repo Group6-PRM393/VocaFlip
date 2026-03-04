@@ -10,14 +10,14 @@ import java.util.List;
 public interface DeckService {
 
     // Create Deck with cover image upload
-    DeckResponse createDeck(DeckRequest request, String userId, MultipartFile coverImage);
+    DeckResponse createDeck(DeckRequest request, MultipartFile coverImage);
 
     DeckResponse getDeckById(String id);
 
     // Update Deck with cover image upload
     DeckResponse updateDeck(String id, DeckRequest request, MultipartFile coverImage);
 
-    List<DeckResponse> getDecksByUserId(String userId);
+    List<DeckResponse> getMyDecks();
 
     void deleteDeck(String id);
 

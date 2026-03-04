@@ -14,8 +14,11 @@ import java.time.LocalDateTime;
 public class CategoryResponse {
     private String id;
     private String categoryName;
+    private String iconCode;
+    private String colorHex;
     private String userId;
     private boolean isRemoved;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private int deckCount;
 }
