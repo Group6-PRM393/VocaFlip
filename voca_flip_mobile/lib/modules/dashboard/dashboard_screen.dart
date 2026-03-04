@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voca_flip_mobile/modules/quiz/screens/quiz_settings_screen.dart';
 import '../../constants/app_colors.dart';
 import '../home/home_tab.dart';
 
@@ -29,13 +30,50 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 0:
         return const HomeTab();
       default:
+        // Cập nhật phần này để hiển thị nút Test Quiz ở các tab 1, 2, 3
         return Center(
-          child: Text(
-            'Coming soon...',
-            style: GoogleFonts.lexend(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Coming soon...',
+                style: GoogleFonts.lexend(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20), // Khoảng cách giữa chữ và nút
+              // --- NÚT TEST QUIZ CỦA BẠN ĐÂY ---
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const QuizSettingsScreen(
+                        deckId:
+                            "deck-test", // THAY BẰNG ID DECK CÓ THẬT TRONG DB CỦA BẠN
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  "Vào Test Quiz",
+                  style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
+                ),
+              ),
+              // ---------------------------------
+            ],
           ),
         );
     }
