@@ -45,4 +45,23 @@ class AppColors {
   static const Color shadow = Color(0x14000000); // rgba(0,0,0,0.08)
   static const Color cardBorder = Color(0xFFFFFFFF);
   static const Color imageOverlay = Color(0xFFF8FAFC); // Slate 50
+  // ── Auth & Common Colors ──
+  static const Color inputBorder = Color(0xFFE2E8F0); // Slate 200
+  static const Color googleBorder = Color(0xFFE2E8F0); // Slate 200
+  static const Color googleText = Color(0xFF334155); // Slate 700
+
+  // ── Auth Hero & Accents ──
+  static const Color authHeroBg = Color(0xFFEFF6FF); // Blue 50
+  static const Color authHeroAccent1 = Color(0xFFDBEAFE); // Blue 100
+  static const Color authHeroAccent2 = Color(0xFF60A5FA); // Blue 400
+  static const Color authHeroAccent3 = Color(0xFF93C5FD); // Blue 300
+  static const Color authHeroAccent4 = Color(0xFFBFDBFE); // Blue 200
+
+  // ── Splash Screen Colors ──
+  static const Color splashBgDark = Color(0xFF1E3A8A); // Blue 900
+  static const Color splashBgMid = Color(0xFF1D4ED8); // Blue 700
+  static const Color splashBgLight = Color(0xFF3B82F6); // Blue 500
+  static const Color splashTextAccent = Color(0xFFDBEAFE); // Blue 100
+  static const Color splashLoadingBg = Color(0xFF172554); // Blue 950
+  static const Color splashLoadingText = Color(0xFFBFDBFE); // Blue 200
 }

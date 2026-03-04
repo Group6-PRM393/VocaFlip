@@ -78,4 +78,57 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     color: AppColors.primary,
   );
+  // ── Auth & Splash ──
+  static TextStyle authHeroTitle = GoogleFonts.lexend(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.5,
+  );
+
+  static TextStyle authHeroSubtitle = GoogleFonts.lexend(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+  );
+
+  static TextStyle authLabel = GoogleFonts.lexend(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textHint,
+  );
+
+  static TextStyle authInput = GoogleFonts.lexend(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+
+  static TextStyle splashTitle = GoogleFonts.lexend(
+    fontSize: 44,
+    fontWeight: FontWeight.w800,
+    color: Colors.white,
+    letterSpacing: -1.0,
+    shadows: [
+      const Shadow(
+        color: Colors.black26,
+        blurRadius: 10,
+        offset: Offset(0, 4),
+      ),
+    ],
+  );
+
+  static TextStyle splashSubtitle = GoogleFonts.lexend(
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    color: AppColors.splashTextAccent,
+    letterSpacing: 0.5,
+  );
+  
+  static TextStyle splashLoading = GoogleFonts.lexend(
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 2.0,
+    color: AppColors.splashLoadingText.withValues(alpha: 0.8),
+  );
 }
