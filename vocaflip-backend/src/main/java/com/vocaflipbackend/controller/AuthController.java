@@ -41,7 +41,7 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<AuthResponse>builder()
-                        .code(1000)
+                        .code(HttpStatus.CREATED.value())
                         .message("User registered successfully")
                         .result(authResponse)
                         .build());
