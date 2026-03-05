@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/modules/quiz/screens/quiz_settings_screen.dart';
 import '../../constants/app_colors.dart';
+import '../../screens/decks/create_deck_screen.dart';
 import '../home/home_tab.dart';
 import '../category/category_management_screen.dart';
 import '../profile/user_profile_screen.dart';
@@ -102,48 +103,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget? _buildFab() {
-    if (_selectedIndex == 3 || _selectedIndex == 4) return null;
+    // Chỉ hiện nút "+" tạo deck trên tab Home (index 0)
+    if (_selectedIndex != 0) return null;
     return FloatingActionButton(
       onPressed: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Thông báo',
-                  style: GoogleFonts.lexend(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Chức năng Tạo Deck đang được triển khai',
-              style: GoogleFonts.lexend(fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.lexend(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
         );
       },
       backgroundColor: AppColors.primary,

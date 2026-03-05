@@ -1,17 +1,14 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/deck_provider.dart';
 import '../../models/category_model.dart';
-import '../../providers/category_provider.dart' hide currentUserIdProvider;
-
-
+import '../../providers/category_provider.dart';
 
 class CreateDeckScreen extends ConsumerStatefulWidget {
   const CreateDeckScreen({super.key});
-
 
   @override
   ConsumerState<CreateDeckScreen> createState() => _CreateDeckScreenState();
@@ -23,11 +20,11 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
   final _descCtrl = TextEditingController();
 
   bool _submitting = false;
-
   CategoryModel? _selectedCategory;
 
-
-  File? _coverFile;
+  /// Dùng XFile + bytes thay vì dart:io File để tương thích Flutter Web
+  XFile? _coverXFile;
+  Uint8List? _coverBytes;
 
   @override
   void dispose() {
@@ -37,57 +34,59 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
   }
 
   Future<void> _pickCover() async {
-  final picker = ImagePicker(); 
-  final XFile? x = await picker.pickImage(
-    source: ImageSource.gallery,
-    imageQuality: 85,
-  );
+    final picker = ImagePicker();
+    final XFile? x = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (x == null) return;
 
-  if (x == null) return;
-
-  setState(() {
-    _coverFile = File(x.path);
-  });
-}
-
-void _clearCover() {              
+    final bytes = await x.readAsBytes();
     setState(() {
-      _coverFile = null;
+      _coverXFile = x;
+      _coverBytes = bytes;
     });
   }
+
+  void _clearCover() {
+    setState(() {
+      _coverXFile = null;
+      _coverBytes = null;
+    });
+  }
+
   Future<void> _submit() async {
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) return;
+
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
-   setState(() => _submitting = true);
-try {
-  final deckService = ref.read(deckServiceProvider);
-  final userId = ref.read(currentUserIdProvider);
+    setState(() => _submitting = true);
+    try {
+      final repo = await ref.read(deckRepositoryProvider.future);
 
-  await deckService.createDeck(
-    userId: userId,
-    title: _titleCtrl.text.trim(),
-    description: _descCtrl.text.trim(),
-    categoryId: _selectedCategory!.id,
-    coverFile: _coverFile,
-  );
+      // Dùng createDeckFromBytes cho cả Web lẫn Mobile (XFile.readAsBytes hoạt động trên mọi nền tảng)
+      await repo.createDeckFromBytes(
+        title: _titleCtrl.text.trim(),
+        description: _descCtrl.text.trim(),
+        categoryId: _selectedCategory!.id,
+        coverBytes: _coverBytes,
+        coverFileName: _coverXFile?.name,
+      );
 
-  // ✅ sửa dòng này
-  ref.invalidate(deckListProvider(userId));
+      // ✅ refresh danh sách deck
+      ref.invalidate(deckListProvider);
 
-  if (!mounted) return;
-  Navigator.pop(context, true);
+      if (!mounted) return;
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Create deck failed: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -125,7 +124,9 @@ try {
                       suffixIcon: const Icon(Icons.edit_outlined),
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -149,7 +150,9 @@ try {
                       hintText: 'What is this deck about?',
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -166,81 +169,80 @@ try {
                   const _FieldLabel('CATEGORY'),
                   const SizedBox(height: 8),
                   categoriesAsync.when(
-  loading: () => Container(
-    height: 56,
-    alignment: Alignment.centerLeft,
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-    child: const SizedBox(
-      height: 18,
-      width: 18,
-      child: CircularProgressIndicator(strokeWidth: 2),
-    ),
-  ),
-  error: (e, _) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.red.shade200),
-    ),
-    child: Row(
-      children: [
-        const Icon(Icons.error_outline, color: Colors.red),
-        const SizedBox(width: 8),
-        const Expanded(child: Text('Load categories failed')),
-        TextButton(
-          onPressed: () => ref.invalidate(categoryListProvider),
-          child: const Text('Retry'),
-        ),
-      ],
-    ),
-  ),
-  data: (cats) {
-    return DropdownButtonFormField<CategoryModel>(
-      value: _selectedCategory,
-      items: cats
-          .map((c) => DropdownMenuItem<CategoryModel>(
-                value: c,
-                child: Text(c.name),
-              ))
-          .toList(),
-      onChanged: (v) => setState(() => _selectedCategory = v),
-      decoration: InputDecoration(
-        hintText: 'Select a category',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      validator: (v) => v == null ? 'Please select a category' : null,
-    );
-  },
-),
-
+                    loading: () => Container(
+                      height: 56,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                    error: (e, _) => Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red),
+                          const SizedBox(width: 8),
+                          const Expanded(child: Text('Load categories failed')),
+                          TextButton(
+                            onPressed: () => ref.invalidate(categoryListProvider),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    data: (cats) {
+                      return DropdownButtonFormField<CategoryModel>(
+                        value: _selectedCategory,
+                        items: cats
+                            .map((c) => DropdownMenuItem<CategoryModel>(
+                                  value: c,
+                                  child: Text(c.name),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() => _selectedCategory = v),
+                        decoration: InputDecoration(
+                          hintText: 'Select a category',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        validator: (v) =>
+                            v == null ? 'Please select a category' : null,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
 
                   Row(
                     children: [
                       const Expanded(child: _FieldLabel('COVER PHOTO')),
                       TextButton(
-                        onPressed: _coverFile == null ? null : () => _clearCover(),
+                        onPressed: _coverBytes == null ? null : _clearCover,
                         child: const Text('Clear'),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  _CoverUploadBox(
-                    file: _coverFile,
-                    onTap: _pickCover,
-                  ),
+                  _CoverUploadBox(imageBytes: _coverBytes, onTap: _pickCover),
                 ],
               ),
             ),
@@ -253,20 +255,24 @@ try {
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF1E5EFF),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: _submitting ? null : _submit,
-                  icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                  icon: const Icon(Icons.check, color: Colors.white),
                   label: const Text(
                     'Create Deck',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
-
         if (_submitting)
           Positioned.fill(
             child: Container(
@@ -297,15 +303,16 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
+/// Widget hiển thị ảnh bìa — dùng Image.memory (bytes) thay vì Image.file
 class _CoverUploadBox extends StatelessWidget {
-  final File? file;
+  final Uint8List? imageBytes;
   final VoidCallback onTap;
 
-  const _CoverUploadBox({required this.file, required this.onTap});
+  const _CoverUploadBox({required this.imageBytes, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final hasFile = file != null;
+    final hasImage = imageBytes != null;
 
     return InkWell(
       onTap: onTap,
@@ -319,28 +326,26 @@ class _CoverUploadBox extends StatelessWidget {
           border: Border.all(
             color: const Color(0xFF1E5EFF),
             width: 1.2,
-            style: BorderStyle.solid,
           ),
         ),
-        child: hasFile
+        child: hasImage
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.file(file!, fit: BoxFit.cover),
+                child: Image.memory(imageBytes!, fit: BoxFit.cover),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.add_a_photo_outlined, color: Color(0xFF1E5EFF), size: 28),
+                  Icon(Icons.add_a_photo_outlined,
+                      color: Color(0xFF1E5EFF), size: 28),
                   SizedBox(height: 10),
-                  Text(
-                    'Tap to upload cover image',
-                    style: TextStyle(color: Color(0xFF1E5EFF), fontWeight: FontWeight.w700),
-                  ),
+                  Text('Tap to upload cover image',
+                      style: TextStyle(
+                          color: Color(0xFF1E5EFF),
+                          fontWeight: FontWeight.w700)),
                   SizedBox(height: 6),
-                  Text(
-                    'PNG, JPG up to 5MB',
-                    style: TextStyle(color: Colors.black45, fontSize: 12),
-                  ),
+                  Text('PNG, JPG up to 5MB',
+                      style: TextStyle(color: Colors.black45, fontSize: 12)),
                 ],
               ),
       ),

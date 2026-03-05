@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voca_flip_mobile/models/card_model.dart';
-import 'package:voca_flip_mobile/services/card_service.dart';
-import 'deck_provider.dart'; 
+import '../data/repositories/card_repository.dart';
+import '../models/card_model.dart';
+import 'deck_provider.dart';
 
-final cardServiceProvider = Provider<CardService>((ref) {
-  return CardService(ref.read(dioProvider));
+/// Provider cho CardRepository
+final cardRepositoryProvider = FutureProvider<CardRepository>((ref) async {
+  final apiService = await ref.watch(apiServiceProvider.future);
+  return CardRepository(apiService);
 });
 
-final cardListProvider =
-    FutureProvider.family<List<CardModel>, String>((ref, deckId) async {
-  return ref.read(cardServiceProvider).getCardsByDeck(deckId);
+/// Lấy danh sách Card theo deckId
+final cardListProvider = FutureProvider.family<List<CardModel>, String>((
+  ref,
+  deckId,
+) async {
+  final repo = await ref.watch(cardRepositoryProvider.future);
+  return repo.getCardsByDeck(deckId);
 });

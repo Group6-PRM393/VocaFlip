@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants/app_colors.dart';
-import '../../../providers/auth_provider.dart';
-import '../../auth/login_screen.dart';
 
 class HomeHeader extends ConsumerWidget {
   final String userName;
@@ -68,34 +66,7 @@ class HomeHeader extends ConsumerWidget {
               ),
             ],
           ),
-          const Spacer(),
-          // Logout button
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              tooltip: 'Đăng xuất',
-              icon: const Icon(Icons.logout_rounded,
-                  color: AppColors.textSecondary, size: 20),
-              onPressed: () async {
-                await ref.read(authProvider.notifier).logout();
-                if (!context.mounted) return;
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (_) => false,
-                );
-              },
-            ),
-          ),
+          // Removed Logout button
         ],
       ),
     );

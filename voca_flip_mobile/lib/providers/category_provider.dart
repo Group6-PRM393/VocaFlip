@@ -1,20 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/repositories/category_repository.dart';
 import '../models/category_model.dart';
-import '../services/category_service.dart';
-import 'deck_provider.dart'; 
+import 'deck_provider.dart';
 
-final categoryServiceProvider = Provider<CategoryService>((ref) {
-  return CategoryService(ref.read(dioProvider));
+/// Provider cho CategoryRepository
+final categoryRepositoryProvider = FutureProvider<CategoryRepository>((
+  ref,
+) async {
+  final apiService = await ref.watch(apiServiceProvider.future);
+  return CategoryRepository(apiService);
 });
 
-final currentUserIdProvider = Provider<String>((ref) {
-  return 'u001';
-});
-
-
+/// Lấy danh sách Category
 final categoryListProvider = FutureProvider<List<CategoryModel>>((ref) async {
-  final userId = ref.watch(currentUserIdProvider); // watch
-  return ref.watch(categoryServiceProvider).getCategories(userId); // watch cũng được
+  final userId = await ref.watch(currentUserIdProvider.future);
+  final repo = await ref.watch(categoryRepositoryProvider.future);
+  return repo.getCategories(userId);
 });
-
-

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +25,8 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
   bool _saving = false;
 
   CategoryModel? _selectedCategory;
-  File? _newCoverFile;
+  Uint8List? _newCoverBytes;
+  String? _newCoverFileName;
 
   @override
   void initState() {
@@ -48,7 +49,11 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       imageQuality: 85,
     );
     if (x == null) return;
-    setState(() => _newCoverFile = File(x.path));
+    final bytes = await x.readAsBytes();
+    setState(() {
+      _newCoverBytes = bytes;
+      _newCoverFileName = x.name;
+    });
   }
 
   Future<void> _submit() async {
@@ -56,36 +61,37 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
     if (!ok) return;
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select category')));
       return;
     }
 
     setState(() => _saving = true);
 
     try {
-      final deckService = ref.read(deckServiceProvider);
+      final repo = await ref.read(deckRepositoryProvider.future);
 
-      await deckService.updateDeck(
+      await repo.updateDeckFromBytes(
         deckId: widget.deck.id,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
-        category: _selectedCategory!.id, // ✅ gửi categoryId
-        coverImage: _newCoverFile,       // ✅ key backend: coverImage
+        categoryId: _selectedCategory!.id,
+        coverImageBytes: _newCoverBytes,
+        coverFileName: _newCoverFileName,
       );
 
       // refresh
       ref.invalidate(deckDetailProvider(widget.deck.id));
-      ref.invalidate(deckListProvider(widget.deck.userId));
+      ref.invalidate(deckListProvider);
 
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Update failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Update failed: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -103,10 +109,11 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
     setState(() => _saving = true);
 
     try {
-      await ref.read(deckServiceProvider).deleteDeck(widget.deck.id);
+      final repo = await ref.read(deckRepositoryProvider.future);
+      await repo.deleteDeck(widget.deck.id);
 
       // refresh list
-      ref.invalidate(deckListProvider(widget.deck.userId));
+      ref.invalidate(deckListProvider);
 
       if (!mounted) return;
 
@@ -116,9 +123,9 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -140,7 +147,10 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
             centerTitle: true,
             title: const Text(
               'Edit Deck',
-              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           body: SingleChildScrollView(
@@ -160,11 +170,17 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         color: Colors.black12,
-                        image: _newCoverFile != null
-                            ? DecorationImage(image: FileImage(_newCoverFile!), fit: BoxFit.cover)
+                        image: _newCoverBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_newCoverBytes!),
+                                fit: BoxFit.cover,
+                              )
                             : (coverUrl != null && coverUrl.trim().isNotEmpty)
-                                ? DecorationImage(image: NetworkImage(coverUrl), fit: BoxFit.cover)
-                                : null,
+                            ? DecorationImage(
+                                image: NetworkImage(coverUrl),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
                       child: Container(
                         decoration: BoxDecoration(
@@ -253,21 +269,26 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                       // ✅ set default theo tên category hiện tại của deck (1 lần)
                       _selectedCategory ??= cats.firstWhere(
                         (c) => c.name == (widget.deck.category ?? ''),
-                        orElse: () => cats.isNotEmpty ? cats.first : CategoryModel(id: '', name: ''),
+                        orElse: () => cats.isNotEmpty
+                            ? cats.first
+                            : CategoryModel(id: '', name: ''),
                       );
                       if (_selectedCategory?.id == '') _selectedCategory = null;
 
                       return DropdownButtonFormField<CategoryModel>(
                         value: _selectedCategory,
                         items: cats
-                            .map((c) => DropdownMenuItem<CategoryModel>(
-                                  value: c,
-                                  child: Text(c.name),
-                                ))
+                            .map(
+                              (c) => DropdownMenuItem<CategoryModel>(
+                                value: c,
+                                child: Text(c.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v),
                         decoration: _inputDeco(),
-                        validator: (v) => v == null ? 'Please select category' : null,
+                        validator: (v) =>
+                            v == null ? 'Please select category' : null,
                       );
                     },
                   ),
@@ -287,13 +308,18 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF1E5EFF),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: _saving ? null : _submit,
                       icon: const Icon(Icons.save, color: Colors.white),
                       label: const Text(
                         'Update Changes',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
@@ -301,7 +327,10 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                   TextButton.icon(
                     onPressed: _saving ? null : _deleteDeck,
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    label: const Text('Delete Deck', style: TextStyle(color: Colors.red)),
+                    label: const Text(
+                      'Delete Deck',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               ),
@@ -345,7 +374,10 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.black87),
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        color: Colors.black87,
+      ),
     );
   }
 }
@@ -371,7 +403,11 @@ class _DeleteDeckDialog extends StatelessWidget {
                 color: Colors.red.withOpacity(0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline, color: Colors.red, size: 28),
+              child: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 28,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -392,12 +428,17 @@ class _DeleteDeckDialog extends StatelessWidget {
               child: FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
                   'Delete Deck',
-                  style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -407,13 +448,19 @@ class _DeleteDeckDialog extends StatelessWidget {
               height: 48,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   side: BorderSide(color: Colors.grey.shade300),
                 ),
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   'Cancel',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black87)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
               ),
             ),
           ],

@@ -5,7 +5,7 @@ import '../../providers/deck_provider.dart';
 import '../../providers/card_provider.dart';
 import '../../models/card_model.dart';
 import 'edit_deck_screen.dart';
-
+import '../../modules/study/study_screen.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -17,9 +17,8 @@ class DeckDetailScreen extends ConsumerWidget {
     final asyncCards = ref.watch(cardListProvider(deckId));
 
     return asyncDeck.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
         appBar: AppBar(
           title: const Text('Deck Details'),
@@ -62,24 +61,23 @@ class DeckDetailScreen extends ConsumerWidget {
             ),
             actions: [
               TextButton(
-               onPressed: () async {
-  final updated = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EditDeckScreen(deck: deck),
-    ),
-  );
+                onPressed: () async {
+                  final updated = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditDeckScreen(deck: deck),
+                    ),
+                  );
 
-  if (updated == true) {
-    final id = deck.id;
+                  if (updated == true) {
+                    final id = deck.id;
 
-    ref.invalidate(deckDetailProvider(id));
-    ref.invalidate(deckListProvider(deck.userId));
+                    ref.invalidate(deckDetailProvider(id));
+                    ref.invalidate(deckListProvider);
 
-    await ref.read(deckDetailProvider(id).future);
-  }
-},
-
+                    await ref.read(deckDetailProvider(id).future);
+                  }
+                },
 
                 child: const Text(
                   'Edit',
@@ -155,8 +153,11 @@ class DeckDetailScreen extends ConsumerWidget {
                       // Meta row
                       Row(
                         children: [
-                          const Icon(Icons.style_outlined,
-                              size: 18, color: Colors.black45),
+                          const Icon(
+                            Icons.style_outlined,
+                            size: 18,
+                            color: Colors.black45,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             '${deck.totalCards} Cards',
@@ -166,8 +167,11 @@ class DeckDetailScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Icon(Icons.access_time,
-                              size: 18, color: Colors.black45),
+                          const Icon(
+                            Icons.access_time,
+                            size: 18,
+                            color: Colors.black45,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             _formatDate(deck.createdAt),
@@ -220,8 +224,10 @@ class DeckDetailScreen extends ConsumerWidget {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline,
-                                  color: Colors.red),
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -254,7 +260,7 @@ class DeckDetailScreen extends ConsumerWidget {
                               for (final c in cards) ...[
                                 _flashcardTile(c),
                                 const SizedBox(height: 12),
-                              ]
+                              ],
                             ],
                           );
                         },
@@ -298,10 +304,18 @@ class DeckDetailScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // TODO: Study Now
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          StudyScreen(deckId: deckId),
+                                    ),
+                                  );
                                 },
-                                icon: const Icon(Icons.play_arrow,
-                                    color: Colors.white),
+                                icon: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                ),
                                 label: const Text(
                                   'Study Now',
                                   style: TextStyle(
@@ -329,8 +343,10 @@ class DeckDetailScreen extends ConsumerWidget {
                                 onPressed: () {
                                   // TODO: Test
                                 },
-                                icon: const Icon(Icons.school,
-                                    color: Color(0xFF1E5EFF)),
+                                icon: const Icon(
+                                  Icons.school,
+                                  color: Color(0xFF1E5EFF),
+                                ),
                                 label: const Text(
                                   'Test',
                                   style: TextStyle(
@@ -363,80 +379,82 @@ class DeckDetailScreen extends ConsumerWidget {
   }
 
   static Widget _flashcardTile(CardModel card) {
-  return Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.black12),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      card.front,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        card.front,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                  ),
-                  if ((card.phonetic ?? '').trim().isNotEmpty)
-                    Text(
-                      card.phonetic!,
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w600,
+                    if ((card.phonetic ?? '').trim().isNotEmpty)
+                      Text(
+                        card.phonetic!,
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                card.back,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
-              ),
-              if ((card.exampleSentence ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  card.exampleSentence!,
-                  style: const TextStyle(color: Colors.black54, height: 1.35),
+                  card.back,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+                if ((card.exampleSentence ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    card.exampleSentence!,
+                    style: const TextStyle(color: Colors.black54, height: 1.35),
+                  ),
+                ],
               ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            children: [
+              IconButton(
+                onPressed: () {
+                  // TODO: edit card
+                },
+                icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
+              ),
+              IconButton(
+                onPressed: () {
+                  // TODO: delete card
+                },
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFF1E5EFF),
+                ),
+              ),
             ],
           ),
-        ),
-        const SizedBox(width: 10),
-        Column(
-          children: [
-            IconButton(
-              onPressed: () {
-                // TODO: edit card
-              },
-              icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
-            ),
-            IconButton(
-              onPressed: () {
-                // TODO: delete card
-              },
-              icon: const Icon(Icons.delete_outline, color: Color(0xFF1E5EFF)),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 }

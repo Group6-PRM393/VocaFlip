@@ -5,16 +5,12 @@ import '../../widgets/deck_item_card.dart';
 import 'create_deck_screen.dart';
 import 'deck_detail_screen.dart';
 
-
 class DeckListScreen extends ConsumerWidget {
   const DeckListScreen({super.key});
 
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userId = ref.watch(currentUserIdProvider);
-print('DeckListScreen userId = $userId');
-final asyncDecks = ref.watch(deckListProvider(userId));
+    final asyncDecks = ref.watch(deckListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,31 +23,29 @@ final asyncDecks = ref.watch(deckListProvider(userId));
         leading: const BackButton(color: Colors.white),
       ),
       floatingActionButton: FloatingActionButton(
-  backgroundColor: const Color(0xFF1E5EFF),
-  onPressed: () async {
-    final created = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-builder: (_) => const CreateDeckScreen(),
-      ),
-    );
+        backgroundColor: const Color(0xFF1E5EFF),
+        onPressed: () async {
+          final created = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
+          );
 
-    if (created == true) {
-      ref.invalidate(deckListProvider(userId));
-    }
-  },
-  child: const Icon(Icons.add, color: Colors.white),
-),
+          if (created == true) {
+            ref.invalidate(deckListProvider);
+          }
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: asyncDecks.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           text: e.toString(),
-          onRetry: () => ref.invalidate(deckListProvider(userId)),
+          onRetry: () => ref.invalidate(deckListProvider),
         ),
         data: (decks) => RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(deckListProvider(userId));
-            await ref.read(deckListProvider(userId).future);
+            ref.invalidate(deckListProvider);
+            await ref.read(deckListProvider.future);
           },
           child: decks.isEmpty
               ? const _EmptyState()
@@ -64,17 +58,16 @@ builder: (_) => const CreateDeckScreen(),
                     return DeckItemCard(
                       title: d.title,
                       cards: d.totalCards,
-                      progress: d.progress, 
+                      progress: d.progress,
                       imageUrl: d.coverImageUrl,
                       onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => DeckDetailScreen(deckId: d.id),
-    ),
-  );
-},
-
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DeckDetailScreen(deckId: d.id),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -89,7 +82,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: const [
@@ -122,7 +114,11 @@ class _ErrorState extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 36),
             const SizedBox(height: 10),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.black54),
+            ),
             const SizedBox(height: 12),
             FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],

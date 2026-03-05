@@ -27,7 +27,14 @@ class AuthRepository {
     // Persist tokens
     await _prefs.setString(AppConfig.tokenKey, authResponse.accessToken);
     await _prefs.setString(
-        AppConfig.refreshTokenKey, authResponse.refreshToken);
+      AppConfig.refreshTokenKey,
+      authResponse.refreshToken,
+    );
+
+    // Lưu userId vào SharedPreferences để dùng ở các màn hình khác
+    if (authResponse.user != null) {
+      await _prefs.setString(AppConfig.userIdKey, authResponse.user!.id);
+    }
 
     return authResponse;
   }
@@ -65,6 +72,7 @@ class AuthRepository {
     }
     await _prefs.remove(AppConfig.tokenKey);
     await _prefs.remove(AppConfig.refreshTokenKey);
+    await _prefs.remove(AppConfig.userIdKey);
   }
 
   bool get isLoggedIn =>

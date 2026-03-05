@@ -1,7 +1,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const bool isProduction = true; 
+  static const bool isProduction = true;
 
   static String get baseUrl => isProduction
       ? 'https://vocaflip-api.onrender.com'
@@ -12,4 +12,5 @@ class AppConfig {
 
   static const String tokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
+  static const String userIdKey = 'user_id';
 }
