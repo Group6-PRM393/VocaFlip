@@ -16,7 +16,7 @@ class QuizReviewDetail {
       questionText: json['questionText'],
       userAnswerText: json['userAnswerText'] ?? 'No Answer',
       correctAnswerText: json['correctAnswerText'],
-      isCorrect: json['isCorrect'],
+      isCorrect: json['isCorrect'] ?? false,
     );
   }
 }

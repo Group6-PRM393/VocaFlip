@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:voca_flip_mobile/screens/quiz/active_quiz_screen.dart';
+import 'active_quiz_screen.dart';
 
 class QuizSettingsScreen extends StatefulWidget {
   final String deckId;
@@ -12,7 +12,7 @@ class QuizSettingsScreen extends StatefulWidget {
 class _QuizSettingsScreenState extends State<QuizSettingsScreen> {
   int _numberOfQuestions = 10;
   double _timeLimitMinutes = 5.0;
-  String _questionType = 'Multiple Choice';
+  String _questionType = 'MULTIPLE_CHOICE';
 
   @override
   Widget build(BuildContext context) {
@@ -35,42 +35,46 @@ class _QuizSettingsScreenState extends State<QuizSettingsScreen> {
             _buildSectionTitle("Question Type"),
             const SizedBox(height: 10),
             Row(
-              children: ["Multiple Choice", "Fill in Blanks"].map((type) {
-                final isSelected = _questionType == type;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _questionType = type;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      margin: const EdgeInsets.only(right: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.white : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          type,
-                          style: TextStyle(
-                            color: isSelected ? Colors.blue : Colors.grey,
-                            fontWeight: FontWeight.bold,
+              children:
+                  [
+                    {"display": "Multiple Choice", "value": "MULTIPLE_CHOICE"},
+                    {"display": "Fill in Blanks", "value": "FILL_IN_THE_BLANK"},
+                  ].map((type) {
+                    final isSelected = _questionType == type['value'];
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _questionType = type['value']!;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              type['display']!,
+                              style: TextStyle(
+                                color: isSelected ? Colors.blue : Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
             ),
 
             const SizedBox(height: 30),
             _buildSectionTitle("Number of Questions"),
             const SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 10,
                 20,

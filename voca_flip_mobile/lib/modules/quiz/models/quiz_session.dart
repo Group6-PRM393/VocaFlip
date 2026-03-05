@@ -1,14 +1,14 @@
-import 'package:voca_flip_mobile/models/quiz/quiz_question.dart';
+import 'quiz_question.dart';
 
 class QuizSession {
-  final String attempId;
+  final String attemptId;
   final String quizTitle;
   final int totalQuestions;
   final int timeLimitSeconds;
   final List<QuizQuestion> questions;
 
   QuizSession({
-    required this.attempId,
+    required this.attemptId,
     required this.quizTitle,
     required this.totalQuestions,
     required this.timeLimitSeconds,
@@ -17,13 +17,15 @@ class QuizSession {
 
   factory QuizSession.fromJson(Map<String, dynamic> json) {
     return QuizSession(
-      attempId: json['attemptId'],
-      quizTitle: json['quizTitle'] ?? 'Quiz',
-      totalQuestions: json['totalQuestions'],
-      timeLimitSeconds: json['timeLimitSeconds'],
-      questions: (json['question'] as List)
-          .map((q) => QuizQuestion.fromJson(q))
-          .toList(),
+      attemptId: json['attemptId'] ?? '',
+      quizTitle: json['quizTitle'] ?? '',
+      totalQuestions: json['totalQuestions'] ?? 0,
+      timeLimitSeconds: json['timeLimitSeconds'] ?? 0,
+      questions: json['questions'] != null
+          ? List<QuizQuestion>.from(
+              json['questions'].map((x) => QuizQuestion.fromJson(x)),
+            )
+          : [],
     );
   }
 }

@@ -5,6 +5,8 @@ import '../../constants/app_colors.dart';
 import '../../data/models/responses/study_session_response.dart';
 import '../../data/services/api_service.dart';
 import '../study/study_screen.dart';
+import '../../screens/decks/deck_detail_screen.dart';
+import '../../screens/decks/deck_list_screen.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_stats_grid.dart';
 import 'widgets/space_repetition_card.dart';
@@ -185,10 +187,10 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Đi đến trang quản lý deck'),
-                          duration: Duration(seconds: 2),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DeckListScreen(),
                         ),
                       );
                     },
@@ -230,10 +232,11 @@ class _HomeTabState extends State<HomeTab> {
                           coverImageUrl: deck['coverImageUrl'],
                           totalCards: deck['totalCards'] ?? 0,
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đi đến trang chi tiết deck này'),
-                                duration: Duration(seconds: 2),
+                            // Điều hướng đến trang chi tiết deck
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DeckDetailScreen(deckId: deck['id']),
                               ),
                             );
                           },

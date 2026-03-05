@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voca_flip_mobile/modules/quiz/screens/quiz_settings_screen.dart';
 import '../../constants/app_colors.dart';
+import '../../screens/decks/create_deck_screen.dart';
 import '../home/home_tab.dart';
+import '../category/category_management_screen.dart';
+import '../profile/user_profile_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -28,6 +32,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     switch (_selectedIndex) {
       case 0:
         return const HomeTab();
+      case 1:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Coming soon...',
+                style: GoogleFonts.lexend(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const QuizSettingsScreen(deckId: "deck-test"),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  " Take Quiz",
+                  style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
+                ),
+              ),
+              // ---------------------------------
+            ],
+          ),
+        );
+      case 2:
+        return Center(
+          child: Text(
+            'Coming soon...',
+            style: GoogleFonts.lexend(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+      case 3:
+        return const CategoryManagementScreen();
+      case 4:
+        return const UserProfileScreen();
       default:
         return Center(
           child: Text(
@@ -41,48 +102,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-  Widget _buildFab() {
+  Widget? _buildFab() {
+    // Chỉ hiện nút "+" tạo deck trên tab Home (index 0)
+    if (_selectedIndex != 0) return null;
     return FloatingActionButton(
       onPressed: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Thông báo',
-                  style: GoogleFonts.lexend(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Chức năng Tạo Deck đang được triển khai',
-              style: GoogleFonts.lexend(fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.lexend(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
         );
       },
       backgroundColor: AppColors.primary,
@@ -107,7 +134,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _navItem(0, Icons.home_rounded, 'Home'),
               _navItem(1, Icons.history_rounded, 'History'),
               _navItem(2, Icons.bar_chart_rounded, 'Stats'),
-              _navItem(3, Icons.person_rounded, 'Profile'),
+              _navItem(
+                3,
+                Icons.category_rounded,
+                'Category',
+              ), //Đông thêm Category
+              _navItem(4, Icons.person_rounded, 'Profile'),
             ],
           ),
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:voca_flip_mobile/models/quiz/quiz_review.dart';
-import 'package:voca_flip_mobile/services/quiz_service.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_review.dart';
+import 'package:voca_flip_mobile/modules/quiz/services/quiz_service.dart';
 
 class QuizReviewScreen extends StatefulWidget {
   final String attemptId;

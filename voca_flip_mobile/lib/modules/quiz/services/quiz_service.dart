@@ -1,18 +1,25 @@
 import 'dart:convert';
-import 'package:voca_flip_mobile/models/quiz/quiz_result.dart';
-import 'package:voca_flip_mobile/models/quiz/quiz_review.dart';
-import 'package:voca_flip_mobile/models/quiz/quiz_session.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_result.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_review.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_session.dart';
 import 'package:http/http.dart' as http;
 
 class QuizService {
-  static const String baseUrl = 'http://192.168.1.15:8080/api/quiz';
+  static const String baseUrl = 'http://localhost:8080/api/quiz';
 
-  Future<QuizSession> generateQuiz(String deckId, int count, int time) async {
+  Future<QuizSession> generateQuiz(
+    String deckId,
+    int numberOfQuestions,
+    int timeLimitSeconds,
+    String questionType,
+  ) async {
     final uri = Uri.parse('$baseUrl/generate').replace(
       queryParameters: {
+        'userId': 'user-test',
         'deckId': deckId,
-        'numberOfQuestion': count.toString(),
-        'timeLimitSeconds': time.toString(),
+        'numberOfQuestions': numberOfQuestions.toString(),
+        'timeLimitSeconds': timeLimitSeconds.toString(),
+        'questionType': questionType,
       },
     );
 
@@ -27,15 +34,15 @@ class QuizService {
   }
 
   Future<QuizResult> submitQuiz(
-    String attempId,
+    String attemptId,
     int timeTaken,
     List<Map<String, String>> answers,
   ) async {
-    final url = Uri.parse('$baseUrl/$attempId/submit');
+    final url = Uri.parse('$baseUrl/$attemptId/submit');
 
     final body = json.encode({
       'timeTakenSeconds': timeTaken,
-      'answer': answers,
+      'answers': answers,
     });
 
     final response = await http.post(

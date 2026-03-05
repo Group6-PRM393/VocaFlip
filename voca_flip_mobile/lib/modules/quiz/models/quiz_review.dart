@@ -1,4 +1,4 @@
-import 'package:voca_flip_mobile/models/quiz/quiz_review_detail.dart';
+import 'quiz_review_detail.dart';
 
 class QuizReview {
   final double scorePercentage;
