@@ -36,7 +36,7 @@ server:
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
-  api-secret: -Z-WlZMbEaTQD0q0O3fWthYcE7c
+  api-secret: ${CLOUDINARY_API_SECRET}
 
 # Actuator Configuration for Health Check
 management:
