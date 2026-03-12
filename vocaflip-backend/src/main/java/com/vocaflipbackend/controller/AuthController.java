@@ -1,5 +1,6 @@
 package com.vocaflipbackend.controller;
 
+import com.vocaflipbackend.dto.request.GoogleLoginRequest;
 import com.vocaflipbackend.dto.request.LoginRequest;
 import com.vocaflipbackend.dto.request.RefreshTokenRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
@@ -29,6 +30,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+
+    /**
+     * Auth with Google
+     */
+    @PostMapping("/google")
+    @Operation(
+            summary = "Đăng nhập bằng Google",
+            description = "Authenticate user với Google ID Token"
+    )
+    public ResponseEntity<ApiResponse<AuthResponse>> authenticateGoogle(
+            @Valid @RequestBody GoogleLoginRequest request) {
+        try {
+            log.info("Google authentication request received");
+            AuthResponse authResponse = authService.authenticateGoogle(request);
+            return ResponseEntity
+                    .ok()
+                    .body(ApiResponse.<AuthResponse>builder()
+                            .code(1000)
+                            .message("Google authentication successful")
+                            .result(authResponse)
+                            .build());
+        } catch (Exception e) {
+            log.error("Google authentication failed: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<AuthResponse>builder()
+                            .code(HttpStatus.UNAUTHORIZED.value())
+                            .message("Google authentication failed: " + e.getMessage())
+                            .build());
+        }
+    }
 
     /**
      * Register

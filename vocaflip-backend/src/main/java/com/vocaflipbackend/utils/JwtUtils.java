@@ -1,4 +1,4 @@
-package com.vocaflipbackend.config;
+package com.vocaflipbackend.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

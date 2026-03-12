@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter Web (Chrome - Port 8888)",
+      "request": "launch",
+      "type": "dart",
+      "args": ["-d", "chrome", "--web-port=8888", "--web-hostname=localhost"]
+    },
+    {
+      "name": "Flutter Mobile",
+      "request": "launch",
+      "type": "dart"
+    }
+  ]
+}

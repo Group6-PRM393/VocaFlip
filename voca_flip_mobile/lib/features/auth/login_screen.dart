@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +61,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const SplashScreen()),
+      );
+    }
+  }
+
+  // Google Sign-In
+  Future<void> _onGoogleSignIn() async {
+    print("_onSigninWithGoogle");
+    log("_onSigninWithGoogle called");
+    final success = await ref.read(authProvider.notifier).loginWithGoogle();
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pushReplacement(
@@ -210,7 +225,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    GoogleSignInButton(onPressed: () {}),
+                    GoogleSignInButton(
+                      onPressed: isLoading ? () {} : _onGoogleSignIn,
+                    ),
 
                     const SizedBox(height: 32),
 
