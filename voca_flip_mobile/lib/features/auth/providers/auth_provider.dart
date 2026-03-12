@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/features/auth/models/auth_model.dart';
 import 'package:voca_flip_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
+import '../../../core/services/google_auth_service.dart';
 
 // ──────────────────────────────────────────────
 //  State
@@ -25,12 +26,11 @@ class AuthState {
     AuthStatus? status,
     AuthResponseModel? authResponse,
     String? errorMessage,
-  }) =>
-      AuthState(
-        status: status ?? this.status,
-        authResponse: authResponse ?? this.authResponse,
-        errorMessage: errorMessage,
-      );
+  }) => AuthState(
+    status: status ?? this.status,
+    authResponse: authResponse ?? this.authResponse,
+    errorMessage: errorMessage,
+  );
 }
 
 // ──────────────────────────────────────────────
@@ -47,10 +47,40 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final result = await _repo.login(email: email, password: password);
+      state = state.copyWith(status: AuthStatus.success, authResponse: result);
+      return true;
+    } catch (e) {
       state = state.copyWith(
-        status: AuthStatus.success,
-        authResponse: result,
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
       );
+      return false;
+    }
+  }
+
+  Future<bool> loginWithGoogle() async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      // 1. Lấy GoogleAuthService
+      final googleAuthService = ref.read(googleAuthServiceProvider);
+
+      // 2. Sign in với Google → Nhận ID Token
+      final idToken = await googleAuthService.signIn();
+
+      if (idToken == null) {
+        // User cancel hoặc có lỗi
+        state = state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Google sign-in cancelled',
+        );
+        return false;
+      }
+
+      // 3. Gửi ID Token lên backend
+      final result = await _repo.loginWithGoogle(idToken: idToken);
+
+      // 4. Update state thành công
+      state = state.copyWith(status: AuthStatus.success, authResponse: result);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -68,12 +98,12 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final result =
-          await _repo.register(name: name, email: email, password: password);
-      state = state.copyWith(
-        status: AuthStatus.success,
-        authResponse: result,
+      final result = await _repo.register(
+        name: name,
+        email: email,
+        password: password,
       );
+      state = state.copyWith(status: AuthStatus.success, authResponse: result);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -96,7 +126,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError(
-      'Override sharedPreferencesProvider with the actual instance');
+    'Override sharedPreferencesProvider with the actual instance',
+  );
 });
 
 final apiServiceProvider = Provider<ApiService>((ref) {
@@ -110,4 +141,12 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(api, prefs);
 });
 
-final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final googleAuthServiceProvider = Provider<GoogleAuthService>((ref) {
+  final service = GoogleAuthService();
+  service.initialize();
+  return service;
+});
+
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);

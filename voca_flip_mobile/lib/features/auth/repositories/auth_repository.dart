@@ -75,6 +75,33 @@ class AuthRepository {
     await _prefs.remove(AppConfig.userIdKey);
   }
 
+  /// POST /api/auth/google
+  /// Đăng nhập bằng Google ID Token
+  Future<AuthResponseModel> loginWithGoogle({required String idToken}) async {
+    final response = await _apiService.post(
+      '/api/auth/google',
+      data: {'idToken': idToken},
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    final result = data['result'] as Map<String, dynamic>;
+    final authResponse = AuthResponseModel.fromJson(result);
+
+    // Lưu tokens vào SharedPreferences
+    await _prefs.setString(AppConfig.tokenKey, authResponse.accessToken);
+    await _prefs.setString(
+      AppConfig.refreshTokenKey,
+      authResponse.refreshToken,
+    );
+
+    // Lưu userId
+    if (authResponse.user != null) {
+      await _prefs.setString(AppConfig.userIdKey, authResponse.user!.id);
+    }
+
+    return authResponse;
+  }
+
   bool get isLoggedIn =>
       (_prefs.getString(AppConfig.tokenKey) ?? '').isNotEmpty;
 }
