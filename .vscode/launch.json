@@ -1,0 +1,28 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "voca_flip_mobile",
+      "cwd": "voca_flip_mobile",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "voca_flip_mobile (profile mode)",
+      "cwd": "voca_flip_mobile",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "voca_flip_mobile (release mode)",
+      "cwd": "voca_flip_mobile",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

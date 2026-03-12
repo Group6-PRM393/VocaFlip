@@ -1,5 +1,6 @@
 package com.vocaflipbackend.service;
 
+import com.vocaflipbackend.dto.request.GoogleLoginRequest;
 import com.vocaflipbackend.dto.request.LoginRequest;
 import com.vocaflipbackend.dto.request.RefreshTokenRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
@@ -20,6 +21,11 @@ public interface AuthService {
      * login
      */
     AuthResponse login(LoginRequest request);
+
+    /**
+     * Google OAuth login
+     */
+    AuthResponse authenticateGoogle(GoogleLoginRequest request) throws Exception;
 
     /**
      * Refresh access token

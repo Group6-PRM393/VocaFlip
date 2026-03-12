@@ -1,13 +1,17 @@
 package com.vocaflipbackend.service.impl;
 
+import com.vocaflipbackend.dto.request.UpdateProfileRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.UserResponse;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.exception.AppException;
+import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.UserMapper;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -44,5 +48,16 @@ public class UserServiceImpl implements UserService {
             User savedUser = userRepository.save(user);
             return userMapper.toResponse(savedUser);
         }).orElseThrow(() -> new RuntimeException("User not found with id " + id));
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(String userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        userMapper.updateEntity(request, user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponse(savedUser);
     }
 }

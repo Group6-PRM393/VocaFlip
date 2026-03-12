@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'constants/app_colors.dart';
-import 'modules/splash/splash_screen.dart';
-import 'providers/auth_provider.dart';
+import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/features/splash/splash_screen.dart';
+import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -23,7 +23,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash", nullable = true)
     private String passwordHash;
 
     @Column(nullable = false)
@@ -51,6 +51,9 @@ public class User extends BaseEntity {
     @Column(name = "is_confirmed_email")
     @Builder.Default
     private Boolean isConfirmedEmail = false;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<SocialAccount> socialAccounts;
 
     // Relationships
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

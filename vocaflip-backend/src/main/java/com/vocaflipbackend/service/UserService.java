@@ -1,5 +1,6 @@
 package com.vocaflipbackend.service;
 
+import com.vocaflipbackend.dto.request.UpdateProfileRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.UserResponse;
 
@@ -13,4 +14,6 @@ public interface UserService {
     Optional<UserResponse> getUserByEmail(String email);
 
     UserResponse updateUser(String id, UserRegisterRequest request);
+
+    UserResponse updateProfile(String userId, UpdateProfileRequest request);
 }

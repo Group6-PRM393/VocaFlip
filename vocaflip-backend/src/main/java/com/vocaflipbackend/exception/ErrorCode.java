@@ -30,6 +30,8 @@ public enum ErrorCode {
     USER_NOT_EXISTED(1019, "User not found", HttpStatus.NOT_FOUND),
     INVALID_TOKEN(1020, "Invalid or expired token", HttpStatus.UNAUTHORIZED),
     INVALID_CREDENTIALS(1021, "Invalid email or password", HttpStatus.UNAUTHORIZED),
+    INVALID_GOOGLE_TOKEN(1402, "Invalid Google ID Token", HttpStatus.UNAUTHORIZED),
+    GOOGLE_AUTH_FAILED(1401, "Google authentication failed", HttpStatus.UNAUTHORIZED),
     // Study session errors
     SESSION_NOT_FOUND(1019, "Study session not found", HttpStatus.NOT_FOUND),
     DECK_EMPTY(1020, "Deck has no cards to study", HttpStatus.BAD_REQUEST),

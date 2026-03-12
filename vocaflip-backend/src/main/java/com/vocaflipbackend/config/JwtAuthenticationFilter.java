@@ -1,5 +1,6 @@
 package com.vocaflipbackend.config;
 
+import com.vocaflipbackend.utils.JwtUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
