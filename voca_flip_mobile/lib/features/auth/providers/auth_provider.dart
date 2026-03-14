@@ -114,6 +114,21 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<bool> forgotPassword({required String email}) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.forgotPassword(email: email);
+      state = state.copyWith(status: AuthStatus.success);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _repo.logout();
     state = const AuthState();
