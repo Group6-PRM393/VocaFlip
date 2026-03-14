@@ -1,11 +1,14 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/core/services/local_notification_service.dart';
+import 'package:voca_flip_mobile/features/auth/forgot_password_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
 import 'package:voca_flip_mobile/features/splash/splash_screen.dart';
 import 'package:voca_flip_mobile/features/auth/register_screen.dart';
@@ -63,6 +66,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
     if (!mounted) return;
     if (success) {
+      if (!kIsWeb) {
+        await LocalNotificationService.instance.showNotification(
+          id: 0,
+          title: 'Đăng nhập thành công <3',
+          body: 'Chào mừng bạn quay lại VocaFlip! (Android/iOS)',
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đăng nhập thành công <3 Chào mừng bạn quay lại VocaFlip! (Web)',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SplashScreen()),
       );
@@ -76,6 +95,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final success = await ref.read(authProvider.notifier).loginWithGoogle();
     if (!mounted) return;
     if (success) {
+      if (!kIsWeb) {
+        await LocalNotificationService.instance.showNotification(
+          id: 1,
+          title: 'Đăng nhập Google thành công <3',
+          body: 'Chào mừng bạn quay lại VocaFlip! (Android/iOS)',
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đăng nhập Google thành công <3 Chào mừng bạn quay lại VocaFlip! (Web)',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const SplashScreen()),
       );
@@ -183,7 +218,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,

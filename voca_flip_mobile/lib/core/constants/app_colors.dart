@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Bảng màu chính của ứng dụng VocaFlip.
 class AppColors {
-  AppColors._(); 
+  AppColors._();
 
   // ── Màu nền (Light Theme) ──
   static const Color scaffoldBackground = Color(0xFFF6F6F8); // Nền xám nhạt
@@ -55,6 +55,15 @@ class AppColors {
   static const Color authHeroAccent2 = Color(0xFF60A5FA); // Blue 400
   static const Color authHeroAccent3 = Color(0xFF93C5FD); // Blue 300
   static const Color authHeroAccent4 = Color(0xFFBFDBFE); // Blue 200
+
+  // ── Stitch Auth Colors ──
+  static const Color stitchAuthPrimary = Color(0xFF307DE8);
+  static const Color stitchAuthPrimarySoft = Color(0xFF8AB8F3);
+  static const Color stitchAuthHeading = Color(0xFF111418);
+  static const Color stitchAuthBody = Color(0xFF637288);
+  static const Color stitchAuthHint = Color(0xFF9CA3AF);
+  static const Color stitchAuthBorder = Color(0xFFD1D5DB);
+  static const Color stitchAuthInputFill = Color(0xFFF9FAFB);
 
   // ── Splash Screen Colors ──
   static const Color splashBgDark = Color(0xFF1E3A8A); // Blue 900
