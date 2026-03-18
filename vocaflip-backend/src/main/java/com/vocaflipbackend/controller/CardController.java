@@ -5,6 +5,7 @@ import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.CardResponse;
 import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.service.CardService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +48,7 @@ public class CardController {
                 .imageUrl(imageUrl)
                 .build();
 
-        String userId = "u001"; // Hardcoded user ID for demonstration
+        String userId = SecurityUtils.getCurrentUserId();
         return ApiResponse.<CardResponse>builder()
                 .message("Card created successfully")
                 .result(cardService.createCard(request, image, userId, deckId))
