@@ -104,7 +104,35 @@ class AuthRepository {
 
   /// POST /api/auth/forgot-password
   Future<void> forgotPassword({required String email}) async {
-    await _apiService.post('/api/auth/forgot-password', data: {'email': email});
+    await requestOtp(email: email);
+  }
+
+  /// POST /api/auth/request-otp
+  Future<void> requestOtp({required String email}) async {
+    await _apiService.post('/api/auth/request-otp', data: {'email': email});
+  }
+
+  /// POST /api/auth/verify-otp
+  Future<void> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    await _apiService.post(
+      '/api/auth/verify-otp',
+      data: {'email': email, 'otpCode': otpCode},
+    );
+  }
+
+  /// POST /api/auth/reset-password/{otp}
+  Future<void> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    await _apiService.post(
+      '/api/auth/reset-password/$otpCode',
+      data: {'email': email, 'newPassword': newPassword},
+    );
   }
 
   bool get isLoggedIn =>

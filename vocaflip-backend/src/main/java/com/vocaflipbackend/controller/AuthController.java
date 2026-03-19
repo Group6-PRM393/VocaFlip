@@ -1,12 +1,13 @@
 package com.vocaflipbackend.controller;
 
-import com.vocaflipbackend.dto.request.GoogleLoginRequest;
-import com.vocaflipbackend.dto.request.LoginRequest;
-import com.vocaflipbackend.dto.request.RefreshTokenRequest;
-import com.vocaflipbackend.dto.request.UserRegisterRequest;
+import com.vocaflipbackend.dto.request.*;
 import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.AuthResponse;
+import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.service.AuthService;
+import com.vocaflipbackend.service.IEmailService;
+import com.vocaflipbackend.service.IRedisOtpService;
+import com.vocaflipbackend.utils.OtpUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,10 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * Authentication Controller
@@ -30,6 +30,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final OtpUtil otpUtil;
+    private final IRedisOtpService redisOtpService;
+    private final IEmailService emailService;
+
 
     /**
      * Auth with Google
@@ -70,11 +74,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody UserRegisterRequest request) {
         log.info("Register request received for email: {}", request.getEmail());
         AuthResponse authResponse = authService.register(request);
+
+        // Send 4-digit OTP immediately after successful registration.
+        String otp = otpUtil.generateOtp();
+        redisOtpService.saveOtp(request.getEmail(), otp);
+        emailService.sendOtpEmail(request.getEmail(), otp);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.<AuthResponse>builder()
                         .code(HttpStatus.CREATED.value())
-                        .message("User registered successfully")
+                        .message("User registered successfully. Please verify your email with OTP")
                         .result(authResponse)
                         .build());
     }
@@ -129,4 +139,69 @@ public class AuthController {
                         .message("Logout successful")
                         .build());
     }
+
+
+    /**
+     * Request OTP to verify email or reset password
+     * OTP will be expired after 5 minute
+     */
+
+    @PostMapping("/request-otp")
+    @Operation(summary = "Yêu cầu mã xác thực OTP")
+    public ResponseEntity<ApiResponse<Void>> requestOtp(@RequestBody OtpRequest body){
+
+        String email = body.getEmail();
+
+        String otp = otpUtil.generateOtp();
+
+        redisOtpService.saveOtp(email, otp);
+
+        emailService.sendOtpEmail(email, otp);
+
+        return ResponseEntity
+                .ok()
+                .body(ApiResponse.<Void>builder()
+                        .code(1000)
+                        .message("OTP code sent successfully")
+                        .build());
+    }
+
+    @PostMapping("/verify-otp")
+    @Operation(summary = "Xác thực OTP")
+    public ResponseEntity<ApiResponse<Void>> verifyOtp(@RequestBody VerifyRequest body){
+        boolean verified = authService.verifyEmail(body.getEmail(), body.getOtpCode());
+
+        if (!verified) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(ApiResponse.<Void>builder()
+                            .code(ErrorCode.INVALID_OTP.getCode())
+                            .message(ErrorCode.INVALID_OTP.getMessage())
+                            .build());
+        }
+
+        return ResponseEntity
+                .ok()
+                .body(ApiResponse.<Void>builder()
+                        .code(1000)
+                        .message("Email verified successfully")
+                        .build());
+    }
+
+    @PostMapping("/reset-password/{OTP}")
+    @Operation(summary = "Đặt lại mật khẩu", description = "Đặt lại mật khẩu mới cho tài khoản đã xác thực OTP thành công")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody ResetPasswordRequest request,
+                                                           @PathVariable String OTP) {
+        String email = request.getEmail();
+        String newPassword = request.getNewPassword();
+
+        authService.resetPassword(email, OTP, newPassword);
+        return ResponseEntity
+                .ok()
+                .body(ApiResponse.<Void>builder()
+                        .code(1000)
+                        .message("Password reset successfully")
+                        .build());
+    }
+
 }

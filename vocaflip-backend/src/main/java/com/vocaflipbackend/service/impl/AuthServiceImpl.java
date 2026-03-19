@@ -7,6 +7,7 @@ import com.vocaflipbackend.entity.SocialAccount;
 import com.vocaflipbackend.enums.Provider;
 import com.vocaflipbackend.repository.SocialAccountRepository;
 import com.vocaflipbackend.service.GoogleOAuthService;
+import com.vocaflipbackend.service.IRedisOtpService;
 import com.vocaflipbackend.utils.JwtUtils;
 import com.vocaflipbackend.dto.request.LoginRequest;
 import com.vocaflipbackend.dto.request.RefreshTokenRequest;
@@ -51,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final GoogleOAuthService googleOAuthService;
     private final SocialAccountRepository socialAccountRepository;
+    private final IRedisOtpService redisOtpService;
 
     @Override
     @Transactional
@@ -102,6 +104,9 @@ public class AuthServiceImpl implements AuthService {
         // Load user
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (!user.getIsConfirmedEmail()){
+            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
 
         // Generate tokens
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -241,6 +246,45 @@ public class AuthServiceImpl implements AuthService {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
         return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public void resetPassword(String email, String otpCode, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String savedOtp = redisOtpService.getOtp(email);
+        if (savedOtp != null && savedOtp.equals(otpCode)) {
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            redisOtpService.deleteOtp(email);
+            log.info("Password reset successful for email: {}", email);
+        } else {
+            log.warn("Invalid OTP code provided for email: {}", email);
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+
+    }
+
+    @Override
+    public boolean verifyEmail(String email, String otpCode) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (user.getIsConfirmedEmail()) {
+            log.info("Email already verified for email: {}", email);
+            return true;
+        }
+
+        String savedOtp = redisOtpService.getOtp(email);
+        if (savedOtp != null && savedOtp.equals(otpCode)) {
+            user.setIsConfirmedEmail(true);
+            userRepository.save(user);
+            redisOtpService.deleteOtp(email);
+            log.info("Email verified successfully for email: {}", email);
+            return true;
+        } else {
+            log.warn("Invalid OTP code provided for email verification: {}", email);
+            return false;
+        }
     }
 
     /**

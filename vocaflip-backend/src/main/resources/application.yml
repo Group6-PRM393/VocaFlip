@@ -1,4 +1,26 @@
 spring:
+  data:
+    redis:
+      url: ${REDIS_URL}
+  #  data:
+#    redis:
+#      username: ${REDIS_USERNAME}
+#      host: ${REDIS_HOST}
+#      port: ${REDIS_PORT}
+#      password: ${REDIS_PASSWORD}
+#      ssl:
+#        enable: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dotuananh2516@gmail.com
+    password: ${GOOGLE_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   security:
     oauth2:
       client:
