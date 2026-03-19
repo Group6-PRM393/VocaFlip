@@ -176,6 +176,14 @@ public class StudyServiceImpl implements StudyService {
 
         userProgressRepository.save(progress);
 
+        long masteredWords = userProgressRepository.countByUserIdAndStatus(
+                session.getUser().getId(),
+                LearningStatus.MASTERED
+        );
+        User currentUser = session.getUser();
+        currentUser.setMasteredWords((int) masteredWords);
+        userRepository.save(currentUser);
+
         //Lưu lịch sử phiên học (SessionCard)
         SessionCard sessionCard = SessionCard.builder()
                 .session(session)
