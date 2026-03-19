@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:voca_flip_mobile/features/deck/repositories/card_repository.dart';
 import 'package:voca_flip_mobile/features/deck/models/card_model.dart';
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
@@ -17,3 +18,6 @@ final cardListProvider = FutureProvider.family<List<CardModel>, String>((
   final repo = await ref.watch(cardRepositoryProvider.future);
   return repo.getCardsByDeck(deckId);
 });
+
+
+final cardActionLoadingProvider = StateProvider<bool>((ref) => false);

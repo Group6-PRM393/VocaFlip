@@ -6,6 +6,7 @@ import 'package:voca_flip_mobile/features/deck/providers/card_provider.dart';
 import 'package:voca_flip_mobile/features/deck/models/card_model.dart';
 import 'package:voca_flip_mobile/features/deck/screens/edit_deck_screen.dart';
 import 'package:voca_flip_mobile/features/study/study_screen.dart';
+import 'package:voca_flip_mobile/features/card/screens/create_card_screen.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -274,12 +275,25 @@ class DeckDetailScreen extends ConsumerWidget {
                   right: 18,
                   bottom: 98,
                   child: FloatingActionButton(
-                    backgroundColor: const Color(0xFF1E5EFF),
-                    onPressed: () {
-                      // TODO: Add card
-                    },
-                    child: const Icon(Icons.add, color: Colors.white),
-                  ),
+  backgroundColor: const Color(0xFF1E5EFF),
+  onPressed: () async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateCardScreen(deckId: deckId),
+      ),
+    );
+
+    if (created == true) {
+      ref.invalidate(cardListProvider(deckId));
+      ref.invalidate(deckDetailProvider(deckId));
+
+      await ref.read(cardListProvider(deckId).future);
+      await ref.read(deckDetailProvider(deckId).future);
+    }
+  },
+  child: const Icon(Icons.add, color: Colors.white),
+),
                 ),
 
                 // Bottom actions
