@@ -4,6 +4,7 @@ import com.vocaflipbackend.dto.request.CategoryRequest;
 import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.CategoryResponse;
 import com.vocaflipbackend.service.CategoryService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,9 +24,9 @@ public class CategoryController {
     @PostMapping
     @Operation(summary = "Tạo danh mục mới")
     public ApiResponse<CategoryResponse> createCategory(
-            @RequestParam String userId,
             @RequestBody @Valid CategoryRequest request
     ) {
+        String userId = SecurityUtils.getCurrentUserId();
         CategoryResponse response = categoryService.createCategory(userId, request);
 
         return ApiResponse.<CategoryResponse>builder()
@@ -37,9 +38,8 @@ public class CategoryController {
 
     @GetMapping
     @Operation(summary = "Lấy danh sách danh mục của User")
-    public ApiResponse<List<CategoryResponse>> getAllCategories(
-            @RequestParam String userId
-    ) {
+        public ApiResponse<List<CategoryResponse>> getAllCategories() {
+                String userId = SecurityUtils.getCurrentUserId();
         List<CategoryResponse> response = categoryService.getAllCategories(userId);
 
         return ApiResponse.<List<CategoryResponse>>builder()

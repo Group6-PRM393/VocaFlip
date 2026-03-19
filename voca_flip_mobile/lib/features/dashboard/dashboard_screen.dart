@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_screen.dart';
 import 'package:voca_flip_mobile/features/profile/learning_history_activity_screen.dart';
-import 'package:voca_flip_mobile/features/quiz/screens/quiz_settings_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';
@@ -78,15 +78,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       //   ),
       // );
       case 2:
-        return Center(
-          child: Text(
-            'Coming soon...',
-            style: GoogleFonts.lexend(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        );
+        return const LearningProgressStatsScreen();
       case 3:
         return const CategoryManagementScreen();
       case 4:

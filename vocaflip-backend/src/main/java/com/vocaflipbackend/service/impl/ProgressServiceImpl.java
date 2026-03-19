@@ -1,7 +1,10 @@
 package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.response.DashboardStatsResponse;
+import com.vocaflipbackend.dto.response.LearningTrajectoryPointResponse;
+import com.vocaflipbackend.dto.response.LearningTrajectoryResponse;
 import com.vocaflipbackend.entity.StudySession;
+import com.vocaflipbackend.repository.SessionCardRepository;
 import com.vocaflipbackend.repository.StudySessionRepository;
 import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.service.ProgressService;
@@ -9,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +22,7 @@ public class ProgressServiceImpl implements ProgressService {
 
     private final UserProgressRepository progressRepository;
     private final StudySessionRepository sessionRepository;
+    private final SessionCardRepository sessionCardRepository;
 
     @Override
     public DashboardStatsResponse getDashboardStats(String userId) {
@@ -45,13 +51,17 @@ public class ProgressServiceImpl implements ProgressService {
 
         // Tính tổng thời gian học (giả sử durationSeconds lưu trong StudySession)
         long totalSeconds = sessions.stream().mapToLong(StudySession::getDurationSeconds).sum();
+        double accuracyPercent = calculateAccuracyPercent(userId);
+        LearningTrajectoryResponse trajectory = buildLearningTrajectory(sessions);
 
         return DashboardStatsResponse.builder()
                 .streakDays(streak)
                 .totalWords((int) totalWords)
                 .totalStudyTime(formatDuration(totalSeconds))
+            .accuracyPercent(accuracyPercent)
                 .wordMastery(masteryMap)
                 .activityLog(activityLog)
+            .learningTrajectory(trajectory)
                 .build();
     }
 
@@ -102,7 +112,68 @@ public class ProgressServiceImpl implements ProgressService {
             entry.put("level", level);
             result.add(entry);
         });
+        result.sort(Comparator.comparing(entry -> entry.get("date").toString()));
         return result;
+    }
+
+    private double calculateAccuracyPercent(String userId) {
+        long total = sessionCardRepository.countAllByUserId(userId);
+        if (total <= 0) {
+            return 0;
+        }
+        long remembered = sessionCardRepository.countRememberedByUserId(userId);
+        double percent = (remembered * 100.0) / total;
+        return Math.round(percent * 10.0) / 10.0;
+    }
+
+    private LearningTrajectoryResponse buildLearningTrajectory(List<StudySession> sessions) {
+        YearMonth currentMonth = YearMonth.now();
+        YearMonth previousMonth = currentMonth.minusMonths(1);
+
+        int currentMonthLearnedWords = 0;
+        int previousMonthLearnedWords = 0;
+
+        Map<LocalDate, Integer> dailySeriesMap = new HashMap<>();
+
+        for (StudySession session : sessions) {
+            LocalDate date = session.getCreatedAt().toLocalDate();
+            int value = session.getTotalCards() != null ? session.getTotalCards() : 0;
+
+            YearMonth ym = YearMonth.from(date);
+            if (ym.equals(currentMonth)) {
+                currentMonthLearnedWords += value;
+            } else if (ym.equals(previousMonth)) {
+                previousMonthLearnedWords += value;
+            }
+
+            dailySeriesMap.put(date, dailySeriesMap.getOrDefault(date, 0) + value);
+        }
+
+        List<LearningTrajectoryPointResponse> series = dailySeriesMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> LearningTrajectoryPointResponse.builder()
+                        .date(entry.getKey().toString())
+                        .value(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        double trendPercent;
+        if (previousMonthLearnedWords == 0) {
+            trendPercent = currentMonthLearnedWords > 0 ? 100.0 : 0.0;
+        } else {
+            trendPercent = ((currentMonthLearnedWords - previousMonthLearnedWords) * 100.0)
+                    / previousMonthLearnedWords;
+        }
+
+        trendPercent = Math.round(trendPercent * 10.0) / 10.0;
+
+        return LearningTrajectoryResponse.builder()
+                .currentMonthLearnedWords(currentMonthLearnedWords)
+                .previousMonthLearnedWords(previousMonthLearnedWords)
+                .trendPercent(trendPercent)
+                .series(series)
+                .build();
     }
 
     private String formatDuration(long totalSeconds) {
