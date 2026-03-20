@@ -32,6 +32,8 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(1021, "Invalid email or password", HttpStatus.UNAUTHORIZED),
     INVALID_GOOGLE_TOKEN(1402, "Invalid Google ID Token", HttpStatus.UNAUTHORIZED),
     GOOGLE_AUTH_FAILED(1401, "Google authentication failed", HttpStatus.UNAUTHORIZED),
+    EMAIL_NOT_VERIFIED(1022, "Email not verified", HttpStatus.UNAUTHORIZED),
+    INVALID_OTP(1023, "Invalid or expired OTP code", HttpStatus.BAD_REQUEST),
     // Study session errors
     SESSION_NOT_FOUND(1019, "Study session not found", HttpStatus.NOT_FOUND),
     DECK_EMPTY(1020, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
