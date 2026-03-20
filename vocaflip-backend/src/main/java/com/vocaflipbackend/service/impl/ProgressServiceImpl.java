@@ -4,7 +4,7 @@ import com.vocaflipbackend.dto.response.LearningProgressStatsResponse;
 import com.vocaflipbackend.dto.response.LearningTrajectoryPointResponse;
 import com.vocaflipbackend.dto.response.LearningTrajectoryResponse;
 import com.vocaflipbackend.entity.StudySession;
-import com.vocaflipbackend.repository.SessionCardRepository;
+import com.vocaflipbackend.repository.QuizAttemptRepository;
 import com.vocaflipbackend.repository.StudySessionRepository;
 import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.service.ProgressService;
@@ -22,7 +22,7 @@ public class ProgressServiceImpl implements ProgressService {
 
     private final UserProgressRepository progressRepository;
     private final StudySessionRepository sessionRepository;
-    private final SessionCardRepository sessionCardRepository;
+    private final QuizAttemptRepository quizAttemptRepository;
 
     @Override
     public LearningProgressStatsResponse getLearningProgressStats(String userId) {
@@ -50,7 +50,7 @@ public class ProgressServiceImpl implements ProgressService {
 
         // Tính tổng thời gian học (giả sử durationSeconds lưu trong StudySession)
         long totalSeconds = sessions.stream().mapToLong(StudySession::getDurationSeconds).sum();
-        double accuracyPercent = calculateAccuracyPercent(userId);
+        double accuracyPercent = calculateQuizAccuracy(userId);
         LearningTrajectoryResponse trajectory = buildLearningTrajectory(sessions);
 
         return LearningProgressStatsResponse.builder()
@@ -61,6 +61,20 @@ public class ProgressServiceImpl implements ProgressService {
                 .wordMastery(masteryMap)
                 .learningTrajectory(trajectory)
                 .build();
+    }
+
+
+    private double calculateQuizAccuracy(String userId) {
+        long totalQuestions = quizAttemptRepository.sumTotalQuestionsByUserId(userId);
+        long totalCorrectAnswers = quizAttemptRepository.sumCorrectAnswersByUserId(userId);
+
+        double accuracyPercent = 0.0;
+        if (totalQuestions > 0) {
+            accuracyPercent = (totalCorrectAnswers * 100.0) / totalQuestions;
+            accuracyPercent = Math.round(accuracyPercent * 10.0) / 10.0;
+        }
+
+       return accuracyPercent;
     }
 
     private int calculateStreak(List<StudySession> sessions) {
@@ -89,16 +103,6 @@ public class ProgressServiceImpl implements ProgressService {
             checkDate = checkDate.minusDays(1);
         }
         return streak;
-    }
-
-    private double calculateAccuracyPercent(String userId) {
-        long total = sessionCardRepository.countAllByUserId(userId);
-        if (total <= 0) {
-            return 0;
-        }
-        long remembered = sessionCardRepository.countRememberedByUserId(userId);
-        double percent = (remembered * 100.0) / total;
-        return Math.round(percent * 10.0) / 10.0;
     }
 
     private LearningTrajectoryResponse buildLearningTrajectory(List<StudySession> sessions) {
