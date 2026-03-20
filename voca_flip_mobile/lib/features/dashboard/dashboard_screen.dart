@@ -35,48 +35,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         return const HomeTab();
       case 1:
         return const LearningHistoryActivityScreen();
-      // return Center(
-      //   child: Column(
-      //     mainAxisAlignment: MainAxisAlignment.center,
-      //     children: [
-      //       Text(
-      //         'Coming soon...',
-      //         style: GoogleFonts.lexend(
-      //           fontSize: 16,
-      //           color: AppColors.textSecondary,
-      //         ),
-      //       ),
-      //       const SizedBox(height: 20),
-      //       ElevatedButton(
-      //         onPressed: () {
-      //           Navigator.push(
-      //             context,
-      //             MaterialPageRoute(
-      //               builder: (context) =>
-      //                   const QuizSettingsScreen(deckId: "deck-test"),
-      //             ),
-      //           );
-      //         },
-      //         style: ElevatedButton.styleFrom(
-      //           backgroundColor: AppColors.primary,
-      //           foregroundColor: Colors.white,
-      //           padding: const EdgeInsets.symmetric(
-      //             horizontal: 24,
-      //             vertical: 12,
-      //           ),
-      //           shape: RoundedRectangleBorder(
-      //             borderRadius: BorderRadius.circular(8),
-      //           ),
-      //         ),
-      //         child: Text(
-      //           " Take Quiz",
-      //           style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
-      //         ),
-      //       ),
-      //       // ---------------------------------
-      //     ],
-      //   ),
-      // );
       case 2:
         return const LearningProgressStatsScreen();
       case 3:
@@ -97,7 +55,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget? _buildFab() {
-    // Chỉ hiện nút "+" tạo deck trên tab Home (index 0)
     if (_selectedIndex != 0) return null;
     return FloatingActionButton(
       onPressed: () {

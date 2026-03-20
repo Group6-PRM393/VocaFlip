@@ -70,7 +70,7 @@ class _LearningProgressStatsScreenState
       _userName = user['name']?.toString() ?? 'User';
       _avatarUrl = user['avatarUrl']?.toString();
 
-      final statsRes = await api.get('/api/stats/dashboard/me');
+      final statsRes = await api.get('/api/learning-progress/me');
 
       final stats = Map<String, dynamic>.from(statsRes.data['result'] as Map);
 
@@ -117,13 +117,6 @@ class _LearningProgressStatsScreenState
         ? totalFromApi
         : (_mastered + _review + _learning + _newWords);
 
-    final activity = (stats['activityLog'] is List)
-        ? (stats['activityLog'] as List)
-              .whereType<Map>()
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList()
-        : <Map<String, dynamic>>[];
-
     final trajectoryRaw = (stats['learningTrajectory'] is Map)
         ? Map<String, dynamic>.from(stats['learningTrajectory'] as Map)
         : <String, dynamic>{};
@@ -138,14 +131,7 @@ class _LearningProgressStatsScreenState
               .toList()
         : <Map<String, dynamic>>[];
 
-    if (trajectorySeries.isNotEmpty) {
-      _last14DaySeries = _buildLast14DaysSeriesFromSeries(trajectorySeries);
-    } else {
-      _thisMonthActivity = _thisMonthActivity > 0
-          ? _thisMonthActivity
-          : _computeCurrentMonthActivity(activity);
-      _last14DaySeries = _buildLast14DaysSeries(activity);
-    }
+    _last14DaySeries = _buildLast14DaysSeriesFromSeries(trajectorySeries);
   }
 
   int _toInt(dynamic value) {
@@ -160,37 +146,6 @@ class _LearningProgressStatsScreenState
     if (value is int) return value.toDouble();
     if (value is String) return double.tryParse(value) ?? 0;
     return 0;
-  }
-
-  int _computeCurrentMonthActivity(List<Map<String, dynamic>> activity) {
-    final now = DateTime.now();
-    var total = 0;
-    for (final item in activity) {
-      final date = DateTime.tryParse(item['date']?.toString() ?? '');
-      if (date == null) continue;
-      if (date.year == now.year && date.month == now.month) {
-        total += _toInt(item['count']);
-      }
-    }
-    return total;
-  }
-
-  List<int> _buildLast14DaysSeries(List<Map<String, dynamic>> activity) {
-    final byDate = <String, int>{};
-    for (final item in activity) {
-      final date = item['date']?.toString();
-      if (date == null || date.isEmpty) continue;
-      byDate[date] = _toInt(item['count']);
-    }
-
-    final today = DateTime.now();
-    final result = <int>[];
-    for (var i = 13; i >= 0; i--) {
-      final day = today.subtract(Duration(days: i));
-      final key = _yyyyMmDd(day);
-      result.add(byDate[key] ?? 0);
-    }
-    return result;
   }
 
   List<int> _buildLast14DaysSeriesFromSeries(
@@ -332,7 +287,6 @@ class _LearningProgressStatsScreenState
             label: 'ACCURACY',
             value: '${_accuracyPercent.toStringAsFixed(1)}%',
             iconColor: AppColors.primaryLight,
-            helperText: 'Remembered / Total answers',
           ),
         ),
       ],
@@ -344,7 +298,6 @@ class _LearningProgressStatsScreenState
     required String label,
     required String value,
     required Color iconColor,
-    String? helperText,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -379,15 +332,6 @@ class _LearningProgressStatsScreenState
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (helperText != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              helperText,
-              style: AppTextStyles.caption.copyWith(fontSize: 10),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ],
       ),
     );

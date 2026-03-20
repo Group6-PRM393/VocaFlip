@@ -8,11 +8,14 @@ import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.entity.UserProgress;
+import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.CardMapper;
 import com.vocaflipbackend.repository.CardRepository;
 import com.vocaflipbackend.repository.DeckRepository;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CardService;
 import com.vocaflipbackend.service.CloudinaryService;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,6 +40,7 @@ public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
+    private final UserProgressRepository userProgressRepository;
     private final CardMapper cardMapper;
     private final CloudinaryService cloudinaryService;
     private final RestTemplate restTemplate;
@@ -69,6 +74,20 @@ public class CardServiceImpl implements CardService {
         }
 
         Card savedCard = cardRepository.save(card);
+
+        userProgressRepository.findByUserIdAndCardId(userId, savedCard.getId())
+            .orElseGet(() -> userProgressRepository.save(
+                UserProgress.builder()
+                    .user(user)
+                    .card(savedCard)
+                    .status(LearningStatus.NEW)
+                    .reviewCount(0)
+                    .intervalDays(0)
+                    .easeFactor(BigDecimal.valueOf(2.5))
+                    .correctCount(0)
+                    .incorrectCount(0)
+                    .build()
+            ));
 
         // Update deck total cards & update by user
         int currentTotal = deck.getTotalCards() != null ? deck.getTotalCards() : 0;
