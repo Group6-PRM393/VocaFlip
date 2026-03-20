@@ -115,6 +115,77 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<bool> forgotPassword({required String email}) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.requestOtp(email: email);
+      state = state.copyWith(status: AuthStatus.success);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> requestOtp({required String email}) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.requestOtp(email: email);
+      state = state.copyWith(status: AuthStatus.success);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> verifyOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.verifyOtp(email: email, otpCode: otpCode);
+      state = state.copyWith(status: AuthStatus.success);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      await _repo.resetPassword(
+        email: email,
+        otpCode: otpCode,
+        newPassword: newPassword,
+      );
+      state = state.copyWith(status: AuthStatus.success);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _repo.logout();
     // Xóa cache profile của user cũ để khi login user mới sẽ fetch lại

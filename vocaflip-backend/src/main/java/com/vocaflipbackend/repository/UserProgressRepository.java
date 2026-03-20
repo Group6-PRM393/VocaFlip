@@ -1,7 +1,10 @@
 package com.vocaflipbackend.repository;
 
+import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.entity.UserProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -22,5 +25,8 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Stri
      */
     List<UserProgress> findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(String userId, LocalDateTime dateTime);
 
-    List<Object[]> countByStatus(String userId);
+    @Query("SELECT up.status, COUNT(up) FROM UserProgress up WHERE up.user.id = :userId GROUP BY up.status")
+    List<Object[]> countByStatus(@Param("userId") String userId);
+
+    long countByUserIdAndStatus(String userId, LearningStatus status);
 }

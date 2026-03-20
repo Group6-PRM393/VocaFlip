@@ -53,12 +53,14 @@ class _HomeTabState extends State<HomeTab> {
         api.get('/api/user/me'),
         api.get('/api/decks/my-decks'),
         api.get('/api/study/due-cards-count'),
+        api.get('/api/learning-progress/me'),
       ]);
 
       final userResult = results[0].data['result'];
+      final statsResult = results[3].data['result'];
       _userName = userResult['name'] ?? 'User';
       _avatarUrl = userResult['avatarUrl'];
-      _streakDays = userResult['streakDays'] ?? 0;
+      _streakDays = statsResult['streakDays'] ?? userResult['streakDays'] ?? 0;
       _masteredWords = userResult['masteredWords'] ?? 0;
 
       final deckResult = results[1].data['result'] as List<dynamic>;

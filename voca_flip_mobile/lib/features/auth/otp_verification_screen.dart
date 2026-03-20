@@ -2,21 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/features/auth/login_screen.dart';
+import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
 import 'package:voca_flip_mobile/features/auth/reset_password_screen.dart';
 
-class OtpVerificationScreen extends StatefulWidget {
-  final String email;
+enum OtpFlow { passwordReset, emailVerification }
 
-  const OtpVerificationScreen({super.key, required this.email});
+class OtpVerificationScreen extends ConsumerStatefulWidget {
+  final String email;
+  final OtpFlow flow;
+
+  const OtpVerificationScreen({
+    super.key,
+    required this.email,
+    this.flow = OtpFlow.passwordReset,
+  });
 
   @override
-  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  ConsumerState<OtpVerificationScreen> createState() =>
+      _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   static const _otpLength = 4;
   static const _initialSeconds = 30;
   static const _illustrationUrl =
@@ -26,6 +37,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   late final List<FocusNode> _focusNodes;
   Timer? _timer;
   int _remainingSeconds = _initialSeconds;
+  bool _isSubmitting = false;
+  bool _isResending = false;
 
   @override
   void initState() {
@@ -92,7 +105,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   Future<void> _onResendCode() async {
-    if (!_canResend) return;
+    if (!_canResend || _isSubmitting || _isResending) return;
+
+    setState(() => _isResending = true);
+    final success = await ref
+        .read(authProvider.notifier)
+        .requestOtp(email: widget.email);
+    if (!mounted) return;
+    setState(() => _isResending = false);
+
+    if (!success) return;
 
     _startTimer();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -107,6 +129,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   Future<void> _onVerify() async {
+    if (_isSubmitting || _isResending) return;
+
     final hasEmptyDigit = _controllers.any(
       (controller) => controller.text.isEmpty,
     );
@@ -120,9 +144,48 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       return;
     }
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ResetPasswordScreen()));
+    setState(() => _isSubmitting = true);
+    final success = await ref
+        .read(authProvider.notifier)
+        .verifyOtp(email: widget.email, otpCode: _otpCode);
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (!success) {
+      final errorMessage = ref.read(authProvider).errorMessage;
+      if (errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (widget.flow == OtpFlow.passwordReset) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              ResetPasswordScreen(email: widget.email, otpCode: _otpCode),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Xac thuc email thanh cong, vui long dang nhap'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(isRegisterSuccess: true),
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   String _formatSeconds(int seconds) {
@@ -290,14 +353,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         const SizedBox(height: 8),
         TextButton(
           onPressed: _canResend ? _onResendCode : null,
-          child: Text(
-            'Resend Code',
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
-          ),
+          child: _isResending
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(
+                  'Resend Code',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
         ),
       ],
     );
@@ -308,7 +377,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       width: double.infinity,
       height: 48,
       child: ElevatedButton(
-        onPressed: _onVerify,
+        onPressed: _isSubmitting || _isResending ? null : _onVerify,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
@@ -317,14 +386,23 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Text(
-          'Verify',
-          style: GoogleFonts.lexend(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textOnPrimary,
-          ),
-        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.textOnPrimary,
+                ),
+              )
+            : Text(
+                'Verify',
+                style: GoogleFonts.lexend(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textOnPrimary,
+                ),
+              ),
       ),
     );
   }

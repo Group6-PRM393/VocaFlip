@@ -41,4 +41,14 @@ public interface AuthService {
      * Get current user's information
      */
     UserResponse getCurrentUser();
+
+    /**
+     * Reset Password with OTP code
+     */
+    void resetPassword(String email, String otpCode, String newPassword);
+
+    /**
+     * verify email with OTP code
+     */
+    boolean verifyEmail(String email, String otpCode);
 }

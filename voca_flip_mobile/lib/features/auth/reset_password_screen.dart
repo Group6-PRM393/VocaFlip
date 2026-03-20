@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/features/auth/login_screen.dart';
+import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
 
-class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+class ResetPasswordScreen extends ConsumerStatefulWidget {
+  final String email;
+  final String otpCode;
+
+  const ResetPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otpCode,
+  });
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   static const _specialCharacters = r'''!@#$%^&*(),.?":{}|<>_-+=~`[]\/;''';
 
   final _passwordController = TextEditingController();
@@ -17,6 +27,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String? _confirmPasswordError;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -52,6 +63,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   Future<void> _onUpdatePassword() async {
+    if (_isSubmitting) return;
+
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
@@ -60,6 +73,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     if (password.isEmpty || confirmPassword.isEmpty) {
+      _showSnackBar('Vui long nhap day du thong tin', Colors.redAccent);
       return;
     }
 
@@ -69,10 +83,32 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     if (!_hasMinLength || !_hasUppercase || !_hasSpecialCharacter) {
+      _showSnackBar('Mat khau chua dat yeu cau', Colors.redAccent);
       return;
     }
 
-    _showSnackBar('Mật khẩu đã được cập nhật', Colors.green);
+    setState(() => _isSubmitting = true);
+    final success = await ref
+        .read(authProvider.notifier)
+        .resetPassword(
+          email: widget.email,
+          otpCode: widget.otpCode,
+          newPassword: password,
+        );
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (!success) {
+      final errorMessage = ref.read(authProvider).errorMessage;
+      _showSnackBar(errorMessage ?? 'Khong the doi mat khau', Colors.redAccent);
+      return;
+    }
+
+    _showSnackBar('Mat khau da duoc cap nhat', Colors.green);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => route.isFirst,
+    );
   }
 
   void _showSnackBar(String message, Color color) {
@@ -362,7 +398,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         width: double.infinity,
         height: 56,
         child: ElevatedButton(
-          onPressed: _onUpdatePassword,
+          onPressed: _isSubmitting ? null : _onUpdatePassword,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.textOnPrimary,
@@ -371,20 +407,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Update Password',
-                style: AppTextStyles.authScreenLabel.copyWith(
-                  color: AppColors.textOnPrimary,
-                  fontWeight: FontWeight.w700,
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.textOnPrimary,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Update Password',
+                      style: AppTextStyles.authScreenLabel.copyWith(
+                        color: AppColors.textOnPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward, size: 20),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward, size: 20),
-            ],
-          ),
         ),
       ),
     );
