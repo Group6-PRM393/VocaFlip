@@ -5,11 +5,13 @@ import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 class SpaceRepetitionCard extends StatelessWidget {
   final int dueCount;
   final VoidCallback onStartReview;
+  final VoidCallback? onCardTap;
 
   const SpaceRepetitionCard({
     super.key,
     required this.dueCount,
     required this.onStartReview,
+    this.onCardTap,
   });
 
   bool get _hasDueCards => dueCount > 0;
@@ -18,7 +20,9 @@ class SpaceRepetitionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Container(
+      child: GestureDetector(
+        onTap: onCardTap,
+        child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
@@ -170,6 +174,7 @@ class SpaceRepetitionCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

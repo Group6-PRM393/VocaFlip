@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/features/auth/models/auth_model.dart';
 import 'package:voca_flip_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
+import 'package:voca_flip_mobile/features/profile/providers/user_provider.dart';
 import '../../../core/services/google_auth_service.dart';
 
 // ──────────────────────────────────────────────
@@ -114,23 +115,10 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> forgotPassword({required String email}) async {
-    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
-    try {
-      await _repo.forgotPassword(email: email);
-      state = state.copyWith(status: AuthStatus.success);
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      );
-      return false;
-    }
-  }
-
   Future<void> logout() async {
     await _repo.logout();
+    // Xóa cache profile của user cũ để khi login user mới sẽ fetch lại
+    ref.invalidate(currentUserProfileProvider);
     state = const AuthState();
   }
 }

@@ -11,6 +11,7 @@ import 'package:voca_flip_mobile/features/home/widgets/home_header.dart';
 import 'package:voca_flip_mobile/features/home/widgets/home_stats_grid.dart';
 import 'package:voca_flip_mobile/features/home/widgets/space_repetition_card.dart';
 import 'package:voca_flip_mobile/features/home/widgets/deck_grid_item.dart';
+import 'package:voca_flip_mobile/features/study/screens/due_for_review_list_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -65,8 +66,10 @@ class _HomeTabState extends State<HomeTab> {
 
       _dueCount = results[2].data['result'] ?? 0;
 
+      if (!mounted) return;
       setState(() => _loading = false);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -148,6 +151,19 @@ class _HomeTabState extends State<HomeTab> {
             SpaceRepetitionCard(
               dueCount: _dueCount,
               onStartReview: _startDailyReview,
+              onCardTap: () {
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (_) => const DueForReviewListScreen(),
+                      ),
+                    )
+                    .then((result) {
+                      if (result == true && mounted) {
+                        _loadData();
+                      }
+                    });
+              },
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),

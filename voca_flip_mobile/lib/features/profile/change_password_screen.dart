@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/features/profile/providers/user_provider.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
+class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final Color primaryColor = const Color(0xFF135BEC);
   final Color backgroundLight = const Color(0xFFF6F6F8);
   final Color textDark = const Color(0xFF0F172A); // slate-900
@@ -17,6 +19,72 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updatePassword() async {
+    final currentPassword = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng điền đầy đủ các trường')),
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu mới phải từ 8 ký tự trở lên')),
+      );
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu mới và xác nhận mật khẩu không khớp')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final repo = await ref.read(userRepositoryProvider.future);
+      await repo.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đổi mật khẩu thành công')),
+      );
+      Navigator.pop(context, true); // Quay về và kèm kết quả
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +132,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   _buildPasswordField(
                     label: 'Current Password',
                     hint: 'Enter current password',
+                    controller: _currentPasswordController,
                     isObscure: _obscureCurrent,
                     onToggleVisibility: () {
                       setState(() => _obscureCurrent = !_obscureCurrent);
@@ -75,6 +144,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   _buildPasswordField(
                     label: 'New Password',
                     hint: 'Enter new password',
+                    controller: _newPasswordController,
                     isObscure: _obscureNew,
                     onToggleVisibility: () {
                       setState(() => _obscureNew = !_obscureNew);
@@ -91,7 +161,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Must be at least 8 characters long and include numbers.',
+                            'Must be at least 8 characters long.',
                             style: TextStyle(color: textGray, fontSize: 12),
                           ),
                         ),
@@ -104,6 +174,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   _buildPasswordField(
                     label: 'Confirm New Password',
                     hint: 'Re-enter new password',
+                    controller: _confirmPasswordController,
                     isObscure: _obscureConfirm,
                     onToggleVisibility: () {
                       setState(() => _obscureConfirm = !_obscureConfirm);
@@ -121,10 +192,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               width: double.infinity,
               height: 56, // h-14
               child: ElevatedButton(
-                onPressed: () {
-                  debugPrint("Xử lý đổi mật khẩu");
-                  Navigator.pop(context); // Quay về sau khi đổi xong
-                },
+                onPressed: _isLoading ? null : _updatePassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -134,10 +202,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     borderRadius: BorderRadius.circular(12), // rounded-xl
                   ),
                 ),
-                child: const Text(
-                  'Update Password',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                ),
+                child: _isLoading 
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Update Password',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    ),
               ),
             ),
           ),
@@ -150,6 +220,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget _buildPasswordField({
     required String label,
     required String hint,
+    required TextEditingController controller,
     required bool isObscure,
     required VoidCallback onToggleVisibility,
   }) {
@@ -166,6 +237,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         const SizedBox(height: 6),
         TextField(
+          controller: controller,
           obscureText: isObscure,
           style: TextStyle(color: textDark, fontSize: 16),
           decoration: InputDecoration(

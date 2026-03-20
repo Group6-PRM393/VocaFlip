@@ -39,4 +39,56 @@ class CategoryRepository {
 
     throw Exception('Invalid categories response: ${body.runtimeType} - $body');
   }
+
+  /// Tạo Category mới
+  Future<CategoryModel> createCategory(
+    String userId,
+    String categoryName,
+    String iconCode,
+    String colorHex,
+  ) async {
+    final res = await _apiService.post(
+      '/api/categories',
+      queryParameters: {'userId': userId},
+      data: {
+        'categoryName': categoryName,
+        'iconCode': iconCode,
+        'colorHex': colorHex,
+      },
+    );
+    
+    final body = res.data;
+    if (body is Map<String, dynamic> && body['result'] != null) {
+      return CategoryModel.fromJson(body['result']);
+    }
+    throw Exception('Failed to create category');
+  }
+
+  /// Cập nhật Category
+  Future<CategoryModel> updateCategory(
+    String id,
+    String categoryName,
+    String iconCode,
+    String colorHex,
+  ) async {
+    final res = await _apiService.put(
+      '/api/categories/$id',
+      data: {
+        'categoryName': categoryName,
+        'iconCode': iconCode,
+        'colorHex': colorHex,
+      },
+    );
+    
+    final body = res.data;
+    if (body is Map<String, dynamic> && body['result'] != null) {
+      return CategoryModel.fromJson(body['result']);
+    }
+    throw Exception('Failed to update category');
+  }
+
+  /// Xóa Category
+  Future<void> deleteCategory(String id) async {
+    await _apiService.delete('/api/categories/$id');
+  }
 }

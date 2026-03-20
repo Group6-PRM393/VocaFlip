@@ -16,4 +16,9 @@ public interface UserService {
     UserResponse updateUser(String id, UserRegisterRequest request);
 
     UserResponse updateProfile(String userId, UpdateProfileRequest request);
+
+    /** Cập nhật avatarUrl sau khi upload ảnh lên Cloudinary thành công. */
+    UserResponse updateAvatar(String userId, String avatarUrl);
+
+    void changePassword(String userId, com.vocaflipbackend.dto.request.ChangePasswordRequest request);
 }

@@ -102,11 +102,6 @@ class AuthRepository {
     return authResponse;
   }
 
-  /// POST /api/auth/forgot-password
-  Future<void> forgotPassword({required String email}) async {
-    await _apiService.post('/api/auth/forgot-password', data: {'email': email});
-  }
-
   bool get isLoggedIn =>
       (_prefs.getString(AppConfig.tokenKey) ?? '').isNotEmpty;
 }

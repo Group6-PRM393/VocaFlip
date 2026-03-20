@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 
 /// Các TextStyle dùng chung trong ứng dụng VocaFlip.
-/// Sử dụng font Lexend
+/// Sử dụng font Lexend 
 class AppTextStyles {
   AppTextStyles._();
 
@@ -104,52 +104,17 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  static TextStyle authScreenTitle = GoogleFonts.lexend(
-    fontSize: 32,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-    height: 1.15,
-    letterSpacing: -0.5,
-  );
-
-  static TextStyle authScreenBody = GoogleFonts.lexend(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    color: AppColors.textHint,
-    height: 1.45,
-  );
-
-  static TextStyle authScreenLabel = GoogleFonts.lexend(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    color: AppColors.textPrimary,
-  );
-
-  static TextStyle authScreenInput = GoogleFonts.lexend(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    color: AppColors.textPrimary,
-  );
-
-  static TextStyle authTopBarTitle = GoogleFonts.lexend(
-    fontSize: 18,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-  );
-
-  static TextStyle authOtpDigit = GoogleFonts.lexend(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-  );
-
   static TextStyle splashTitle = GoogleFonts.lexend(
     fontSize: 44,
     fontWeight: FontWeight.w800,
     color: Colors.white,
     letterSpacing: -1.0,
     shadows: [
-      const Shadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+      const Shadow(
+        color: Colors.black26,
+        blurRadius: 10,
+        offset: Offset(0, 4),
+      ),
     ],
   );
 
@@ -159,7 +124,7 @@ class AppTextStyles {
     color: AppColors.splashTextAccent,
     letterSpacing: 0.5,
   );
-
+  
   static TextStyle splashLoading = GoogleFonts.lexend(
     fontSize: 10,
     fontWeight: FontWeight.w700,
