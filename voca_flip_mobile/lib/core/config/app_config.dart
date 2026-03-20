@@ -1,7 +1,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const bool isProduction = true;
+  static const bool isProduction = false;
 
   static String get baseUrl => isProduction
       ? 'https://vocaflip-api.onrender.com'

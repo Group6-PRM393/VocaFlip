@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_screen.dart';
-import 'package:voca_flip_mobile/features/profile/learning_history_activity_screen.dart';
+import 'package:voca_flip_mobile/features/game/flip_match_game_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';
@@ -34,7 +34,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 0:
         return const HomeTab();
       case 1:
-        return const LearningHistoryActivityScreen();
+        return const FlipMatchGameScreen();
+      // return Center(
+      //   child: Column(
+      //     mainAxisAlignment: MainAxisAlignment.center,
+      //     children: [
+      //       Text(
+      //         'Coming soon...',
+      //         style: GoogleFonts.lexend(
+      //           fontSize: 16,
+      //           color: AppColors.textSecondary,
+      //         ),
+      //       ),
+      //       const SizedBox(height: 20),
+      //       ElevatedButton(
+      //         onPressed: () {
+      //           Navigator.push(
+      //             context,
+      //             MaterialPageRoute(
+      //               builder: (context) =>
+      //                   const QuizSettingsScreen(deckId: "deck-test"),
+      //             ),
+      //           );
+      //         },
+      //         style: ElevatedButton.styleFrom(
+      //           backgroundColor: AppColors.primary,
+      //           foregroundColor: Colors.white,
+      //           padding: const EdgeInsets.symmetric(
+      //             horizontal: 24,
+      //             vertical: 12,
+      //           ),
+      //           shape: RoundedRectangleBorder(
+      //             borderRadius: BorderRadius.circular(8),
+      //           ),
+      //         ),
+      //         child: Text(
+      //           " Take Quiz",
+      //           style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
+      //         ),
+      //       ),
+      //       // ---------------------------------
+      //     ],
+      //   ),
+      // );
       case 2:
         return const LearningProgressStatsScreen();
       case 3:
@@ -83,7 +125,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.history_rounded, 'History'),
+              _navItem(1, Icons.style_rounded, 'Game'),
               _navItem(2, Icons.bar_chart_rounded, 'Stats'),
               _navItem(
                 3,

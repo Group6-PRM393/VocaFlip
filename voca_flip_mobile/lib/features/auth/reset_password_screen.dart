@@ -73,7 +73,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     });
 
     if (password.isEmpty || confirmPassword.isEmpty) {
-      _showSnackBar('Vui long nhap day du thong tin', Colors.redAccent);
+      _showSnackBar('Vui lòng nhập đầy đủ thông tin', Colors.redAccent);
       return;
     }
 
@@ -83,7 +83,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     }
 
     if (!_hasMinLength || !_hasUppercase || !_hasSpecialCharacter) {
-      _showSnackBar('Mat khau chua dat yeu cau', Colors.redAccent);
+      _showSnackBar('Mật khẩu không đáp ứng yêu cầu', Colors.redAccent);
       return;
     }
 
