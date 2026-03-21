@@ -112,15 +112,13 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       final repo = await ref.read(deckRepositoryProvider.future);
       await repo.deleteDeck(widget.deck.id);
 
-      // refresh list
-      ref.invalidate(deckListProvider);
+     ref.invalidate(deckListProvider);
+      await repo.deleteDeck(widget.deck.id);
 
       if (!mounted) return;
 
-      // đóng Edit -> về Detail
-      Navigator.pop(context, true);
-      // đóng Detail -> về List (nếu Edit mở từ Detail)
-      Navigator.pop(context, true);
+      Navigator.pop(context);
+      Navigator.pop(context, widget.deck.id);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
