@@ -49,6 +49,7 @@ dependencies:
   percent_indicator: ^4.2.5
   appinio_swiper: ^2.1.1
   flutter_tts: ^4.2.5
+  audioplayers: ^6.1.0
   flip_card: ^0.7.0
   flutter_heatmap_calendar: ^1.0.5
   flutter_form_builder: ^10.2.0
