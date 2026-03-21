@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_screen.dart';
 import 'package:voca_flip_mobile/features/game/screens/flip_match_game_screen.dart';
+import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_bottom_nav.dart';
+import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_fab.dart';
+import 'package:voca_flip_mobile/features/profile/learning_history_activity_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';
@@ -19,13 +22,29 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
 
+  void _onNavTap(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
+  void _openCreateDeck() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(child: _buildBody()),
-      floatingActionButton: _buildFab(),
-      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: _selectedIndex == 0
+          ? DashboardFab(onPressed: _openCreateDeck)
+          : null,
+      bottomNavigationBar: DashboardBottomNav(
+        selectedIndex: _selectedIndex,
+        onTap: _onNavTap,
+      ),
     );
   }
 
