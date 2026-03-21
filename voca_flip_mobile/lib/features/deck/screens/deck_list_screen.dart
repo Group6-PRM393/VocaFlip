@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/features/deck/models/deck_model.dart';
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
 import 'package:voca_flip_mobile/features/deck/widgets/deck_item_card.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/deck/screens/deck_detail_screen.dart';
 
-class DeckListScreen extends ConsumerWidget {
+class DeckListScreen extends ConsumerStatefulWidget {
   const DeckListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DeckListScreen> createState() => _DeckListScreenState();
+}
+
+class _DeckListScreenState extends ConsumerState<DeckListScreen> {
+  List<DeckModel>? _localDecks;
+
+  @override
+  Widget build(BuildContext context) {
     final asyncDecks = ref.watch(deckListProvider);
 
     return Scaffold(
@@ -32,6 +40,12 @@ class DeckListScreen extends ConsumerWidget {
 
           if (created == true) {
             ref.invalidate(deckListProvider);
+            final refreshed = await ref.read(deckListProvider.future);
+
+            if (!mounted) return;
+            setState(() {
+              _localDecks = List<DeckModel>.from(refreshed);
+            });
           }
         },
         child: const Icon(Icons.add, color: Colors.white),
@@ -42,37 +56,70 @@ class DeckListScreen extends ConsumerWidget {
           text: e.toString(),
           onRetry: () => ref.invalidate(deckListProvider),
         ),
-        data: (decks) => RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(deckListProvider);
-            await ref.read(deckListProvider.future);
-          },
-          child: decks.isEmpty
-              ? const _EmptyState()
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: decks.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final d = decks[i];
-                    return DeckItemCard(
-                      title: d.title,
-                      cards: d.totalCards,
-                      progress: d.progress,
-                      imageUrl: d.coverImageUrl,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DeckDetailScreen(deckId: d.id),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-        ),
+        data: (decks) {
+          final visibleDecks = _localDecks ?? decks;
+
+          if (_localDecks == null) {
+            _localDecks = List<DeckModel>.from(decks);
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(deckListProvider);
+              final refreshed = await ref.read(deckListProvider.future);
+
+              if (!mounted) return;
+              setState(() {
+                _localDecks = List<DeckModel>.from(refreshed);
+              });
+            },
+            child: visibleDecks.isEmpty
+                ? const _EmptyState()
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: visibleDecks.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, i) {
+                      final d = visibleDecks[i];
+                      return DeckItemCard(
+                        title: d.title,
+                        cards: d.totalCards,
+                        progress: d.progress,
+                        imageUrl: d.coverImageUrl,
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DeckDetailScreen(deckId: d.id),
+                            ),
+                          );
+
+                          if (result is String) {
+                            setState(() {
+                              _localDecks = (_localDecks ?? [])
+                                  .where((deck) => deck.id != result)
+                                  .toList();
+                            });
+                            return;
+                          }
+
+                          if (result == true) {
+                            ref.invalidate(deckListProvider);
+                            final refreshed =
+                                await ref.read(deckListProvider.future);
+
+                            if (!mounted) return;
+                            setState(() {
+                              _localDecks = List<DeckModel>.from(refreshed);
+                            });
+                          }
+                        },
+                      );
+                    },
+                  ),
+          );
+        },
       ),
     );
   }

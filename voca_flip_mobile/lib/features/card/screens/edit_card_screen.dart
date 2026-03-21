@@ -5,21 +5,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/features/card/models/card_model.dart';
 import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
 
-class CreateCardScreen extends ConsumerStatefulWidget {
-  final String deckId;
+class EditCardScreen extends ConsumerStatefulWidget {
+  final CardModel card;
 
-  const CreateCardScreen({
+  const EditCardScreen({
     super.key,
-    required this.deckId,
+    required this.card,
   });
 
   @override
-  ConsumerState<CreateCardScreen> createState() => _CreateCardScreenState();
+  ConsumerState<EditCardScreen> createState() => _EditCardScreenState();
 }
 
-class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
+class _EditCardScreenState extends ConsumerState<EditCardScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _frontController;
@@ -34,10 +35,11 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
   @override
   void initState() {
     super.initState();
-    _frontController = TextEditingController();
-    _backController = TextEditingController();
-    _phoneticController = TextEditingController();
-    _exampleController = TextEditingController();
+    _frontController = TextEditingController(text: widget.card.front);
+    _backController = TextEditingController(text: widget.card.back);
+    _phoneticController = TextEditingController(text: widget.card.phonetic);
+    _exampleController =
+        TextEditingController(text: widget.card.exampleSentence);
   }
 
   @override
@@ -71,7 +73,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
     }
   }
 
-  Future<void> _saveCard() async {
+  Future<void> _saveChanges() async {
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) return;
@@ -82,8 +84,8 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
       final repo = await ref.read(cardRepositoryProvider.future);
 
       if (kIsWeb) {
-        await repo.createCardFromBytes(
-          deckId: widget.deckId,
+        await repo.updateCardFromBytes(
+          cardId: widget.card.id,
           front: _frontController.text,
           back: _backController.text,
           phonetic: _phoneticController.text,
@@ -92,8 +94,8 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
           imageFileName: _selectedImageName,
         );
       } else {
-        await repo.createCard(
-          deckId: widget.deckId,
+        await repo.updateCard(
+          cardId: widget.card.id,
           front: _frontController.text,
           back: _backController.text,
           phonetic: _phoneticController.text,
@@ -102,12 +104,12 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
         );
       }
 
-      ref.invalidate(cardListProvider(widget.deckId));
+      ref.invalidate(cardListProvider(widget.card.deckId));
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Card created successfully')),
+        const SnackBar(content: Text('Card updated successfully')),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -115,7 +117,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Create card failed: $e')),
+        SnackBar(content: Text('Update card failed: $e')),
       );
     }
   }
@@ -214,33 +216,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: const Color(0xFFE5E7EB)),
                           ),
-                          child: (_selectedImage == null &&
-                                  _selectedImageBytes == null)
-                              ? const Center(
-                                  child: Text(
-                                    'Tap to upload image',
-                                    style: TextStyle(
-                                      color: Color(0xFF6B7280),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                )
-                              : ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: kIsWeb
-                                      ? Image.memory(
-                                          _selectedImageBytes!,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                        )
-                                      : Image.file(
-                                          _selectedImage!,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                        ),
-                                ),
+                          child: _buildImagePreview(),
                         ),
                       ),
                     ],
@@ -250,6 +226,79 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
             ),
             _buildBottomButton(isLoading),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    if (_selectedImage == null &&
+        _selectedImageBytes == null &&
+        (widget.card.imageUrl == null || widget.card.imageUrl!.isEmpty)) {
+      return const Center(
+        child: Text(
+          'Tap to upload image',
+          style: TextStyle(
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    if (kIsWeb && _selectedImageBytes != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.memory(
+          _selectedImageBytes!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
+      );
+    }
+
+    if (!kIsWeb && _selectedImage != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.file(
+          _selectedImage!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
+      );
+    }
+
+    if (widget.card.imageUrl != null && widget.card.imageUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.network(
+          widget.card.imageUrl!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) {
+            return const Center(
+              child: Text(
+                'Cannot load image',
+                style: TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    return const Center(
+      child: Text(
+        'Tap to upload image',
+        style: TextStyle(
+          color: Color(0xFF6B7280),
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -271,7 +320,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
             ),
           ),
           const Text(
-            'Add New Card',
+            'Edit Card',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -293,7 +342,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: isLoading ? null : _saveCard,
+            onPressed: isLoading ? null : _saveChanges,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2146F3),
               elevation: 0,
@@ -311,7 +360,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
                     ),
                   )
                 : const Text(
-                    'Save Card',
+                    'Save Changes',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,

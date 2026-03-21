@@ -172,12 +172,7 @@ class DeckRepository {
 
   /// Xóa Deck theo deckId
   /// Backend: DELETE /api/decks/{id}
-  Future<void> deleteDeck(String deckId) async {
-    final res = await _apiService.delete('/api/decks/$deckId');
-
-    final body = res.data;
-    if (body is Map && (body['code'] == 1000 || body['code'] == 0)) return;
-
-    throw Exception('Delete failed: $body');
-  }
+ Future<void> deleteDeck(String deckId) async {
+  await _apiService.delete('/api/decks/$deckId');
+}
 }

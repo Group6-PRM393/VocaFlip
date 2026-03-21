@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
-import 'package:voca_flip_mobile/features/deck/providers/card_provider.dart';
-import 'package:voca_flip_mobile/features/deck/models/card_model.dart';
+import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
+import 'package:voca_flip_mobile/features/card/models/card_model.dart';
 import 'package:voca_flip_mobile/features/deck/screens/edit_deck_screen.dart';
 import 'package:voca_flip_mobile/features/study/study_screen.dart';
 import 'package:voca_flip_mobile/features/card/screens/create_card_screen.dart';
+import 'package:voca_flip_mobile/features/card/screens/edit_card_screen.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -63,21 +64,27 @@ class DeckDetailScreen extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () async {
-                  final updated = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditDeckScreen(deck: deck),
-                    ),
-                  );
+                 final result = await Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => EditDeckScreen(deck: deck),
+  ),
+);
 
-                  if (updated == true) {
-                    final id = deck.id;
+if (result is String) {
+  if (!context.mounted) return;
+  Navigator.pop(context, result); 
+  return;
+}
 
-                    ref.invalidate(deckDetailProvider(id));
-                    ref.invalidate(deckListProvider);
+if (result == true) {
+  final id = deck.id;
 
-                    await ref.read(deckDetailProvider(id).future);
-                  }
+  ref.invalidate(deckDetailProvider(id));
+  ref.invalidate(deckListProvider);
+
+  await ref.read(deckDetailProvider(id).future);
+}
                 },
 
                 child: const Text(
@@ -259,7 +266,7 @@ class DeckDetailScreen extends ConsumerWidget {
                           return Column(
                             children: [
                               for (final c in cards) ...[
-                                _flashcardTile(c),
+                                _flashcardTile(context, ref, c),
                                 const SizedBox(height: 12),
                               ],
                             ],
@@ -392,7 +399,7 @@ class DeckDetailScreen extends ConsumerWidget {
     return '$y-$m-$d';
   }
 
-  static Widget _flashcardTile(CardModel card) {
+  Widget _flashcardTile(BuildContext context, WidgetRef ref, CardModel card) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -451,24 +458,181 @@ class DeckDetailScreen extends ConsumerWidget {
           Column(
             children: [
               IconButton(
-                onPressed: () {
-                  // TODO: edit card
-                },
-                icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
-              ),
+  onPressed: () async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditCardScreen(card: card),
+      ),
+    );
+
+    /// Nếu sửa thành công → reload lại list
+    if (updated == true) {
+      ref.invalidate(cardListProvider(card.deckId));
+    }
+  },
+  icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
+),
               IconButton(
-                onPressed: () {
-                  // TODO: delete card
-                },
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: Color(0xFF1E5EFF),
-                ),
-              ),
+  onPressed: () {
+    _showDeleteCardDialog(context, ref, card);
+  },
+  icon: const Icon(
+    Icons.delete_outline,
+    color: Color(0xFF1E5EFF),
+  ),
+),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+Future<void> _showDeleteCardDialog(
+  BuildContext context,
+  WidgetRef ref,
+  CardModel card,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9ECFF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete,
+                  color: Color(0xFF4C63FF),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Delete this word?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: Color(0xFF6B7280),
+                    fontFamily: 'Roboto',
+                  ),
+                  children: [
+                    const TextSpan(text: 'Are you sure you want to delete '),
+                    TextSpan(
+                      text: '"${card.front}"',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const TextSpan(
+                      text:
+                          '? This action cannot be undone and the card will be permanently removed.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4A4A),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  if (confirmed != true) return;
+
+  try {
+    final repo = await ref.read(cardRepositoryProvider.future);
+    await repo.deleteCard(card.id);
+
+    ref.invalidate(cardListProvider(card.deckId));
+    ref.invalidate(deckDetailProvider(card.deckId));
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Card deleted successfully')),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Delete card failed: $e')),
     );
   }
 }

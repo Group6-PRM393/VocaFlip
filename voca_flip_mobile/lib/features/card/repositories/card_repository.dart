@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:voca_flip_mobile/features/deck/models/card_model.dart';
+import 'package:voca_flip_mobile/features/card/models/card_model.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
 
 /// Repository quản lý các thao tác liên quan đến Card (Flashcard).
@@ -146,5 +146,115 @@ class CardRepository {
 
     return CardModel.fromJson(result);
   }
+  Future<CardModel> updateCard({
+    required String cardId,
+    String? front,
+    String? back,
+    String? phonetic,
+    String? exampleSentence,
+    String? audioUrl,
+    String? imageUrl,
+    File? imageFile,
+  }) async {
+    final queryParams = <String, dynamic>{
+      if (front != null && front.trim().isNotEmpty) 'front': front.trim(),
+      if (back != null && back.trim().isNotEmpty) 'back': back.trim(),
+      'phonetic': phonetic?.trim() ?? '',
+      'exampleSentence': exampleSentence?.trim() ?? '',
+      'audioUrl': audioUrl?.trim() ?? '',
+      'imageUrl': imageUrl?.trim() ?? '',
+    };
+
+    final formMap = <String, dynamic>{};
+
+    if (imageFile != null) {
+      final fileName = imageFile.path.split(Platform.pathSeparator).last;
+      formMap['image'] = await MultipartFile.fromFile(
+        imageFile.path,
+        filename: fileName,
+      );
+    }
+
+    final form = FormData.fromMap(formMap);
+
+    final res = await _apiService.dio.put(
+      '/api/cards/$cardId',
+      queryParameters: queryParams,
+      data: form,
+      options: Options(
+        contentType: 'multipart/form-data',
+        headers: {Headers.acceptHeader: 'application/json'},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Invalid response format');
+    }
+
+    final result = data['result'];
+    if (result is! Map<String, dynamic>) {
+      throw Exception('Missing result in response');
+    }
+
+    return CardModel.fromJson(result);
+  }
+
+  Future<CardModel> updateCardFromBytes({
+    required String cardId,
+    String? front,
+    String? back,
+    String? phonetic,
+    String? exampleSentence,
+    String? audioUrl,
+    String? imageUrl,
+    Uint8List? imageBytes,
+    String? imageFileName,
+  }) async {
+    final queryParams = <String, dynamic>{
+      if (front != null && front.trim().isNotEmpty) 'front': front.trim(),
+      if (back != null && back.trim().isNotEmpty) 'back': back.trim(),
+      'phonetic': phonetic?.trim() ?? '',
+      'exampleSentence': exampleSentence?.trim() ?? '',
+      'audioUrl': audioUrl?.trim() ?? '',
+      'imageUrl': imageUrl?.trim() ?? '',
+    };
+
+    final formMap = <String, dynamic>{};
+
+    if (imageBytes != null) {
+      formMap['image'] = MultipartFile.fromBytes(
+        imageBytes,
+        filename: imageFileName ?? 'card.jpg',
+      );
+    }
+
+    final form = FormData.fromMap(formMap);
+
+    final res = await _apiService.dio.put(
+      '/api/cards/$cardId',
+      queryParameters: queryParams,
+      data: form,
+      options: Options(
+        contentType: 'multipart/form-data',
+        headers: {Headers.acceptHeader: 'application/json'},
+      ),
+    );
+
+    final data = res.data;
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Invalid response format');
+    }
+
+    final result = data['result'];
+    if (result is! Map<String, dynamic>) {
+      throw Exception('Missing result in response');
+    }
+
+    return CardModel.fromJson(result);
+  }
+  Future<void> deleteCard(String cardId) async {
+  await _apiService.delete('/api/cards/$cardId');
+}
 
 }
