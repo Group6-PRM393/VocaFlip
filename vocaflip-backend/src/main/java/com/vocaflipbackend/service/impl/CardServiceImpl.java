@@ -24,6 +24,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,6 +71,25 @@ public class CardServiceImpl implements CardService {
 
         Card card = cardMapper.toEntity(request);
         card.setDeck(deck);
+
+        // Auto-fill missing fields from dictionary API (including audio URL)
+        if (StringUtils.hasText(request.getFront())) {
+            TranslationResponse translation = fetchDictionaryData(request.getFront().trim());
+            if (translation != null) {
+                if (!StringUtils.hasText(card.getBack()) && StringUtils.hasText(translation.getMeaning())) {
+                    card.setBack(translation.getMeaning());
+                }
+                if (!StringUtils.hasText(card.getPhonetic()) && StringUtils.hasText(translation.getPhonetic())) {
+                    card.setPhonetic(translation.getPhonetic());
+                }
+                if (!StringUtils.hasText(card.getExampleSentence()) && StringUtils.hasText(translation.getExampleSentence())) {
+                    card.setExampleSentence(translation.getExampleSentence());
+                }
+                if (!StringUtils.hasText(card.getAudioUrl()) && StringUtils.hasText(translation.getAudioUrl())) {
+                    card.setAudioUrl(translation.getAudioUrl());
+                }
+            }
+        }
 
         // Upload image if provided
         if (image != null && !image.isEmpty()) {
