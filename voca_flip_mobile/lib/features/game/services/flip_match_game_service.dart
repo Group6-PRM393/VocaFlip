@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
-import 'package:voca_flip_mobile/features/deck/models/card_model.dart';
+import 'package:voca_flip_mobile/features/card/models/card_model.dart';
 import 'package:voca_flip_mobile/features/game/models/flip_match_models.dart';
 
 class FlipMatchGameService {
