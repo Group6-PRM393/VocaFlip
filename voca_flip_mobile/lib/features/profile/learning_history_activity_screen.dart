@@ -6,10 +6,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
   const LearningHistoryActivityScreen({super.key});
 
   static const _horizontalPadding = 16.0;
-  static const _bottomNavHeight = 64.0;
-  static const _heatCellSize = 14.0;
-  static const _heatCellGap = 4.0;
-  static const List<String> _weekdayLabels = ['Mon', 'Wed', 'Fri'];
 
   static const List<_HistoryStat> _stats = [
     _HistoryStat(
@@ -19,21 +15,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
     ),
     _HistoryStat(value: '2.4k', label: 'LEARNED'),
     _HistoryStat(value: '85%', label: 'RETENTION'),
-  ];
-
-  static const List<List<int>> _heatmapData = [
-    [1, 3, 2, 0, 3, 1, 0],
-    [0, 0, 1, 2, 3, 3, 2],
-    [3, 3, 3, 0, 0, 1, 1],
-    [0, 2, 2, 3, 3, 0, 0],
-    [1, 3, 2, 0, 3, 1, 0],
-    [0, 0, 1, 2, 3, 3, 2],
-    [3, 3, 3, 0, 0, 1, 1],
-    [0, 2, 2, 3, 3, 0, 0],
-    [1, 3, 2, 0, 3, 1, 0],
-    [0, 0, 1, 2, 3, 3, 2],
-    [3, 3, 3, 0, 0, 1, 1],
-    [0, 2, 2, 3, 3, 0, 1],
   ];
 
   static const List<_HistoryActivity> _activities = [
@@ -74,33 +55,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
       date: 'Oct 18',
     ),
   ];
-
-  static const List<_BottomNavItemData> _bottomNavItems = [
-    _BottomNavItemData(icon: Icons.home_rounded, label: 'Home'),
-    _BottomNavItemData(icon: Icons.bar_chart_rounded, label: 'Stats'),
-    _BottomNavItemData(
-      icon: Icons.history_rounded,
-      label: 'History',
-      active: true,
-    ),
-    _BottomNavItemData(icon: Icons.person_rounded, label: 'Profile'),
-  ];
-
-  Color _heatColor(int level) {
-    switch (level) {
-      case 1:
-        return AppColors.primary.withValues(alpha: 0.3);
-      case 2:
-        return AppColors.primary.withValues(alpha: 0.6);
-      case 3:
-        return AppColors.primary;
-      default:
-        return AppColors.imageOverlay;
-    }
-  }
-
-  TextStyle get _heatmapCaptionStyle =>
-      AppTextStyles.caption.copyWith(fontSize: 10);
 
   Widget _buildStatCard(_HistoryStat stat) {
     return Expanded(
@@ -143,50 +97,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeatLegend() {
-    return Row(
-      children: [
-        const Spacer(),
-        Text('Less', style: _heatmapCaptionStyle),
-        const SizedBox(width: 4),
-        for (var i = 0; i < 4; i++) ...[
-          Container(
-            width: 8,
-            height: 8,
-            margin: const EdgeInsets.only(right: 3),
-            decoration: BoxDecoration(
-              color: _heatColor(i),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
-        Text('More', style: _heatmapCaptionStyle),
-      ],
-    );
-  }
-
-  Widget _buildHeatColumn(List<int> column) {
-    return Padding(
-      padding: const EdgeInsets.only(right: _heatCellGap),
-      child: Column(
-        children: column.map((level) {
-          return Container(
-            width: _heatCellSize,
-            height: _heatCellSize,
-            margin: const EdgeInsets.only(bottom: _heatCellGap),
-            decoration: BoxDecoration(
-              color: _heatColor(level),
-              borderRadius: BorderRadius.circular(3),
-              border: level == 0
-                  ? Border.all(color: AppColors.inputBorder)
-                  : null,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildSectionHeader({required String title, Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
@@ -194,65 +104,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
         children: [
           Text(title, style: AppTextStyles.heading2),
           if (trailing != null) ...[const Spacer(), trailing],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStudyActivityCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: _horizontalPadding),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.inputBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Study Activity',
-                style: AppTextStyles.heading2.copyWith(fontSize: 20),
-              ),
-              Expanded(child: _buildHeatLegend()),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 116,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _weekdayLabels
-                      .map((label) => Text(label, style: _heatmapCaptionStyle))
-                      .toList(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _heatmapData.map(_buildHeatColumn).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "You've studied 80% of the last 30 days. Keep it up!",
-            style: AppTextStyles.caption.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
         ],
       ),
     );
@@ -319,21 +170,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      height: _bottomNavHeight,
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
-        border: Border(top: BorderSide(color: AppColors.inputBorder)),
-      ),
-      child: Row(
-        children: _bottomNavItems
-            .map((item) => _BottomNavItem(item: item))
-            .toList(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -342,13 +178,12 @@ class LearningHistoryActivityScreen extends StatelessWidget {
         backgroundColor: AppColors.scaffoldBackground,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-        ),
-        title: Text('Learning History', style: AppTextStyles.authTopBarTitle),
+        // leading: IconButton(
+        //   onPressed: () => Navigator.of(context).pop(),
+        //   icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+        // ),
+        title: Text('Learning History', style: AppTextStyles.authHeroTitle),
       ),
-      bottomNavigationBar: _buildBottomNav(),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -371,8 +206,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildStudyActivityCard(),
               const SizedBox(height: 18),
               _buildSectionHeader(
                 title: 'Recent Activities',
@@ -401,53 +234,6 @@ class LearningHistoryActivityScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  final _BottomNavItemData item;
-
-  const _BottomNavItem({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = item.active ? AppColors.primary : AppColors.textSecondary;
-
-    return Expanded(
-      child: InkWell(
-        onTap: () {},
-        child: SizedBox(
-          height: LearningHistoryActivityScreen._bottomNavHeight,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item.icon, color: color, size: 24),
-              const SizedBox(height: 2),
-              Text(
-                item.label,
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 10,
-                  color: color,
-                  fontWeight: item.active ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomNavItemData {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const _BottomNavItemData({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
 }
 
 class _HistoryStat {
