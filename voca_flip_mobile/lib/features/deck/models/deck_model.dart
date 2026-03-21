@@ -9,6 +9,7 @@ class DeckModel {
   final String userId;
 
   final double progress; // 0..1
+  final int learnedCards;
 
   DeckModel({
     required this.id,
@@ -20,6 +21,7 @@ class DeckModel {
     required this.createdAt,
     required this.userId,
     this.progress = 0,
+    this.learnedCards = 0,
   });
 
   factory DeckModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,13 @@ class DeckModel {
       if (v is int) return v;
       if (v is double) return v.toInt();
       if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    double toDouble(dynamic v) {
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0;
       return 0;
     }
 
@@ -42,7 +51,8 @@ class DeckModel {
       totalCards: toInt(json['totalCards']),
       createdAt: created == null ? null : DateTime.tryParse(created),
       userId: (json['userId'] ?? '').toString(),
-      progress: 0,
+      progress: toDouble(json['progress']).clamp(0.0, 1.0),
+      learnedCards: toInt(json['learnedCards']),
     );
   }
 }

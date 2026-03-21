@@ -28,5 +28,12 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Stri
     @Query("SELECT up.status, COUNT(up) FROM UserProgress up WHERE up.user.id = :userId GROUP BY up.status")
     List<Object[]> countByStatus(@Param("userId") String userId);
 
+    @Query("SELECT COUNT(up) FROM UserProgress up " +
+            "WHERE up.user.id = :userId " +
+            "AND up.card.deck.id = :deckId " +
+            "AND up.card.isRemoved = false " +
+            "AND up.status <> com.vocaflipbackend.enums.LearningStatus.NEW")
+    long countLearnedCardsByUserAndDeck(@Param("userId") String userId, @Param("deckId") String deckId);
+
     long countByUserIdAndStatus(String userId, LearningStatus status);
 }

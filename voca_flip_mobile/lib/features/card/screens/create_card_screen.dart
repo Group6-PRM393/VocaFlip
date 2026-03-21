@@ -166,34 +166,6 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
                         },
                       ),
                       const SizedBox(height: 18),
-                      Row(
-                        children: const [
-                          Text(
-                            'Pronunciation',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF374151),
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '(Optional)',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _buildTextField(
-                        controller: _phoneticController,
-                        hintText: '/prəˌnʌnsiˈeɪʃ(ə)n/',
-                        maxLines: 1,
-                      ),
-                      const SizedBox(height: 18),
                       _buildLabel('Example Sentence'),
                       const SizedBox(height: 8),
                       _buildTextField(

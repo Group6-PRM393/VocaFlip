@@ -12,6 +12,8 @@ public class DeckResponse {
     private String category;
     private String coverImageUrl;
     private Integer totalCards;
+    private Integer learnedCards;
+    private Double progress;
 
     private LocalDateTime createdAt;
     private String userId; // Or UserResponse if strict nesting needed
