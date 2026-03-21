@@ -57,3 +57,6 @@ app.*.map.json
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
 .flutter-plugins
+
+# file installed
+pubspec.lock
