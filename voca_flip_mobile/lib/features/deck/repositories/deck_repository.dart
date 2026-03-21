@@ -28,6 +28,25 @@ class DeckRepository {
     throw Exception('Invalid decks response: ${body.runtimeType} - $body');
   }
 
+  Future<List<DeckModel>> getMyDecksByCategory(String categoryId) async {
+    final res = await _apiService.get(
+      '/api/decks/my-decks/category/$categoryId',
+    );
+    final body = res.data;
+
+    final list = (body is Map<String, dynamic>) ? body['result'] : body;
+
+    if (list is List) {
+      return list
+          .map((e) => DeckModel.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+
+    throw Exception(
+      'Invalid decks by category response: ${body.runtimeType} - $body',
+    );
+  }
+
   /// Lấy chi tiết Deck theo deckId
   /// Backend: GET /api/decks/{deckId}
   Future<DeckModel> getDeckById(String deckId) async {
@@ -172,7 +191,7 @@ class DeckRepository {
 
   /// Xóa Deck theo deckId
   /// Backend: DELETE /api/decks/{id}
- Future<void> deleteDeck(String deckId) async {
-  await _apiService.delete('/api/decks/$deckId');
-}
+  Future<void> deleteDeck(String deckId) async {
+    await _apiService.delete('/api/decks/$deckId');
+  }
 }

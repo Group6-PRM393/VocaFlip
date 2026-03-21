@@ -122,6 +122,18 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    public List<DeckResponse> getMyDecksByCategory(String categoryId) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        return deckRepository.findByUserIdAndCategoryIdAndIsRemovedFalse(userId, categoryId).stream()
+                .map(deckMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteDeck(String id) {
         String currentUserId = SecurityUtils.getCurrentUserId();
         Deck deck = deckRepository.findById(id)

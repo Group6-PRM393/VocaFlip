@@ -6,6 +6,7 @@ import 'package:voca_flip_mobile/features/category/delete_category_dialog.dart';
 import 'package:voca_flip_mobile/features/category/models/category_model.dart';
 import 'package:voca_flip_mobile/features/category/providers/category_provider.dart';
 import 'package:voca_flip_mobile/core/utils/category_helper.dart';
+import 'package:voca_flip_mobile/features/deck/screens/deck_list_screen.dart';
 
 class CategoryManagementScreen extends ConsumerStatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -15,7 +16,8 @@ class CategoryManagementScreen extends ConsumerStatefulWidget {
       _CategoryManagementScreenState();
 }
 
-class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScreen> {
+class _CategoryManagementScreenState
+    extends ConsumerState<CategoryManagementScreen> {
   // --- Định nghĩa màu sắc ---
   final Color primaryColor = const Color(0xFF135BEC);
   final Color backgroundLight = const Color(0xFFF6F6F8);
@@ -50,6 +52,18 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     }
   }
 
+  void _navigateToCategoryDecks(CategoryModel category) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DeckListScreen(
+          filterCategoryId: category.id,
+          filterCategoryName: category.categoryName,
+        ),
+      ),
+    );
+  }
+
   void _confirmDelete(CategoryModel category) async {
     // Hiển thị Dialog
     final bool? isDeleted = await showDialog<bool>(
@@ -64,7 +78,7 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
       try {
         final repo = await ref.read(categoryRepositoryProvider.future);
         await repo.deleteCategory(category.id);
-        
+
         ref.invalidate(categoryListProvider);
 
         if (!mounted) return;
@@ -73,9 +87,9 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
         );
       } catch (e) {
         if (!mounted) return;
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi xóa: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
       }
     }
   }
@@ -92,16 +106,8 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
         backgroundColor: primaryColor,
         elevation: 2,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-        ),
         title: const Text(
-          'Categories',
+          'My Decks',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
@@ -119,13 +125,15 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
               ElevatedButton(
                 onPressed: () => ref.invalidate(categoryListProvider),
                 child: const Text('Thử lại'),
-              )
+              ),
             ],
           ),
         ),
         data: (categories) {
           if (categories.isEmpty) {
-             return const Center(child: Text('Chưa có danh mục nào. Hãy tạo mới.'));
+            return const Center(
+              child: Text('Chưa có danh mục nào. Hãy tạo mới.'),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.only(
@@ -163,84 +171,98 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
   }
 
   Widget _buildCategoryCard(CategoryModel item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: surfaceLight,
+    return Material(
+      color: surfaceLight,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => _navigateToCategoryDecks(item),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+        child: Container(
+          decoration: BoxDecoration(
+            color: surfaceLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: CategoryHelper.hexToColor(item.colorHex).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(CategoryHelper.getIconFromString(item.iconCode), color: CategoryHelper.hexToColor(item.colorHex), size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.categoryName,
-                    style: TextStyle(
-                      color: textSlate900,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${item.deckCount} Decks',
-                    style: TextStyle(color: textSlate500, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
+            child: Row(
               children: [
-                InkWell(
-                  onTap: () => _navigateToEdit(item),
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    child: Text(
-                      'Edit',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: CategoryHelper.hexToColor(
+                      item.colorHex,
+                    ).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    CategoryHelper.getIconFromString(item.iconCode),
+                    color: CategoryHelper.hexToColor(item.colorHex),
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => _confirmDelete(item),
-                  icon: Icon(Icons.delete, size: 22, color: textSlate300),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.categoryName,
+                        style: TextStyle(
+                          color: textSlate900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${item.deckCount} Decks',
+                        style: TextStyle(color: textSlate500, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: () => _navigateToEdit(item),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          'Edit',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _confirmDelete(item),
+                      icon: Icon(Icons.delete, size: 22, color: textSlate300),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

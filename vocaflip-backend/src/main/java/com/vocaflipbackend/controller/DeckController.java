@@ -32,6 +32,16 @@ public class DeckController {
                 .build();
     }
 
+    @Operation(summary = "Lấy danh sách Deck của tôi theo category",
+            description = "Trả về tất cả bộ thẻ thuộc user đang đăng nhập và thuộc category được chọn")
+    @GetMapping("/my-decks/category/{categoryId}")
+    public ApiResponse<List<DeckResponse>> getMyDecksByCategory(
+            @Parameter(description = "ID category") @PathVariable String categoryId) {
+        return ApiResponse.<List<DeckResponse>>builder()
+                .result(deckService.getMyDecksByCategory(categoryId))
+                .build();
+    }
+
     @Operation(summary = "Lấy chi tiết Deck", description = "Trả về thông tin chi tiết của một bộ thẻ theo ID")
     @GetMapping("/{deckId}")
     public ApiResponse<DeckResponse> getDeck(

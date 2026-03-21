@@ -19,6 +19,8 @@ public interface DeckService {
 
     List<DeckResponse> getMyDecks();
 
+    List<DeckResponse> getMyDecksByCategory(String categoryId);
+
     void deleteDeck(String id);
 
     PageResponse<DeckResponse> searchDecks(String keyword, int page, int pageSize);
