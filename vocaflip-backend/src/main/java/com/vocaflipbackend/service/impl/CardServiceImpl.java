@@ -19,6 +19,7 @@ import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CardService;
 import com.vocaflipbackend.service.CloudinaryService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,9 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class CardServiceImpl implements CardService {
+
+    private static final int DEFAULT_FLIP_MATCH_LIMIT = 32;
+    private static final int MAX_FLIP_MATCH_LIMIT = 120;
 
     private final CardRepository cardRepository;
     private final DeckRepository deckRepository;
@@ -109,6 +113,22 @@ public class CardServiceImpl implements CardService {
             throw new AppException(ErrorCode.DECK_NOT_FOUND);
         }
         return cardRepository.findByDeckIdAndIsRemovedFalse(deckId).stream()
+                .map(cardMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CardResponse> getFlipMatchCardsForCurrentUser(int limit) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        int resolvedLimit = limit <= 0
+                ? DEFAULT_FLIP_MATCH_LIMIT
+                : Math.min(limit, MAX_FLIP_MATCH_LIMIT);
+
+        return cardRepository.findRandomCardsByUserId(userId, resolvedLimit).stream()
                 .map(cardMapper::toResponse)
                 .collect(Collectors.toList());
     }

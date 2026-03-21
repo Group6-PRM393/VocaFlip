@@ -64,6 +64,19 @@ public class CardController {
                 .build();
     }
 
+    @Operation(
+            summary = "Lấy dữ liệu game Flip Match",
+            description = "Trả về danh sách card ngẫu nhiên từ toàn bộ deck của user hiện tại để FE chỉ cần gọi 1 request"
+    )
+    @GetMapping("/game/flip-match")
+    public ApiResponse<List<CardResponse>> getFlipMatchCards(
+            @Parameter(description = "Số card tối đa cần lấy")
+            @RequestParam(required = false, defaultValue = "32") int limit) {
+        return ApiResponse.<List<CardResponse>>builder()
+                .result(cardService.getFlipMatchCardsForCurrentUser(limit))
+                .build();
+    }
+
     @Operation(summary = "Cập nhật thẻ", description = "Cập nhật thông tin của một thẻ flashcard với tùy chọn thay đổi ảnh")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<CardResponse> updateCard(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_screen.dart';
-import 'package:voca_flip_mobile/features/game/flip_match_game_screen.dart';
+import 'package:voca_flip_mobile/features/game/screens/flip_match_game_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';
