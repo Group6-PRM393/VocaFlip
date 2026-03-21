@@ -18,6 +18,7 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
   bool _loading = true;
   String? _error;
   StudySessionResponse? _sessionData;
+  List<StudyCardResponse> _comingUpCards = const [];
 
   // User stats
   int _streakDays = 0;
@@ -38,18 +39,39 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
       final prefs = await SharedPreferences.getInstance();
       final api = ApiService(prefs);
 
-      // Fetch daily review session and user info in parallel
+      // Fetch user info + due count + upcoming cards in parallel
       final results = await Future.wait([
-        api.post('/api/study/daily-review'),
         api.get('/api/user/me'),
+        api.get('/api/study/due-cards-count'),
+        api.get(
+          '/api/study/upcoming-cards',
+          queryParameters: {'withinHours': 3},
+        ),
       ]);
 
-      final sessionData = StudySessionResponse.fromJson(
-        results[0].data['result'] as Map<String, dynamic>,
-      );
-
-      final userResult = results[1].data['result'];
+      final userResult = results[0].data['result'];
       _streakDays = userResult['streakDays'] ?? 0;
+
+      final dueCount = (results[1].data['result'] as num?)?.toInt() ?? 0;
+
+      final upcomingRaw = results[2].data['result'];
+      _comingUpCards = (upcomingRaw is List)
+          ? upcomingRaw
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      StudyCardResponse.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
+          : const [];
+
+      StudySessionResponse? sessionData;
+      if (dueCount > 0) {
+        final dailyReviewRes = await api.post('/api/study/daily-review');
+        sessionData = StudySessionResponse.fromJson(
+          dailyReviewRes.data['result'] as Map<String, dynamic>,
+        );
+      }
 
       if (!mounted) return;
       setState(() {
@@ -68,13 +90,16 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
   void _startReview() {
     if (_sessionData == null || _sessionData!.cards.isEmpty) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => StudyScreen(sessionData: _sessionData),
-      ),
-    ).then((_) {
-      if (mounted) Navigator.of(context).pop(true); // Pop back to home and refresh
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => StudyScreen(sessionData: _sessionData),
+          ),
+        )
+        .then((_) {
+          if (mounted)
+            Navigator.of(context).pop(true); // Pop back to home and refresh
+        });
   }
 
   @override
@@ -84,8 +109,8 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
       body: _loading
           ? _buildLoading()
           : _error != null
-              ? _buildError()
-              : _buildContent(),
+          ? _buildError()
+          : _buildContent(),
     );
   }
 
@@ -150,6 +175,9 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
   Widget _buildContent() {
     final cards = _sessionData?.cards ?? [];
     final totalCards = cards.length;
+    final upcomingCards = _comingUpCards
+        .where((c) => !_containsCard(cards, c.cardId))
+        .toList();
 
     return Column(
       children: [
@@ -175,6 +203,20 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
                     ),
                     const SizedBox(height: 12),
                     ...cards.map((card) => _buildCardItem(card, isReady: true)),
+
+                    const SizedBox(height: 20),
+                    _buildSectionHeader(
+                      'Coming Up Later',
+                      upcomingCards.length.toString(),
+                      const Color(0xFFF97316),
+                    ),
+                    const SizedBox(height: 12),
+                    if (upcomingCards.isEmpty)
+                      _buildNoUpcomingHint()
+                    else
+                      ...upcomingCards.map(
+                        (card) => _buildCardItem(card, isReady: false),
+                      ),
                   ],
                 ),
         ),
@@ -320,7 +362,10 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF7ED), // Orange 50
                   borderRadius: BorderRadius.circular(20),
@@ -387,6 +432,8 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
   }
 
   Widget _buildCardItem(StudyCardResponse card, {required bool isReady}) {
+    final timeLabel = !isReady ? _formatTimeUntil(card.nextReviewAt) : null;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 2),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -458,45 +505,114 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
                 ],
               ),
             ),
+          if (!isReady)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFED7AA)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.schedule,
+                    color: Color(0xFFF97316),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    timeLabel ?? 'SOON',
+                    style: GoogleFonts.lexend(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFF97316),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_outline_rounded,
-              size: 64,
-              color: const Color(0xFF22C55E).withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'All Caught Up!',
-              style: GoogleFonts.lexend(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'No cards due for review right now.\nGreat job keeping up!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ],
+  Widget _buildNoUpcomingHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+          ),
         ),
       ),
+      child: Text(
+        'No upcoming cards in the next 3 hours.',
+        style: GoogleFonts.lexend(
+          fontSize: 13,
+          color: const Color(0xFF64748B),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                size: 64,
+                color: const Color(0xFF22C55E).withValues(alpha: 0.6),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'All Caught Up!',
+                style: GoogleFonts.lexend(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No cards due for review right now.\nGreat job keeping up!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lexend(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildSectionHeader(
+          'Coming Up Later',
+          _comingUpCards.length.toString(),
+          const Color(0xFFF97316),
+        ),
+        const SizedBox(height: 12),
+        if (_comingUpCards.isEmpty)
+          _buildNoUpcomingHint()
+        else
+          ..._comingUpCards.map((card) => _buildCardItem(card, isReady: false)),
+      ],
     );
   }
 
@@ -510,9 +626,7 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFE2E8F0)),
-        ),
+        border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -568,5 +682,29 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
         ),
       ),
     );
+  }
+
+  bool _containsCard(List<StudyCardResponse> cards, String cardId) {
+    for (final card in cards) {
+      if (card.cardId == cardId) return true;
+    }
+    return false;
+  }
+
+  String? _formatTimeUntil(String? nextReviewAt) {
+    if (nextReviewAt == null || nextReviewAt.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(nextReviewAt);
+    if (parsed == null) return null;
+
+    final now = DateTime.now();
+    final diff = parsed.difference(now);
+    if (diff.inMinutes <= 1) return 'SOON';
+    if (diff.inMinutes < 60) return 'IN ${diff.inMinutes}M';
+
+    final hours = diff.inHours;
+    final minutes = diff.inMinutes % 60;
+    if (minutes == 0) return 'IN ${hours}H';
+    return 'IN ${hours}H ${minutes}M';
   }
 }

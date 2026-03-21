@@ -7,6 +7,7 @@ class StudyCardResponse {
   final String? imageUrl;
   final String? audioUrl;
   final int? orderIndex;
+  final String? nextReviewAt;
 
   const StudyCardResponse({
     required this.cardId,
@@ -17,6 +18,7 @@ class StudyCardResponse {
     this.imageUrl,
     this.audioUrl,
     this.orderIndex,
+    this.nextReviewAt,
   });
 
   /// JSON -> StudyCardResponse
@@ -30,6 +32,7 @@ class StudyCardResponse {
       imageUrl: json['imageUrl'] as String?,
       audioUrl: json['audioUrl'] as String?,
       orderIndex: json['orderIndex'] as int?,
+      nextReviewAt: json['nextReviewAt']?.toString(),
     );
   }
 
@@ -44,6 +47,7 @@ class StudyCardResponse {
       'imageUrl': imageUrl,
       'audioUrl': audioUrl,
       'orderIndex': orderIndex,
+      'nextReviewAt': nextReviewAt,
     };
   }
 }
