@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
 import 'package:voca_flip_mobile/features/auth/models/auth_model.dart';
 import 'package:voca_flip_mobile/features/profile/providers/user_provider.dart';
 
@@ -108,17 +109,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: primaryColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.camera_alt_rounded, color: primaryColor),
-                ),
-                title: const Text('Chụp ảnh mới'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
               // Chỉ hiện nút xoá nếu đang có ảnh đã chọn (chưa lưu)
               if (_pickedImageBytes != null)
                 ListTile(
@@ -199,12 +189,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         title: Text(
           'Edit Profile',
-          style: TextStyle(
-            color: primaryColor,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.2,
-          ),
+          style: AppTextStyles.heading2.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       body: Stack(
