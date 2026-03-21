@@ -87,4 +87,58 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
+
+    @Override
+    public String uploadAvatar(MultipartFile file, String userId) {
+        try {
+            if (file.isEmpty()) {
+                throw new AppException(ErrorCode.FILE_EMPTY);
+            }
+
+            if (file.getSize() > CloudinaryConstants.MAX_FILE_SIZE) {
+                throw new AppException(ErrorCode.FILE_SIZE_EXCEEDED);
+            }
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new AppException(ErrorCode.INVALID_FILE_TYPE);
+            }
+
+            // public_id cố định theo userId → overwrite lần upload sau, không tạo file rác
+            String publicId = "vocaflip/avatars/" + userId;
+
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "public_id", publicId,
+                    "overwrite", true,
+                    "resource_type", "image",
+                    "transformation", new Transformation()
+                            .width(400)
+                            .height(400)
+                            .crop("fill")
+                            .gravity("face")  // ưu tiên nhận diện khuôn mặt
+                            .quality("auto")
+            );
+
+            Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), options);
+            String secureUrl = (String) result.get("secure_url");
+            log.info("Avatar uploaded successfully for user {}: {}", userId, secureUrl);
+            return secureUrl;
+
+        } catch (IOException e) {
+            log.error("Error uploading avatar for user {}: {}", userId, e.getMessage());
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    @Override
+    public void deleteAvatar(String userId) {
+        try {
+            String publicId = "vocaflip/avatars/" + userId;
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            log.info("Avatar deleted successfully for user {}", userId);
+        } catch (IOException e) {
+            // Không throw exception — thất bại khi xoá không nên block luồng chính
+            log.warn("Failed to delete avatar for user {}: {}", userId, e.getMessage());
+        }
+    }
 }

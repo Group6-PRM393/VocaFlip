@@ -209,7 +209,7 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
                         items: cats
                             .map((c) => DropdownMenuItem<CategoryModel>(
                                   value: c,
-                                  child: Text(c.name),
+                                  child: Text(c.categoryName),
                                 ))
                             .toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v),

@@ -266,10 +266,10 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                     data: (cats) {
                       // ✅ set default theo tên category hiện tại của deck (1 lần)
                       _selectedCategory ??= cats.firstWhere(
-                        (c) => c.name == (widget.deck.category ?? ''),
+                        (c) => c.categoryName == (widget.deck.category ?? ''),
                         orElse: () => cats.isNotEmpty
                             ? cats.first
-                            : CategoryModel(id: '', name: ''),
+                            : CategoryModel(id: '', categoryName: '', iconCode: '', colorHex: ''),
                       );
                       if (_selectedCategory?.id == '') _selectedCategory = null;
 
@@ -279,7 +279,7 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                             .map(
                               (c) => DropdownMenuItem<CategoryModel>(
                                 value: c,
-                                child: Text(c.name),
+                                child: Text(c.categoryName),
                               ),
                             )
                             .toList(),
