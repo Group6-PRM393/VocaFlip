@@ -27,28 +27,21 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Future<void> _onSubmit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailController.text.trim();
+    final success = await ref.read(authProvider.notifier).requestOtp(email: email);
+
+    if (!mounted || !success) return;
+
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            OtpVerificationScreen(email: _emailController.text.trim()),
+        builder: (_) => OtpVerificationScreen(
+          email: email,
+          flow: OtpFlow.passwordReset,
+        ),
       ),
     );
-
-    // if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    // final success = await ref
-    //     .read(authProvider.notifier)
-    //     .forgotPassword(email: _emailController.text.trim());
-
-    // if (!mounted) return;
-    // if (success) {
-    //   Navigator.of(context).push(
-    //     MaterialPageRoute(
-    //       builder: (_) =>
-    //           OtpVerificationScreen(email: _emailController.text.trim()),
-    //     ),
-    //   );
-    // }
   }
 
   String? _validateEmail(String? value) {

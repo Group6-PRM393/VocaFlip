@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_screen.dart';
+import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_bottom_nav.dart';
+import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_fab.dart';
 import 'package:voca_flip_mobile/features/profile/learning_history_activity_screen.dart';
-import 'package:voca_flip_mobile/features/quiz/screens/quiz_settings_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';
@@ -19,13 +21,29 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
 
+  void _onNavTap(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
+  void _openCreateDeck() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(child: _buildBody()),
-      floatingActionButton: _buildFab(),
-      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: _selectedIndex == 0
+          ? DashboardFab(onPressed: _openCreateDeck)
+          : null,
+      bottomNavigationBar: DashboardBottomNav(
+        selectedIndex: _selectedIndex,
+        onTap: _onNavTap,
+      ),
     );
   }
 
@@ -35,58 +53,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         return const HomeTab();
       case 1:
         return const LearningHistoryActivityScreen();
-      // return Center(
-      //   child: Column(
-      //     mainAxisAlignment: MainAxisAlignment.center,
-      //     children: [
-      //       Text(
-      //         'Coming soon...',
-      //         style: GoogleFonts.lexend(
-      //           fontSize: 16,
-      //           color: AppColors.textSecondary,
-      //         ),
-      //       ),
-      //       const SizedBox(height: 20),
-      //       ElevatedButton(
-      //         onPressed: () {
-      //           Navigator.push(
-      //             context,
-      //             MaterialPageRoute(
-      //               builder: (context) =>
-      //                   const QuizSettingsScreen(deckId: "deck-test"),
-      //             ),
-      //           );
-      //         },
-      //         style: ElevatedButton.styleFrom(
-      //           backgroundColor: AppColors.primary,
-      //           foregroundColor: Colors.white,
-      //           padding: const EdgeInsets.symmetric(
-      //             horizontal: 24,
-      //             vertical: 12,
-      //           ),
-      //           shape: RoundedRectangleBorder(
-      //             borderRadius: BorderRadius.circular(8),
-      //           ),
-      //         ),
-      //         child: Text(
-      //           " Take Quiz",
-      //           style: GoogleFonts.lexend(fontWeight: FontWeight.w600),
-      //         ),
-      //       ),
-      //       // ---------------------------------
-      //     ],
-      //   ),
-      // );
       case 2:
-        return Center(
-          child: Text(
-            'Coming soon...',
-            style: GoogleFonts.lexend(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        );
+        return const LearningProgressStatsScreen();
       case 3:
         return const CategoryManagementScreen();
       case 4:
@@ -102,89 +70,5 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         );
     }
-  }
-
-  Widget? _buildFab() {
-    // Chỉ hiện nút "+" tạo deck trên tab Home (index 0)
-    if (_selectedIndex != 0) return null;
-    return FloatingActionButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
-        );
-      },
-      backgroundColor: AppColors.primary,
-      elevation: 8,
-      shape: const CircleBorder(),
-      child: const Icon(Icons.add, color: Colors.white, size: 28),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        border: const Border(top: BorderSide(color: AppColors.divider)),
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(0, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.history_rounded, 'History'),
-              _navItem(2, Icons.bar_chart_rounded, 'Stats'),
-              _navItem(
-                3,
-                Icons.category_rounded,
-                'Category',
-              ), //Đông thêm Category
-              _navItem(4, Icons.person_rounded, 'Profile'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(int index, IconData icon, String label) {
-    final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.08)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: GoogleFonts.lexend(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
