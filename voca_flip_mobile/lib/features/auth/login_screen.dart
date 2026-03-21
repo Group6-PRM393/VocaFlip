@@ -12,6 +12,7 @@ import 'package:voca_flip_mobile/features/auth/register_screen.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/auth_text_field.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/google_sign_in_button.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/login_hero_section.dart';
+import 'package:voca_flip_mobile/features/auth/forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final bool isRegisterSuccess;
@@ -183,7 +184,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
