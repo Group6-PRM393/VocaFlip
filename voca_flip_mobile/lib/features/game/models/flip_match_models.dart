@@ -12,6 +12,70 @@ class FlipWordPair {
   final String meaning;
 }
 
+class FlipGameDeck {
+  const FlipGameDeck({
+    required this.id,
+    required this.title,
+    required this.coverImageUrl,
+    required this.totalCards,
+  });
+
+  final String id;
+  final String title;
+  final String? coverImageUrl;
+  final int totalCards;
+
+  factory FlipGameDeck.fromJson(Map<String, dynamic> json) {
+    int toInt(dynamic v) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    final image = json['coverImageUrl']?.toString().trim();
+    return FlipGameDeck(
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      coverImageUrl: (image == null || image.isEmpty) ? null : image,
+      totalCards: toInt(json['totalCards']),
+    );
+  }
+}
+
+class FlipGameSummary {
+  const FlipGameSummary({
+    required this.totalScore,
+    required this.totalGames,
+    required this.bestScore,
+  });
+
+  final int totalScore;
+  final int totalGames;
+  final int bestScore;
+
+  factory FlipGameSummary.fromJson(Map<String, dynamic> json) {
+    int toInt(dynamic v) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    return FlipGameSummary(
+      totalScore: toInt(json['totalScore']),
+      totalGames: toInt(json['totalGames']),
+      bestScore: toInt(json['bestScore']),
+    );
+  }
+
+  static const empty = FlipGameSummary(
+    totalScore: 0,
+    totalGames: 0,
+    bestScore: 0,
+  );
+}
+
 enum FlipTileSide { word, meaning }
 
 class FlipGameTileModel {
@@ -36,12 +100,14 @@ class FlipScoreHistoryEntry {
     required this.score,
     required this.seconds,
     required this.cardCount,
+    required this.moves,
     required this.playedAt,
   });
 
   final int score;
   final int seconds;
   final int cardCount;
+  final int moves;
   final DateTime playedAt;
 
   Map<String, dynamic> toJson() {
@@ -49,6 +115,7 @@ class FlipScoreHistoryEntry {
       'score': score,
       'seconds': seconds,
       'cardCount': cardCount,
+      'moves': moves,
       'playedAt': playedAt.toIso8601String(),
     };
   }
@@ -59,6 +126,7 @@ class FlipScoreHistoryEntry {
       score: (json['score'] as num?)?.toInt() ?? 0,
       seconds: (json['seconds'] as num?)?.toInt() ?? 0,
       cardCount: (json['cardCount'] as num?)?.toInt() ?? 12,
+      moves: (json['moves'] as num?)?.toInt() ?? 0,
       playedAt: DateTime.tryParse(playedAtRaw) ?? DateTime.now(),
     );
   }

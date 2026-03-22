@@ -2,11 +2,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/features/auth/constants/password_constants.dart';
 import 'package:voca_flip_mobile/features/auth/otp_verification_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
+import 'package:voca_flip_mobile/features/auth/utils/password_strength_utils.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/auth_text_field.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/google_sign_in_button.dart';
+import 'package:voca_flip_mobile/features/auth/widgets/password_strength_section.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/register_hero_illustration.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -24,6 +28,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+
+  PasswordStrengthResult get _passwordStrength =>
+      PasswordStrengthEvaluator.evaluate(_passwordController.text);
 
   @override
   void dispose() {
@@ -134,7 +141,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   prefixIcon: Icons.person_outline_rounded,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'Vui lòng nhập họ tên';
+                      return AuthMessages.requiredFullName;
                     }
                     return null;
                   },
@@ -151,11 +158,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'Vui lòng nhập email';
+                      return AuthMessages.requiredEmail;
                     }
                     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
                     if (!emailRegex.hasMatch(v.trim())) {
-                      return 'Email không hợp lệ';
+                      return AuthMessages.invalidEmail;
                     }
                     return null;
                   },
@@ -169,6 +176,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _passwordController,
                   hintText: '••••••••',
                   prefixIcon: Icons.lock_outline_rounded,
+                  onChanged: (_) => setState(() {}),
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -183,16 +191,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
+                      return AuthMessages.requiredPassword;
                     }
-                    if (v.length < 6) {
-                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    final strength = PasswordStrengthEvaluator.evaluate(v);
+                    if (!strength.isValid) {
+                      return AuthMessages.passwordRequirementSummary;
                     }
-                    if (v.length >= 255) {
-                      return 'Mật khẩu phải ít hơn 255 ký tự';
+                    if (v.length >= PasswordConstants.maxLength) {
+                      return AuthMessages.passwordTooLong;
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 10),
+                PasswordStrengthSection(
+                  result: _passwordStrength,
+                  guideText: PasswordConstants.strengthGuideText,
                 ),
                 const SizedBox(height: 16),
 
@@ -203,6 +217,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _confirmPasswordController,
                   hintText: '••••••••',
                   prefixIcon: Icons.lock_outline_rounded,
+                  onChanged: (_) => setState(() {}),
                   obscureText: _obscureConfirm,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -217,13 +232,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) {
-                      return 'Vui lòng xác nhận mật khẩu';
+                      return AuthMessages.requiredConfirmPassword;
                     }
                     if (v != _passwordController.text) {
-                      return 'Mật khẩu không khớp';
+                      return AuthMessages.passwordMismatch;
                     }
-                    if (v.length >= 255) {
-                      return 'Mật khẩu phải ít hơn 255 ký tự';
+                    if (v.length >= PasswordConstants.maxLength) {
+                      return AuthMessages.passwordTooLong;
                     }
                     return null;
                   },
@@ -249,7 +264,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                       ),
                     ),
-                    const Expanded(child: Divider(color: AppColors.googleBorder)),
+                    const Expanded(
+                      child: Divider(color: AppColors.googleBorder),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 18),

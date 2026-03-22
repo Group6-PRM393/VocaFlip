@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/features/category/create_category_screen.dart';
 import 'package:voca_flip_mobile/features/category/edit_category_screen.dart';
 import 'package:voca_flip_mobile/features/category/delete_category_dialog.dart';
@@ -15,7 +16,8 @@ class CategoryManagementScreen extends ConsumerStatefulWidget {
       _CategoryManagementScreenState();
 }
 
-class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScreen> {
+class _CategoryManagementScreenState
+    extends ConsumerState<CategoryManagementScreen> {
   // --- Định nghĩa màu sắc ---
   final Color primaryColor = const Color(0xFF135BEC);
   final Color backgroundLight = const Color(0xFFF6F6F8);
@@ -64,17 +66,23 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
       try {
         final repo = await ref.read(categoryRepositoryProvider.future);
         await repo.deleteCategory(category.id);
-        
+
         ref.invalidate(categoryListProvider);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã xóa ${category.categoryName}')),
+          SnackBar(
+            content: Text(
+              CategoryMessages.deletedCategory(category.categoryName),
+            ),
+          ),
         );
       } catch (e) {
         if (!mounted) return;
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi xóa: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${CategoryMessages.categoryDeleteFailed}: $e'),
+          ),
         );
       }
     }
@@ -115,17 +123,17 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Lỗi: $err'),
+              Text('Error: $err'),
               ElevatedButton(
                 onPressed: () => ref.invalidate(categoryListProvider),
-                child: const Text('Thử lại'),
-              )
+                child: const Text(AppMessages.tryAgain),
+              ),
             ],
           ),
         ),
         data: (categories) {
           if (categories.isEmpty) {
-             return const Center(child: Text('Chưa có danh mục nào. Hãy tạo mới.'));
+            return const Center(child: Text(CategoryMessages.noCategories));
           }
           return ListView.separated(
             padding: const EdgeInsets.only(
@@ -184,10 +192,16 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: CategoryHelper.hexToColor(item.colorHex).withValues(alpha: 0.1),
+                color: CategoryHelper.hexToColor(
+                  item.colorHex,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(CategoryHelper.getIconFromString(item.iconCode), color: CategoryHelper.hexToColor(item.colorHex), size: 24),
+              child: Icon(
+                CategoryHelper.getIconFromString(item.iconCode),
+                color: CategoryHelper.hexToColor(item.colorHex),
+                size: 24,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

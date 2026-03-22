@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/features/category/providers/category_provider.dart';
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
 import 'package:voca_flip_mobile/core/utils/category_helper.dart';
@@ -58,7 +59,7 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập tên danh mục')),
+        const SnackBar(content: Text(CategoryMessages.requiredCategoryName)),
       );
       return;
     }
@@ -83,9 +84,9 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi tạo danh mục: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${CategoryMessages.categoryCreateFailed}: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

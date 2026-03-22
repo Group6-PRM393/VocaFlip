@@ -5,7 +5,6 @@ import 'package:voca_flip_mobile/features/dashboard/learning_progress_stats_scre
 import 'package:voca_flip_mobile/features/game/screens/flip_match_game_screen.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_bottom_nav.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/dashboard_fab.dart';
-import 'package:voca_flip_mobile/features/profile/learning_history_activity_screen.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/home/home_tab.dart';

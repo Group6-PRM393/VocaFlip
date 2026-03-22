@@ -26,7 +26,7 @@ class DashboardBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.history_rounded, 'History'),
+              _navItem(1, Icons.videogame_asset, 'Game'),
               _navItem(2, Icons.bar_chart_rounded, 'Stats'),
               _navItem(3, Icons.category_rounded, 'Category'),
               _navItem(4, Icons.person_rounded, 'Profile'),

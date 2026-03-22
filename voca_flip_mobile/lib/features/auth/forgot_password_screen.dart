@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
 import 'package:voca_flip_mobile/features/auth/otp_verification_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
@@ -30,28 +31,28 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
-    final success = await ref.read(authProvider.notifier).requestOtp(email: email);
+    final success = await ref
+        .read(authProvider.notifier)
+        .requestOtp(email: email);
 
     if (!mounted || !success) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => OtpVerificationScreen(
-          email: email,
-          flow: OtpFlow.passwordReset,
-        ),
+        builder: (_) =>
+            OtpVerificationScreen(email: email, flow: OtpFlow.passwordReset),
       ),
     );
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Vui lòng nhập email';
+      return AuthMessages.requiredEmail;
     }
 
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     if (!emailRegex.hasMatch(value.trim())) {
-      return 'Email không hợp lệ';
+      return AuthMessages.invalidEmail;
     }
 
     return null;

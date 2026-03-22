@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
 import 'package:voca_flip_mobile/features/study/study_notifier.dart';
 import 'package:voca_flip_mobile/features/study/study_result_screen.dart';
@@ -165,13 +166,13 @@ class _StudyScreenState extends State<StudyScreen> {
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  'Không thể bắt đầu phiên học',
+                  StudyMessages.startSessionTitle,
                   style: AppTextStyles.headerLabel,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  n.errorMessage ?? 'Lỗi không xác định',
+                  n.errorMessage ?? AppMessages.unknownError,
                   style: const TextStyle(color: Colors.red, fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
@@ -182,12 +183,12 @@ class _StudyScreenState extends State<StudyScreen> {
                       n.startSession(widget.deckId!);
                     }
                   },
-                  child: const Text('Thử lại'),
+                  child: const Text(AppMessages.tryAgain),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Quay lại'),
+                  child: const Text(StudyMessages.goBack),
                 ),
               ],
             ),
@@ -199,7 +200,7 @@ class _StudyScreenState extends State<StudyScreen> {
     if (n.status == StudyStatus.initial || n.currentCard == null) {
       return Scaffold(
         backgroundColor: AppColors.scaffoldBackground,
-        body: const Center(child: Text('Chưa có dữ liệu phiên học')),
+        body: const Center(child: Text(StudyMessages.noSessionData)),
       );
     }
 

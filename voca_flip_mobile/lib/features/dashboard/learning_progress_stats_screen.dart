@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
+import 'package:voca_flip_mobile/core/utils/error_message_utils.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/activity_trend_card.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/learning_progress_header.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/learning_progress_top_stats.dart';
@@ -88,7 +89,10 @@ class _LearningProgressStatsScreenState
       setState(() => _loading = false);
     } catch (e) {
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = ErrorMessageUtils.normalize(
+          e,
+          fallback: 'Unable to load learning progress. Please try again.',
+        );
         _loading = false;
       });
     }

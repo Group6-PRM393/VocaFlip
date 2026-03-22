@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
 import 'package:voca_flip_mobile/features/auth/login_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
@@ -120,7 +121,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Đã gửi lại mã xác thực tới ${widget.email}',
+          'A new verification code was sent to ${widget.email}.',
           style: GoogleFonts.lexend(color: AppColors.textOnPrimary),
         ),
         backgroundColor: AppColors.primary,
@@ -137,7 +138,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     if (_otpCode.length != _otpLength || hasEmptyDigit) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng nhập đủ 4 chữ số'),
+          content: Text(AuthMessages.otpDigitsRequired),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -176,7 +177,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Xac thuc email thanh cong, vui long dang nhap'),
+        content: Text(AuthMessages.otpVerifySuccess),
         backgroundColor: Colors.green,
       ),
     );
