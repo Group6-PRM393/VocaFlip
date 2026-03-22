@@ -76,6 +76,8 @@ class _StudyScreenState extends State<StudyScreen> {
   }
 
   void _navigateToResult(StudyNotifier n) {
+    final canStudyAgain = widget.deckId != null;
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => StudyResultScreen(
@@ -83,6 +85,7 @@ class _StudyScreenState extends State<StudyScreen> {
           rememberedCount: n.rememberedCount,
           accuracy: n.accuracy,
           deckId: widget.deckId,
+          canStudyAgain: canStudyAgain,
         ),
       ),
     );

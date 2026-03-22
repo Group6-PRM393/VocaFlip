@@ -12,12 +12,15 @@ class StudyResultScreen extends StatelessWidget {
 
   final String? deckId;
 
+  final bool canStudyAgain;
+
   const StudyResultScreen({
     super.key,
     required this.forgotCount,
     required this.rememberedCount,
     required this.accuracy,
     this.deckId,
+    this.canStudyAgain = true,
   });
 
   @override
@@ -69,8 +72,10 @@ class StudyResultScreen extends StatelessWidget {
 
               const Spacer(flex: 3),
 
-              _buildStudyAgainButton(context),
-              const SizedBox(height: 12),
+              if (canStudyAgain) ...[
+                _buildStudyAgainButton(context),
+                const SizedBox(height: 12),
+              ],
               _buildBackToHomeButton(context),
               const SizedBox(height: 32),
             ],
