@@ -167,6 +167,10 @@ class FlipMatchGameService {
         bestScore: entry.score > currentSummary.bestScore
             ? entry.score
             : currentSummary.bestScore,
+        top3Scores: ([
+          ...currentSummary.top3Scores,
+          entry.score,
+        ]..sort((a, b) => b.compareTo(a))).take(3).toList(),
       );
       await prefs.setString(
         scoreSummaryKey,
@@ -174,6 +178,7 @@ class FlipMatchGameService {
           'totalScore': fallbackSummary.totalScore,
           'totalGames': fallbackSummary.totalGames,
           'bestScore': fallbackSummary.bestScore,
+          'top3Scores': fallbackSummary.top3Scores,
         }),
       );
       return fallbackSummary;
