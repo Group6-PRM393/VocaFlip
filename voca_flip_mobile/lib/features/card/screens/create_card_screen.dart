@@ -10,10 +10,7 @@ import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
 class CreateCardScreen extends ConsumerStatefulWidget {
   final String deckId;
 
-  const CreateCardScreen({
-    super.key,
-    required this.deckId,
-  });
+  const CreateCardScreen({super.key, required this.deckId});
 
   @override
   ConsumerState<CreateCardScreen> createState() => _CreateCardScreenState();
@@ -107,15 +104,21 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Card created successfully')),
+        const SnackBar(
+          content: Text('Card created successfully'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context, true);
     } catch (e) {
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Create card failed: $e')),
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Create card failed: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -186,7 +189,8 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: const Color(0xFFE5E7EB)),
                           ),
-                          child: (_selectedImage == null &&
+                          child:
+                              (_selectedImage == null &&
                                   _selectedImageBytes == null)
                               ? const Center(
                                   child: Text(
