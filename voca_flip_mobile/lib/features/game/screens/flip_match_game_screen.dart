@@ -8,6 +8,8 @@ import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/utils/error_message_utils.dart';
 import 'package:voca_flip_mobile/features/game/models/flip_match_models.dart';
 import 'package:voca_flip_mobile/features/game/services/flip_match_game_service.dart';
+import 'package:voca_flip_mobile/features/game/widgets/flip_match_game_sections.dart';
+import 'package:voca_flip_mobile/features/game/widgets/flip_match_settings_sections.dart';
 import 'package:voca_flip_mobile/features/game/widgets/flip_game_tile.dart';
 
 class FlipMatchGameScreen extends StatefulWidget {
@@ -21,8 +23,8 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
   static const int _maxCardCount = 20;
   static const int _minimumDeckCards = 12;
 
-  static const List<_DifficultyOption> _difficultyOptions = [
-    _DifficultyOption(
+  static const List<FlipDifficultyOption> _difficultyOptions = [
+    FlipDifficultyOption(
       id: 'easy',
       title: 'Easy',
       subtitle: '12 cards. Perfect for a quick warmup.',
@@ -30,7 +32,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       cardCount: 12,
       icon: Icons.filter_1_rounded,
     ),
-    _DifficultyOption(
+    FlipDifficultyOption(
       id: 'normal',
       title: 'Normal',
       subtitle: '16 cards. Balanced challenge.',
@@ -38,7 +40,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       cardCount: 16,
       icon: Icons.filter_2_rounded,
     ),
-    _DifficultyOption(
+    FlipDifficultyOption(
       id: 'hard',
       title: 'Hard',
       subtitle: '20 cards. For memory masters only.',
@@ -60,7 +62,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
   int _selectedDeckIndex = 0;
   bool _startingGame = false;
   bool _showingDeckEnd = false;
-  _DifficultyOption _selectedDifficulty = _difficultyOptions[1];
+  FlipDifficultyOption _selectedDifficulty = _difficultyOptions[1];
   _GamePhase _phase = _GamePhase.settings;
 
   List<FlipGameDeck> _eligibleDecks = const [];
@@ -254,14 +256,14 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
   }
 
   bool _isDifficultySupportedForDeck(
-    _DifficultyOption option,
+    FlipDifficultyOption option,
     FlipGameDeck? deck,
   ) {
     if (deck == null) return false;
     return deck.totalCards >= option.cardCount;
   }
 
-  _DifficultyOption _bestDifficultyForDeck(FlipGameDeck? deck) {
+  FlipDifficultyOption _bestDifficultyForDeck(FlipGameDeck? deck) {
     for (final option in _difficultyOptions.reversed) {
       if (_isDifficultySupportedForDeck(option, deck)) {
         return option;
@@ -270,7 +272,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
     return _difficultyOptions.first;
   }
 
-  void _onSelectDifficulty(_DifficultyOption option) {
+  void _onSelectDifficulty(FlipDifficultyOption option) {
     final deck = _selectedDeck;
     if (_isDifficultySupportedForDeck(option, deck)) {
       setState(() => _selectedDifficulty = option);
@@ -489,7 +491,11 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       backgroundColor: const Color(0xFFF6F6FF),
       appBar: _buildTopBar(),
       bottomNavigationBar: _phase == _GamePhase.settings
-          ? _buildStartButtonBar()
+          ? FlipMatchStartButtonBar(
+              startingGame: _startingGame,
+              hasDecks: _eligibleDecks.isNotEmpty,
+              onStart: _startNewGame,
+            )
           : null,
       body: Container(
         decoration: const BoxDecoration(
@@ -565,417 +571,41 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
           ),
         ),
         const SizedBox(height: 22),
-        Row(
-          children: [
-            Text(
-              'Select Deck',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF27324D),
-              ),
-            ),
-            const Spacer(),
-            InkWell(
-              onTap: _toggleViewAllDecks,
-              borderRadius: BorderRadius.circular(10),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Text(
-                  _showingDeckEnd ? 'Back' : 'View All',
-                  style: GoogleFonts.manrope(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 206,
-          child: ListView.separated(
-            controller: _deckScrollController,
-            scrollDirection: Axis.horizontal,
-            itemCount: _eligibleDecks.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final deck = _eligibleDecks[index];
-              final isSelected = _selectedDeckIndex == index;
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedDeckIndex = index;
-                    final selectedDeck = _eligibleDecks[index];
-                    if (!_isDifficultySupportedForDeck(
-                      _selectedDifficulty,
-                      selectedDeck,
-                    )) {
-                      _selectedDifficulty = _bestDifficultyForDeck(
-                        selectedDeck,
-                      );
-                    }
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 160,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.primary
-                          : const Color(0xFFD6E0FF),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: SizedBox(
-                          height: 110,
-                          width: double.infinity,
-                          child: deck.coverImageUrl != null
-                              ? Image.network(
-                                  deck.coverImageUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: const Color(0xFFE6ECFF),
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.image_not_supported_rounded,
-                                      color: AppColors.textHint,
-                                    ),
-                                  ),
-                                )
-                              : Container(
-                                  color: const Color(0xFFE6ECFF),
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.layers_rounded,
-                                    color: AppColors.textHint,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 9),
-                      Text(
-                        deck.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2A45),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${deck.totalCards} Cards',
-                        style: GoogleFonts.manrope(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF7D869F),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+        FlipDeckSelectorSection(
+          decks: _eligibleDecks,
+          selectedDeckIndex: _selectedDeckIndex,
+          showingDeckEnd: _showingDeckEnd,
+          scrollController: _deckScrollController,
+          onToggleViewAllDecks: _toggleViewAllDecks,
+          onSelectDeck: (index) {
+            setState(() {
+              _selectedDeckIndex = index;
+              final selectedDeck = _eligibleDecks[index];
+              if (!_isDifficultySupportedForDeck(
+                _selectedDifficulty,
+                selectedDeck,
+              )) {
+                _selectedDifficulty = _bestDifficultyForDeck(selectedDeck);
+              }
+            });
+          },
         ),
         const SizedBox(height: 20),
-        Text(
-          'Difficulty Level',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF27324D),
-          ),
+        FlipDifficultySection(
+          hint: _buildDifficultySupportHint(_selectedDeck),
+          options: _difficultyOptions,
+          selectedOptionId: _selectedDifficulty.id,
+          isOptionSupported: (option) =>
+              _isDifficultySupportedForDeck(option, _selectedDeck),
+          onSelectOption: _onSelectDifficulty,
         ),
-        const SizedBox(height: 4),
-        Text(
-          _buildDifficultySupportHint(_selectedDeck),
-          style: GoogleFonts.manrope(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF66718E),
-          ),
-        ),
-        const SizedBox(height: 10),
-        ..._difficultyOptions.map(_buildDifficultyTile),
         const SizedBox(height: 14),
-        _buildPastPerformanceCard(),
-      ],
-    );
-  }
-
-  Widget _buildDifficultyTile(_DifficultyOption option) {
-    final supported = _isDifficultySupportedForDeck(option, _selectedDeck);
-    final selected = option.id == _selectedDifficulty.id && supported;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        onTap: () => _onSelectDifficulty(option),
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: supported ? Colors.white : const Color(0xFFF6F7FB),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected
-                  ? AppColors.primary
-                  : (supported
-                        ? const Color(0xFFD8E0F5)
-                        : const Color(0xFFE2E5EF)),
-              width: selected ? 2 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: !supported
-                    ? Colors.transparent
-                    : selected
-                    ? AppColors.primary.withValues(alpha: 0.13)
-                    : Colors.black.withValues(alpha: 0.02),
-                blurRadius: selected ? 20 : 8,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Opacity(
-            opacity: supported ? 1 : 0.62,
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected
-                        ? AppColors.primary
-                        : const Color(0xFFE8EEFF),
-                  ),
-                  child: Icon(
-                    option.icon,
-                    size: 18,
-                    color: selected ? Colors.white : AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            option.title,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1B233A),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? const Color(0xFFDCE7FF)
-                                  : const Color(0xFFF0F3FF),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              supported
-                                  ? option.gridLabel
-                                  : 'Need ${option.cardCount} Cards',
-                              style: GoogleFonts.manrope(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: selected
-                                    ? const Color(0xFF1136A8)
-                                    : const Color(0xFF66718E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        option.subtitle,
-                        style: GoogleFonts.manrope(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF66718E),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? AppColors.primary : Colors.transparent,
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.primary
-                          : const Color(0xFFB6BED6),
-                      width: 1.6,
-                    ),
-                  ),
-                  child: selected
-                      ? const Icon(Icons.circle, size: 8, color: Colors.white)
-                      : null,
-                ),
-              ],
-            ),
-          ),
+        FlipPastPerformanceCard(
+          history: _scoreHistory,
+          summary: _scoreSummary,
+          formatDuration: _formatDuration,
         ),
-      ),
-    );
-  }
-
-  Widget _buildPastPerformanceCard() {
-    final bestSeconds = _scoreHistory.isEmpty
-        ? null
-        : _scoreHistory
-              .map((entry) => entry.seconds)
-              .reduce((a, b) => a < b ? a : b);
-
-    final bestAccuracy = _scoreHistory
-        .map((entry) {
-          final pairs = math.max(1, entry.cardCount ~/ 2);
-          final moves = math.max(pairs, entry.moves);
-          return (pairs / moves) * 100;
-        })
-        .fold<double>(0, math.max);
-
-    final fallbackTop3 =
-        ([..._scoreHistory]..sort((a, b) => b.score.compareTo(a.score)))
-            .take(3)
-            .map((entry) => entry.score)
-            .toList();
-    final top3Scores = _scoreSummary.top3Scores.isNotEmpty
-        ? _scoreSummary.top3Scores
-        : fallbackTop3;
-
-    String scoreAt(int index) {
-      if (index >= top3Scores.length) return '--';
-      return top3Scores[index].toString();
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE9EEFF),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.analytics_outlined, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Past Performance',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B2440),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _statBox(
-                  'BEST TIME',
-                  bestSeconds == null ? '--:--' : _formatDuration(bestSeconds),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statBox(
-                  'ACCURACY',
-                  bestAccuracy == 0
-                      ? '-- %'
-                      : '${bestAccuracy.round().clamp(0, 100)} %',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _statBox('TOP 1', scoreAt(0))),
-              const SizedBox(width: 10),
-              Expanded(child: _statBox('TOP 2', scoreAt(1))),
-              const SizedBox(width: 10),
-              Expanded(child: _statBox('TOP 3', scoreAt(2))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statBox(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.manrope(
-              fontSize: 10,
-              letterSpacing: 0.8,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF7E89A7),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF1D2642),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -985,7 +615,12 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 92, 16, 24),
       children: [
-        _buildGameStatusCard(),
+        FlipMatchGameStatusCard(
+          elapsedSeconds: _elapsedSeconds,
+          moves: _moves,
+          score: _lastScore,
+          formatDuration: _formatDuration,
+        ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -1003,7 +638,16 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
           },
         ),
         const SizedBox(height: 16),
-        if (_finished) _buildFinishedCard(),
+        if (_finished)
+          FlipMatchFinishedCard(
+            activeCardCount: _activeCardCount,
+            moves: _moves,
+            elapsedSeconds: _elapsedSeconds,
+            lastScore: _lastScore,
+            formatDuration: _formatDuration,
+            onPlayAgain: _startNewGame,
+            onBackToDecks: () => setState(() => _phase = _GamePhase.settings),
+          ),
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(14),
@@ -1033,233 +677,6 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
     );
   }
 
-  Widget _buildGameStatusCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE9EEFF),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _statusItem(
-              icon: Icons.timer_rounded,
-              label: 'TIMER',
-              value: _formatDuration(_elapsedSeconds),
-              iconBg: const Color(0xFFDCE7FF),
-              valueColor: AppColors.primary,
-            ),
-          ),
-          Container(width: 1, height: 38, color: const Color(0xFFCFD8F5)),
-          Expanded(
-            child: _statusItem(
-              icon: Icons.ads_click_rounded,
-              label: 'MOVES',
-              value: _moves.toString(),
-              iconBg: const Color(0xFFF0DBFF),
-              valueColor: const Color(0xFF9C33C7),
-            ),
-          ),
-          Container(width: 1, height: 38, color: const Color(0xFFCFD8F5)),
-          Expanded(
-            child: _statusItem(
-              icon: Icons.workspace_premium_rounded,
-              label: 'SCORE',
-              value: _lastScore.toString(),
-              iconBg: const Color(0xFFFFE8C6),
-              valueColor: const Color(0xFFC97A00),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color iconBg,
-    required Color valueColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 16, color: valueColor),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.manrope(
-                  fontSize: 10,
-                  letterSpacing: 0.8,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF7680A0),
-                ),
-              ),
-              Text(
-                value,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: valueColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFinishedCard() {
-    final pairCount = math.max(1, _activeCardCount ~/ 2);
-    final accuracy = ((pairCount / math.max(_moves, pairCount)) * 100)
-        .round()
-        .clamp(0, 100);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD6E0FF)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Great run!',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF202B47),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Time ${_formatDuration(_elapsedSeconds)} • Score $_lastScore • Accuracy $accuracy%',
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF626C89),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _startNewGame,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Play Again'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => setState(() => _phase = _GamePhase.settings),
-                  icon: const Icon(Icons.view_carousel_rounded),
-                  label: const Text('Back to Decks'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStartButtonBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.10),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          height: 54,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0A4ED6), Color(0xFF4D84FF)],
-              ),
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: FilledButton.icon(
-              onPressed: _startingGame || _eligibleDecks.isEmpty
-                  ? null
-                  : _startNewGame,
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-              ),
-              icon: _startingGame
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.play_arrow_rounded),
-              label: Text(
-                _startingGame ? 'Preparing...' : 'Start Game',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 enum _GamePhase { settings, game }
-
-class _DifficultyOption {
-  const _DifficultyOption({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.gridLabel,
-    required this.cardCount,
-    required this.icon,
-  });
-
-  final String id;
-  final String title;
-  final String subtitle;
-  final String gridLabel;
-  final int cardCount;
-  final IconData icon;
-}
