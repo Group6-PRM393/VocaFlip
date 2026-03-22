@@ -59,8 +59,8 @@ class _CategoryManagementScreenState
     }
   }
 
-  void _navigateToCategoryDecks(CategoryModel category) {
-    Navigator.push(
+  void _navigateToCategoryDecks(CategoryModel category) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DeckListScreen(
@@ -69,6 +69,11 @@ class _CategoryManagementScreenState
         ),
       ),
     );
+    // Always refetch when returning from DeckListScreen to update deck count
+    ref.invalidate(categoryListProvider);
+    try {
+      await ref.read(categoryListProvider.future);
+    } catch (_) {}
   }
 
   void _confirmDelete(CategoryModel category) async {
