@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'package:voca_flip_mobile/config/app_config.dart';
 import 'package:voca_flip_mobile/modules/quiz/models/quiz_result.dart';
 import 'package:voca_flip_mobile/modules/quiz/models/quiz_review.dart';
 import 'package:voca_flip_mobile/modules/quiz/models/quiz_session.dart';
 import 'package:http/http.dart' as http;
 
 class QuizService {
-  static const String baseUrl = 'http://localhost:8080/api/quiz';
+  String baseUrl = '${AppConfig.baseUrl}/api/quiz';
 
   Future<QuizSession> generateQuiz(
     String deckId,

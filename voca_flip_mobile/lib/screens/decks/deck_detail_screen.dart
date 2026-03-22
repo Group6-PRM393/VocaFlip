@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:voca_flip_mobile/modules/quiz/screens/quiz_settings_screen.dart';
 import '../../providers/deck_provider.dart';
 import '../../providers/card_provider.dart';
 import '../../models/card_model.dart';
@@ -341,7 +341,13 @@ class DeckDetailScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // TODO: Test
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          QuizSettingsScreen(deckId: deckId),
+                                    ),
+                                  );
                                 },
                                 icon: const Icon(
                                   Icons.school,
