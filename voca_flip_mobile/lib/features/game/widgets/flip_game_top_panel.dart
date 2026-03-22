@@ -64,13 +64,13 @@ class FlipGameTopPanel extends StatelessWidget {
           ),
           if (scoreHistory.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Lich su diem', style: AppTextStyles.bodyMedium),
+            Text('Score History', style: AppTextStyles.bodyMedium),
             const SizedBox(height: 6),
             ...scoreHistory
                 .take(3)
                 .map(
                   (entry) => Text(
-                    '${entry.score} diem • ${entry.cardCount} the • ${formatDuration(entry.seconds)} • ${formatDateTime(entry.playedAt)}',
+                    '${entry.score} pts • ${entry.cardCount} cards • ${formatDuration(entry.seconds)} • ${formatDateTime(entry.playedAt)}',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.textHint,
                     ),

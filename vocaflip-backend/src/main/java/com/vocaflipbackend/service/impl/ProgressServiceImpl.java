@@ -27,7 +27,7 @@ public class ProgressServiceImpl implements ProgressService {
     @Override
     public LearningProgressStatsResponse getLearningProgressStats(String userId) {
         // 1. Tính Word Mastery (Pie Chart)
-        List<Object[]> statusCounts = progressRepository.countByStatus(userId);
+        List<Object[]> statusCounts = progressRepository.countByStatusWithActiveCards(userId);
         Map<String, Long> masteryMap = new HashMap<>();
         // Init default
         masteryMap.put("NEW", 0L);

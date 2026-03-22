@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
 import 'package:voca_flip_mobile/features/auth/forgot_password_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
@@ -13,7 +14,6 @@ import 'package:voca_flip_mobile/features/auth/register_screen.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/auth_text_field.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/google_sign_in_button.dart';
 import 'package:voca_flip_mobile/features/auth/widgets/login_hero_section.dart';
-import 'package:voca_flip_mobile/features/auth/forgot_password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final bool isRegisterSuccess;
@@ -38,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Đăng ký thành công, vui lòng đăng nhập',
+              AuthMessages.registrationSuccessful,
               style: GoogleFonts.lexend(color: Colors.white),
             ),
             backgroundColor: Colors.green,
@@ -138,12 +138,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return 'Vui lòng nhập email';
+                          return AuthMessages.requiredEmail;
                         }
                         if (!RegExp(
                           r'^[^@]+@[^@]+\.[^@]+',
                         ).hasMatch(v.trim())) {
-                          return 'Email không hợp lệ';
+                          return AuthMessages.invalidEmail;
                         }
                         return null;
                       },
@@ -171,11 +171,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) {
-                          return 'Vui lòng nhập mật khẩu';
+                          return AuthMessages.requiredPassword;
                         }
-                        if (v.length < 6) return 'Ít nhất 6 ký tự';
+                        if (v.length < 6) return 'At least 6 characters';
                         if (v.length >= 255) {
-                          return 'Mật khẩu phải ít hơn 255 ký tự';
+                          return AuthMessages.passwordTooLong;
                         }
                         return null;
                       },

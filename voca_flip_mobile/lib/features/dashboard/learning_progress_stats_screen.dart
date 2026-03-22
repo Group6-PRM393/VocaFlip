@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
+import 'package:voca_flip_mobile/core/utils/error_message_utils.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/activity_trend_card.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/learning_progress_header.dart';
 import 'package:voca_flip_mobile/features/dashboard/widgets/learning_progress_top_stats.dart';
@@ -17,9 +18,6 @@ class LearningProgressStatsScreen extends StatefulWidget {
 
 class _LearningProgressStatsScreenState
     extends State<LearningProgressStatsScreen> {
-  static DateTime? _lastCacheAt;
-  static Map<String, dynamic>? _cachedSnapshot;
-
   bool _loading = true;
   String? _error;
 
@@ -46,22 +44,13 @@ class _LearningProgressStatsScreenState
     _loadData();
   }
 
-  Future<void> _loadData({bool force = false}) async {
+  Future<void> _loadData() async {
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      if (!force && _cachedSnapshot != null && _lastCacheAt != null) {
-        final age = DateTime.now().difference(_lastCacheAt!);
-        if (age.inSeconds <= 45) {
-          _applySnapshot(_cachedSnapshot!);
-          setState(() => _loading = false);
-          return;
-        }
-      }
-
       final prefs = await SharedPreferences.getInstance();
       final api = ApiService(prefs);
 
@@ -82,13 +71,14 @@ class _LearningProgressStatsScreenState
       };
 
       _applySnapshot(snapshot);
-      _cachedSnapshot = snapshot;
-      _lastCacheAt = DateTime.now();
 
       setState(() => _loading = false);
     } catch (e) {
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = ErrorMessageUtils.normalize(
+          e,
+          fallback: 'Unable to load learning progress. Please try again.',
+        );
         _loading = false;
       });
     }
@@ -199,7 +189,7 @@ class _LearningProgressStatsScreenState
     }
 
     return RefreshIndicator(
-      onRefresh: () => _loadData(force: true),
+      onRefresh: _loadData,
       color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),

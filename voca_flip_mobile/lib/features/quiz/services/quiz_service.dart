@@ -1,36 +1,49 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voca_flip_mobile/core/services/api_service.dart';
+import 'dart:convert';
+import 'package:voca_flip_mobile/core/config/app_config.dart';
 import 'package:voca_flip_mobile/features/quiz/models/quiz_result.dart';
 import 'package:voca_flip_mobile/features/quiz/models/quiz_review.dart';
 import 'package:voca_flip_mobile/features/quiz/models/quiz_session.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QuizService {
+  String baseUrl = '${AppConfig.baseUrl}/api/quiz';
+
+  Future<Map<String, String>> _getHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(AppConfig.tokenKey);
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<QuizSession> generateQuiz(
     String deckId,
     int numberOfQuestions,
     int timeLimitSeconds,
     String questionType,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final api = ApiService(prefs);
-
-    final response = await api.post(
-      '/api/quiz/generate',
+    final uri = Uri.parse('$baseUrl/generate').replace(
       queryParameters: {
-        'userId':
-            'user-test', // TODO: remove hardcoded userId when backend relies on token
         'deckId': deckId,
-        'numberOfQuestions': numberOfQuestions,
-        'timeLimitSeconds': timeLimitSeconds,
+        'numberOfQuestions': numberOfQuestions.toString(),
+        'timeLimitSeconds': timeLimitSeconds.toString(),
         'questionType': questionType,
       },
     );
 
-    final data = response.data;
-    if (data is Map<String, dynamic> && data['result'] != null) {
-      return QuizSession.fromJson(data['result']);
+    final response = await http.post(
+      uri,
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      return QuizSession.fromJson(jsonResponse['result']);
     } else {
-      throw Exception('Invalid response format');
+      throw Exception('Error creating quiz: ${response.body}');
     }
   }
 
@@ -39,33 +52,39 @@ class QuizService {
     int timeTaken,
     List<Map<String, String>> answers,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final api = ApiService(prefs);
+    final url = Uri.parse('$baseUrl/$attemptId/submit');
 
-    final response = await api.post(
-      '/api/quiz/$attemptId/submit',
-      data: {'timeTakenSeconds': timeTaken, 'answers': answers},
+    final body = json.encode({
+      'timeTakenSeconds': timeTaken,
+      'answers': answers,
+    });
+
+    final response = await http.post(
+      url,
+      headers: await _getHeaders(),
+      body: body,
     );
 
-    final data = response.data;
-    if (data is Map<String, dynamic> && data['result'] != null) {
-      return QuizResult.fromJson(data['result']);
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      return QuizResult.fromJson(jsonResponse['result']);
     } else {
-      throw Exception('Invalid response format');
+      throw Exception('Error submitting quiz');
     }
   }
 
   Future<QuizReview> getReview(String attemptId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final api = ApiService(prefs);
+    final url = Uri.parse('$baseUrl/$attemptId/review');
+    final response = await http.get(
+      url,
+      headers: await _getHeaders(),
+    );
 
-    final response = await api.get('/api/quiz/$attemptId/review');
-
-    final data = response.data;
-    if (data is Map<String, dynamic> && data['result'] != null) {
-      return QuizReview.fromJson(data['result']);
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      return QuizReview.fromJson(jsonResponse['result']);
     } else {
-      throw Exception('Invalid response format');
+      throw Exception('Error loadding quiz review');
     }
   }
 }

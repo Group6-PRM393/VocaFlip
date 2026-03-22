@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/features/category/create_category_screen.dart';
 import 'package:voca_flip_mobile/features/category/edit_category_screen.dart';
 import 'package:voca_flip_mobile/features/category/delete_category_dialog.dart';
@@ -37,6 +38,9 @@ class _CategoryManagementScreenState
     );
     if (result == true) {
       ref.invalidate(categoryListProvider);
+      try {
+        await ref.read(categoryListProvider.future);
+      } catch (_) {}
     }
   }
 
@@ -49,6 +53,9 @@ class _CategoryManagementScreenState
     );
     if (result == true) {
       ref.invalidate(categoryListProvider);
+      try {
+        await ref.read(categoryListProvider.future);
+      } catch (_) {}
     }
   }
 
@@ -80,16 +87,23 @@ class _CategoryManagementScreenState
         await repo.deleteCategory(category.id);
 
         ref.invalidate(categoryListProvider);
+        try {
+          await ref.read(categoryListProvider.future);
+        } catch (_) {}
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã xóa ${category.categoryName}')),
+          SnackBar(
+            content: Text(
+              CategoryMessages.deletedCategory(category.categoryName),
+            ),
+          ),
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi khi xóa: $e')));
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi xóa: $e')),
+        );
       }
     }
   }
@@ -107,7 +121,7 @@ class _CategoryManagementScreenState
         elevation: 2,
         centerTitle: true,
         title: const Text(
-          'My Decks',
+          'Category',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
@@ -121,19 +135,17 @@ class _CategoryManagementScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Lỗi: $err'),
+              Text('Error: $err'),
               ElevatedButton(
                 onPressed: () => ref.invalidate(categoryListProvider),
                 child: const Text('Thử lại'),
-              ),
+              )
             ],
           ),
         ),
         data: (categories) {
           if (categories.isEmpty) {
-            return const Center(
-              child: Text('Chưa có danh mục nào. Hãy tạo mới.'),
-            );
+             return const Center(child: Text('Chưa có danh mục nào. Hãy tạo mới.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.only(
@@ -199,15 +211,19 @@ class _CategoryManagementScreenState
                   height: 48,
                   decoration: BoxDecoration(
                     color: CategoryHelper.hexToColor(
-                      item.colorHex,
-                    ).withValues(alpha: 0.1),
+                      
+                  item.colorHex,
+                ).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    CategoryHelper.getIconFromString(item.iconCode),
-                    color: CategoryHelper.hexToColor(item.colorHex),
-                    size: 24,
-                  ),
+                    
+                CategoryHelper.getIconFromString(item.iconCode),
+                   
+                color: CategoryHelper.hexToColor(item.colorHex),
+                   
+                size: 24,
+              ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

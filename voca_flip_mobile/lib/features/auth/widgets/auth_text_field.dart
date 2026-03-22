@@ -10,10 +10,7 @@ class AuthFieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        label,
-        style: AppTextStyles.authLabel,
-      ),
+      child: Text(label, style: AppTextStyles.authLabel),
     );
   }
 }
@@ -26,6 +23,7 @@ class AuthTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
 
   const AuthTextField({
     super.key,
@@ -36,6 +34,7 @@ class AuthTextField extends StatelessWidget {
     this.keyboardType,
     this.suffixIcon,
     this.validator,
+    this.onChanged,
   });
 
   @override
@@ -52,7 +51,10 @@ class AuthTextField extends StatelessWidget {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.inputBorder),
@@ -76,6 +78,7 @@ class AuthTextField extends StatelessWidget {
         errorStyle: AppTextStyles.caption.copyWith(color: Colors.redAccent),
       ),
       validator: validator,
+      onChanged: onChanged,
     );
   }
 }

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/features/auth/constants/password_constants.dart';
 import 'package:voca_flip_mobile/features/auth/login_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
+import 'package:voca_flip_mobile/features/auth/utils/password_strength_utils.dart';
+import 'package:voca_flip_mobile/features/auth/widgets/password_strength_section.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String email;
@@ -16,12 +20,11 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
-  static const _specialCharacters = r'''!@#$%^&*(),.?":{}|<>_-+=~`[]\/;''';
-
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
@@ -36,31 +39,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     super.dispose();
   }
 
-  bool get _hasMinLength => _passwordController.text.length >= 8;
-  bool get _hasUppercase => RegExp(r'[A-Z]').hasMatch(_passwordController.text);
-  bool get _hasSpecialCharacter =>
-      _passwordController.text.split('').any(_specialCharacters.contains);
-
-  int get _strengthScore {
-    var score = 0;
-    if (_hasMinLength) score++;
-    if (_hasUppercase) score++;
-    if (_hasSpecialCharacter) score++;
-    if (_passwordController.text.length >= 12) score++;
-    return score;
-  }
-
-  String get _strengthLabel {
-    if (_strengthScore <= 1) return 'Weak';
-    if (_strengthScore <= 3) return 'Medium';
-    return 'Strong';
-  }
-
-  Color get _strengthColor {
-    if (_strengthScore <= 1) return AppColors.buttonForgot;
-    if (_strengthScore <= 3) return AppColors.primary;
-    return Colors.green;
-  }
+  PasswordStrengthResult get _passwordStrength =>
+      PasswordStrengthEvaluator.evaluate(_passwordController.text);
 
   Future<void> _onUpdatePassword() async {
     if (_isSubmitting) return;
@@ -73,17 +53,27 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     });
 
     if (password.isEmpty || confirmPassword.isEmpty) {
-      _showSnackBar('Vui lòng nhập đầy đủ thông tin', Colors.redAccent);
+      _showSnackBar('Please fill in all required fields.', Colors.redAccent);
       return;
     }
 
     if (password != confirmPassword) {
-      setState(() => _confirmPasswordError = 'Mật khẩu xác nhận không khớp');
+      setState(
+        () => _confirmPasswordError = 'Confirmation password does not match.',
+      );
       return;
     }
 
-    if (!_hasMinLength || !_hasUppercase || !_hasSpecialCharacter) {
-      _showSnackBar('Mật khẩu không đáp ứng yêu cầu', Colors.redAccent);
+    if (!_passwordStrength.isValid) {
+      _showSnackBar(
+        'Password does not meet the requirements.',
+        Colors.redAccent,
+      );
+      return;
+    }
+
+    if (password.length >= PasswordConstants.maxLength) {
+      _showSnackBar(AuthMessages.passwordTooLong, Colors.redAccent);
       return;
     }
 
@@ -100,11 +90,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     if (!success) {
       final errorMessage = ref.read(authProvider).errorMessage;
-      _showSnackBar(errorMessage ?? 'Khong the doi mat khau', Colors.redAccent);
+      _showSnackBar(
+        errorMessage ?? AuthMessages.resetPasswordFailed,
+        Colors.redAccent,
+      );
       return;
     }
 
-    _showSnackBar('Mat khau da duoc cap nhat', Colors.green);
+    _showSnackBar(AuthMessages.resetPasswordSuccess, Colors.green);
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => route.isFirst,
@@ -220,50 +213,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     );
   }
 
-  Widget _buildStrengthSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Password Strength',
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              _strengthLabel,
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: _strengthColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: List.generate(4, (index) {
-            final isActive = index < _strengthScore;
-            return Expanded(
-              child: Container(
-                height: 6,
-                margin: EdgeInsets.only(right: index == 3 ? 0 : 4),
-                decoration: BoxDecoration(
-                  color: isActive ? _strengthColor : AppColors.inputBorder,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
   Widget _buildRequirementItem({
     required String text,
     required bool satisfied,
@@ -308,17 +257,17 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           const SizedBox(height: 12),
           _buildRequirementItem(
             text: 'At least 8 characters',
-            satisfied: _hasMinLength,
+            satisfied: _passwordStrength.hasMinLength,
           ),
           const SizedBox(height: 10),
           _buildRequirementItem(
             text: 'One uppercase character',
-            satisfied: _hasUppercase,
+            satisfied: _passwordStrength.hasUppercase,
           ),
           const SizedBox(height: 10),
           _buildRequirementItem(
             text: 'One special character',
-            satisfied: _hasSpecialCharacter,
+            satisfied: _passwordStrength.hasSpecialCharacter,
           ),
         ],
       ),
@@ -357,7 +306,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              _buildStrengthSection(),
+              PasswordStrengthSection(
+                result: _passwordStrength,
+                guideText: PasswordConstants.strengthGuideText,
+              ),
               const SizedBox(height: 24),
               _buildPasswordField(
                 label: 'Confirm New Password',

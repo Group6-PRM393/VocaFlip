@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/features/study/models/responses/study_card_response.dart';
 import 'package:voca_flip_mobile/features/study/models/responses/study_session_response.dart';
 import 'package:voca_flip_mobile/features/study/repositories/study_repository.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
+import 'package:voca_flip_mobile/core/utils/error_message_utils.dart';
 
 enum StudyStatus {
   initial,
@@ -28,6 +30,13 @@ class StudyNotifier extends ChangeNotifier {
   String? _errorMessage;
 
   DateTime? _cardStartTime;
+
+  String _normalizeErrorMessage(Object error) {
+    return ErrorMessageUtils.normalize(
+      error,
+      fallback: StudyMessages.startSessionFailed,
+    );
+  }
 
   StudyNotifier(SharedPreferences prefs)
     : _repository = StudyRepository(ApiService(prefs));
@@ -75,13 +84,13 @@ class StudyNotifier extends ChangeNotifier {
           : StudyStatus.completed;
     } catch (e) {
       _status = StudyStatus.error;
-      _errorMessage = e.toString();
+      _errorMessage = _normalizeErrorMessage(e);
     }
     notifyListeners();
   }
 
-  /// Nap du lieu session da duoc tao san (VD: tu daily-review API).
-  /// Khong goi them API, chi set state tu du lieu co san.
+  /// Load an existing pre-created session (for example, from daily review API).
+  /// No extra API call is required; state is set directly from provided data.
   void loadFromResponse(StudySessionResponse sessionResponse) {
     _session = sessionResponse;
     _cards = sessionResponse.cards;
@@ -95,13 +104,13 @@ class StudyNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// lat the
+  /// Flip card to back side.
   void flipCard() {
     _isFlipped = true;
     notifyListeners();
   }
 
-  /// lat the tro lai
+  /// Sync card side state from UI flip callback.
   void onCardFlip(bool isFront) {
     _isFlipped = !isFront;
     notifyListeners();
@@ -111,10 +120,10 @@ class StudyNotifier extends ChangeNotifier {
   Future<void> submitRating(int grade) async {
     if (currentCard == null || _session == null) return;
 
-    // thoi gian phan hoi
+    // Track response time in seconds.
     final responseTime = _cardStartTime != null
         ? DateTime.now().difference(_cardStartTime!).inSeconds
-        : 5; // fallback 5 giay
+        : 5; // fallback: 5 seconds
 
     if (grade == 0) {
       _forgotCount++;
@@ -136,13 +145,13 @@ class StudyNotifier extends ChangeNotifier {
       debugPrint('Submit card result error: $e');
     }
 
-    // kiem tra het the chua
+    // Check whether this is the last card.
     if (_currentIndex >= _cards.length - 1) {
       await _completeSession();
       return;
     }
 
-    // chuyen sang the tiep theo
+    // Move to next card.
     _currentIndex++;
     _isFlipped = false;
     _cardStartTime = DateTime.now();
@@ -165,7 +174,7 @@ class StudyNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  // hoc lai
+  // Restart current study run.
   void reset() {
     _currentIndex = 0;
     _isFlipped = false;
@@ -176,7 +185,7 @@ class StudyNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  // thoat study session dot ngot
+  // Gracefully complete session when user exits abruptly.
   Future<void> forceCompleteSession() async {
     if (_session == null) return;
     try {

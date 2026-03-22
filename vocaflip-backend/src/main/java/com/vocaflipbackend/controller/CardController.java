@@ -1,9 +1,14 @@
 package com.vocaflipbackend.controller;
 
 import com.vocaflipbackend.dto.request.CardRequest;
+import com.vocaflipbackend.dto.request.FlipMatchGameResultRequest;
 import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.CardResponse;
+import com.vocaflipbackend.dto.response.FlipMatchDeckResponse;
+import com.vocaflipbackend.dto.response.FlipMatchGameHistoryResponse;
+import com.vocaflipbackend.dto.response.FlipMatchGameSummaryResponse;
 import com.vocaflipbackend.dto.response.TranslationResponse;
+import com.vocaflipbackend.constants.FlipMatchConstants;
 import com.vocaflipbackend.service.CardService;
 import com.vocaflipbackend.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -74,6 +79,68 @@ public class CardController {
             @RequestParam(required = false, defaultValue = "32") int limit) {
         return ApiResponse.<List<CardResponse>>builder()
                 .result(cardService.getFlipMatchCardsForCurrentUser(limit))
+                .build();
+    }
+
+    @Operation(
+            summary = "Lấy danh sách deck hợp lệ cho Flip Match",
+            description = "Chỉ trả về deck có đủ số thẻ tối thiểu để chơi game"
+    )
+    @GetMapping("/game/flip-match/decks")
+    public ApiResponse<List<FlipMatchDeckResponse>> getFlipMatchEligibleDecks(
+            @Parameter(description = "Số thẻ tối thiểu trong deck")
+            @RequestParam(required = false, defaultValue = FlipMatchConstants.DEFAULT_MIN_DECK_CARDS_QUERY) int minCards) {
+        return ApiResponse.<List<FlipMatchDeckResponse>>builder()
+                .result(cardService.getEligibleFlipMatchDecksForCurrentUser(minCards))
+                .build();
+    }
+
+    @Operation(
+            summary = "Lấy card game Flip Match theo deck",
+            description = "Random card trong deck đã chọn của user hiện tại"
+    )
+    @GetMapping("/game/flip-match/decks/{deckId}")
+    public ApiResponse<List<CardResponse>> getFlipMatchCardsByDeck(
+            @PathVariable String deckId,
+            @RequestParam(required = false, defaultValue = FlipMatchConstants.DEFAULT_CARD_FETCH_LIMIT_QUERY) int limit) {
+        return ApiResponse.<List<CardResponse>>builder()
+                .result(cardService.getFlipMatchCardsByDeckForCurrentUser(deckId, limit))
+                .build();
+    }
+
+    @Operation(
+            summary = "Lưu kết quả game Flip Match",
+            description = "Lưu lịch sử và cộng dồn tổng điểm game cho user hiện tại"
+    )
+    @PostMapping("/game/flip-match/history")
+    public ApiResponse<FlipMatchGameSummaryResponse> saveFlipMatchResult(
+            @RequestBody FlipMatchGameResultRequest request) {
+        return ApiResponse.<FlipMatchGameSummaryResponse>builder()
+                .result(cardService.saveFlipMatchResultForCurrentUser(request))
+                .message(FlipMatchConstants.SAVE_RESULT_SUCCESS_MESSAGE)
+                .build();
+    }
+
+    @Operation(
+            summary = "Lấy lịch sử game Flip Match",
+            description = "Lấy lịch sử gần nhất của user hiện tại"
+    )
+    @GetMapping("/game/flip-match/history")
+    public ApiResponse<List<FlipMatchGameHistoryResponse>> getFlipMatchHistory(
+            @RequestParam(required = false, defaultValue = FlipMatchConstants.DEFAULT_HISTORY_LIMIT_QUERY) int limit) {
+        return ApiResponse.<List<FlipMatchGameHistoryResponse>>builder()
+                .result(cardService.getFlipMatchHistoryForCurrentUser(limit))
+                .build();
+    }
+
+    @Operation(
+            summary = "Lấy tổng quan điểm game Flip Match",
+            description = "Trả về tổng điểm tích lũy, tổng số ván và best score"
+    )
+    @GetMapping("/game/flip-match/summary")
+    public ApiResponse<FlipMatchGameSummaryResponse> getFlipMatchSummary() {
+        return ApiResponse.<FlipMatchGameSummaryResponse>builder()
+                .result(cardService.getFlipMatchSummaryForCurrentUser())
                 .build();
     }
 
