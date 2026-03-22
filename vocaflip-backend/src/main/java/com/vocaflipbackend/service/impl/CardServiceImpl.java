@@ -146,6 +146,8 @@ public class CardServiceImpl implements CardService {
                 .collect(Collectors.toList());
     }
 
+
+    // old function, not remove yet, maybe use for other game mode
     @Override
     public List<CardResponse> getFlipMatchCardsForCurrentUser(int limit) {
         String userId = SecurityUtils.getCurrentUserId();
@@ -293,12 +295,14 @@ public class CardServiceImpl implements CardService {
         long totalGames = totalGamesRaw != null ? totalGamesRaw : 0L;
 
         int bestScore = 0;
+        List<Integer> topScores = new ArrayList<>();
         List<String> allItems = redisTemplate.opsForList().range(getHistoryKey(userId), 0, FlipMatchConstants.MAX_HISTORY_LIMIT - 1);
         if (allItems != null) {
             for (String raw : allItems) {
                 try {
                     FlipMatchGameHistoryResponse item = objectMapper.readValue(raw, FlipMatchGameHistoryResponse.class);
                     int score = item.getScore() != null ? item.getScore() : 0;
+                    topScores.add(score);
                     if (score > bestScore) {
                         bestScore = score;
                     }
@@ -308,10 +312,16 @@ public class CardServiceImpl implements CardService {
             }
         }
 
+        List<Integer> top3Scores = topScores.stream()
+                .sorted((a, b) -> Integer.compare(b, a))
+                .limit(3)
+                .collect(Collectors.toList());
+
         return FlipMatchGameSummaryResponse.builder()
                 .totalScore(totalScore)
                 .totalGames(totalGames)
                 .bestScore(bestScore)
+                .top3Scores(top3Scores)
                 .build();
     }
 

@@ -48,11 +48,13 @@ class FlipGameSummary {
     required this.totalScore,
     required this.totalGames,
     required this.bestScore,
+    required this.top3Scores,
   });
 
   final int totalScore;
   final int totalGames;
   final int bestScore;
+  final List<int> top3Scores;
 
   factory FlipGameSummary.fromJson(Map<String, dynamic> json) {
     int toInt(dynamic v) {
@@ -66,6 +68,12 @@ class FlipGameSummary {
       totalScore: toInt(json['totalScore']),
       totalGames: toInt(json['totalGames']),
       bestScore: toInt(json['bestScore']),
+      top3Scores: (json['top3Scores'] is List)
+          ? (json['top3Scores'] as List)
+                .map((item) => toInt(item))
+                .take(3)
+                .toList()
+          : const [],
     );
   }
 
@@ -73,6 +81,7 @@ class FlipGameSummary {
     totalScore: 0,
     totalGames: 0,
     bestScore: 0,
+    top3Scores: [],
   );
 }
 

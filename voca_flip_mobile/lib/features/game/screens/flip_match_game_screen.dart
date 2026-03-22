@@ -72,6 +72,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
   int _lastScore = 0;
   bool _finished = false;
   List<FlipScoreHistoryEntry> _scoreHistory = const [];
+  FlipGameSummary _scoreSummary = FlipGameSummary.empty;
 
   Timer? _ticker;
   int _elapsedSeconds = 0;
@@ -101,6 +102,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
         minCards: _minimumDeckCards,
       );
       final history = await _gameService.loadScoreHistory();
+      final summary = await _gameService.loadScoreSummary();
 
       if (decks.isEmpty) {
         throw Exception(
@@ -123,6 +125,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
         _selectedDeckIndex = safeSelectedIndex;
         _selectedDifficulty = nextDifficulty;
         _scoreHistory = history;
+        _scoreSummary = summary;
         _tiles = [];
         _moves = 0;
         _matchedPairs = 0;
@@ -420,7 +423,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       _scoreHistory = optimisticHistory;
     });
 
-    await _gameService.saveScoreHistoryEntry(
+    final updatedSummary = await _gameService.saveScoreHistoryEntry(
       entry: entry,
       deckId: selectedDeck?.id,
       existing: previousHistory,
@@ -430,6 +433,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
     if (!mounted) return;
     setState(() {
       _scoreHistory = updatedHistory;
+      _scoreSummary = updatedSummary;
     });
   }
 
@@ -870,13 +874,18 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
         })
         .fold<double>(0, math.max);
 
-    final topScores = [..._scoreHistory]
-      ..sort((a, b) => b.score.compareTo(a.score));
-    final top3 = topScores.take(3).toList();
+    final fallbackTop3 =
+        ([..._scoreHistory]..sort((a, b) => b.score.compareTo(a.score)))
+            .take(3)
+            .map((entry) => entry.score)
+            .toList();
+    final top3Scores = _scoreSummary.top3Scores.isNotEmpty
+        ? _scoreSummary.top3Scores
+        : fallbackTop3;
 
     String scoreAt(int index) {
-      if (index >= top3.length) return '--';
-      return top3[index].score.toString();
+      if (index >= top3Scores.length) return '--';
+      return top3Scores[index].toString();
     }
 
     return Container(
