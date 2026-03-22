@@ -68,7 +68,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       );
 
       if (pairs.length < _minRequiredPairs) {
-        throw Exception('Can it nhat 8 cap tu-viet nghia de choi (16 the).');
+        throw Exception('At least 8 word-meaning pairs are required to play (16 cards).');
       }
 
       setState(() {
@@ -273,27 +273,27 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Hoan thanh!'),
+          title: const Text('Completed!'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Thoi gian: ${_formatDuration(seconds)}'),
+              Text('Time: ${_formatDuration(seconds)}'),
               const SizedBox(height: 6),
-              Text('Diem: $_lastScore'),
+              Text('Score: $_lastScore'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Dong'),
+              child: const Text('Close'),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _startNewGame();
               },
-              child: const Text('Choi lai'),
+              child: const Text('Play again'),
             ),
           ],
         );
@@ -339,7 +339,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: _loadPairsAndStartGame,
-                child: const Text('Thu lai'),
+                child: const Text('Play again'),
               ),
             ],
           ),
@@ -372,7 +372,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
                 isFinished: _finished,
                 scoreText: '$_lastScore',
                 scoreHistory: _scoreHistory,
-                primaryButtonLabel: _gameStarted ? 'New Game' : 'Bat dau',
+                primaryButtonLabel: _gameStarted ? 'New Game' : 'Start',
                 primaryButtonIcon: _gameStarted
                     ? Icons.shuffle
                     : Icons.play_arrow_rounded,
@@ -409,7 +409,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
                     border: Border.all(color: AppColors.inputBorder),
                   ),
                   child: Text(
-                    'Nhan "Bat dau" de vao van choi Flip Match.',
+                    'Press "Start" to play Flip Match.',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyMedium,
                   ),

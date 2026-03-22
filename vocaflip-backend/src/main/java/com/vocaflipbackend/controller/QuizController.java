@@ -6,6 +6,7 @@ import com.vocaflipbackend.dto.response.QuizAttemptResponse;
 import com.vocaflipbackend.dto.response.QuizReviewResponse;
 import com.vocaflipbackend.dto.response.QuizSessionResponse;
 import com.vocaflipbackend.service.QuizService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,11 +25,11 @@ public class QuizController {
     @PostMapping("/generate")
     @Operation(summary = "Tạo đề thi mới", description = "Tạo ngẫu nhiên câu hỏi từ Deck, bao gồm cả đáp án nhiễu.")
     public ApiResponse<QuizSessionResponse> generateQuiz(
-            @RequestParam String userId,
             @RequestParam String deckId,
             @RequestParam(defaultValue = "10") @Min(value = 1, message = "Minimum of number question is 1") int numberOfQuestions,
             @RequestParam(defaultValue = "300") @Min(value = 10, message = "Minimum of time is 10 seconds") int timeLimitSeconds
     ) {
+        String userId = SecurityUtils.getCurrentUserId();
         QuizSessionResponse response = quizService.generateQuiz(userId, deckId, numberOfQuestions, timeLimitSeconds);
 
         return ApiResponse.<QuizSessionResponse>builder()

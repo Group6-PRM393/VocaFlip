@@ -165,13 +165,13 @@ class _StudyScreenState extends State<StudyScreen> {
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  'Không thể bắt đầu phiên học',
+                  'Unable to start study session',
                   style: AppTextStyles.headerLabel,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  n.errorMessage ?? 'Lỗi không xác định',
+                  n.errorMessage ?? 'Unknown error',
                   style: const TextStyle(color: Colors.red, fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
@@ -182,12 +182,12 @@ class _StudyScreenState extends State<StudyScreen> {
                       n.startSession(widget.deckId!);
                     }
                   },
-                  child: const Text('Thử lại'),
+                  child: const Text('Try again'),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Quay lại'),
+                  child: const Text('Go back'),
                 ),
               ],
             ),
@@ -199,7 +199,7 @@ class _StudyScreenState extends State<StudyScreen> {
     if (n.status == StudyStatus.initial || n.currentCard == null) {
       return Scaffold(
         backgroundColor: AppColors.scaffoldBackground,
-        body: const Center(child: Text('Chưa có dữ liệu phiên học')),
+        body: const Center(child: Text('No study session data available')),
       );
     }
 

@@ -1,23 +1,12 @@
 import 'dart:convert';
-import 'package:voca_flip_mobile/core/config/app_config.dart';
-import 'package:voca_flip_mobile/features/quiz/models/quiz_result.dart';
-import 'package:voca_flip_mobile/features/quiz/models/quiz_review.dart';
-import 'package:voca_flip_mobile/features/quiz/models/quiz_session.dart';
+import 'package:voca_flip_mobile/config/app_config.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_result.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_review.dart';
+import 'package:voca_flip_mobile/modules/quiz/models/quiz_session.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class QuizService {
   String baseUrl = '${AppConfig.baseUrl}/api/quiz';
-
-  Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(AppConfig.tokenKey);
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-    };
-  }
 
   Future<QuizSession> generateQuiz(
     String deckId,
@@ -27,6 +16,7 @@ class QuizService {
   ) async {
     final uri = Uri.parse('$baseUrl/generate').replace(
       queryParameters: {
+        'userId': 'user-test',
         'deckId': deckId,
         'numberOfQuestions': numberOfQuestions.toString(),
         'timeLimitSeconds': timeLimitSeconds.toString(),
@@ -34,10 +24,7 @@ class QuizService {
       },
     );
 
-    final response = await http.post(
-      uri,
-      headers: await _getHeaders(),
-    );
+    final response = await http.post(uri);
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
@@ -61,7 +48,7 @@ class QuizService {
 
     final response = await http.post(
       url,
-      headers: await _getHeaders(),
+      headers: {'Content-Type': 'application/json'},
       body: body,
     );
 
@@ -75,10 +62,7 @@ class QuizService {
 
   Future<QuizReview> getReview(String attemptId) async {
     final url = Uri.parse('$baseUrl/$attemptId/review');
-    final response = await http.get(
-      url,
-      headers: await _getHeaders(),
-    );
+    final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
