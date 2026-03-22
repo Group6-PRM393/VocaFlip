@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
+import 'package:voca_flip_mobile/core/utils/error_message_utils.dart';
 import 'package:voca_flip_mobile/features/auth/models/auth_model.dart';
 import 'package:voca_flip_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
@@ -44,6 +46,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
+  String _formatErrorMessage(Object error) {
+    return ErrorMessageUtils.normalize(
+      error,
+      fallback: AppMessages.genericActionFailed,
+    );
+  }
+
   Future<bool> login({required String email, required String password}) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
@@ -53,7 +62,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -62,31 +71,31 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> loginWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      // 1. Lấy GoogleAuthService
+      // 1. Get GoogleAuthService
       final googleAuthService = ref.read(googleAuthServiceProvider);
 
-      // 2. Sign in với Google → Nhận ID Token
+      // 2. Sign in with Google and get ID token
       final idToken = await googleAuthService.signIn();
 
       if (idToken == null) {
-        // User cancel hoặc có lỗi
+        // User cancelled sign-in or an error occurred
         state = state.copyWith(
           status: AuthStatus.failure,
-          errorMessage: 'Google sign-in cancelled',
+          errorMessage: AuthMessages.googleSignInCancelled,
         );
         return false;
       }
 
-      // 3. Gửi ID Token lên backend
+      // 3. Send ID token to backend
       final result = await _repo.loginWithGoogle(idToken: idToken);
 
-      // 4. Update state thành công
+      // 4. Update state on success
       state = state.copyWith(status: AuthStatus.success, authResponse: result);
       return true;
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -109,7 +118,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -124,7 +133,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -139,7 +148,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -157,7 +166,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -180,7 +189,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.failure,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        errorMessage: _formatErrorMessage(e),
       );
       return false;
     }
@@ -188,7 +197,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> logout() async {
     await _repo.logout();
-    // Xóa cache profile của user cũ để khi login user mới sẽ fetch lại
+    // Clear old profile cache so the next logged-in user is fetched fresh.
     ref.invalidate(currentUserProfileProvider);
     state = const AuthState();
   }

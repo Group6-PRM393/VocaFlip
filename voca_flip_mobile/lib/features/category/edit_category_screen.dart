@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/features/category/models/category_model.dart';
 import 'package:voca_flip_mobile/features/category/providers/category_provider.dart';
 import 'package:voca_flip_mobile/core/utils/category_helper.dart';
@@ -17,15 +18,24 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
   final Color primaryColor = const Color(0xFF1337EC);
   final Color backgroundLight = const Color(0xFFFFFFFF);
   final Color surfaceLight = const Color(0xFFF6F6F8);
-  
+
   late TextEditingController _nameController;
   bool _isLoading = false;
 
   final List<IconData> categoryIcons = [
-    Icons.menu_book, Icons.school, Icons.work, Icons.flight,
-    Icons.restaurant, Icons.forum, Icons.star, Icons.flag,
-    Icons.flight_takeoff, Icons.home, Icons.fitness_center,
-    Icons.shopping_cart, Icons.pets,
+    Icons.menu_book,
+    Icons.school,
+    Icons.work,
+    Icons.flight,
+    Icons.restaurant,
+    Icons.forum,
+    Icons.star,
+    Icons.flag,
+    Icons.flight_takeoff,
+    Icons.home,
+    Icons.fitness_center,
+    Icons.shopping_cart,
+    Icons.pets,
   ];
   late int selectedIconIndex;
 
@@ -44,16 +54,18 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     super.initState();
     // Khởi tạo giá trị ban đầu dựa trên category được truyền vào
     _nameController = TextEditingController(text: widget.category.categoryName);
-    
+
     // Tìm index của icon hiện tại, nếu không có thì mặc định là 0
-    final currentIcon = CategoryHelper.getIconFromString(widget.category.iconCode);
+    final currentIcon = CategoryHelper.getIconFromString(
+      widget.category.iconCode,
+    );
     selectedIconIndex = categoryIcons.indexOf(currentIcon);
-    if (selectedIconIndex == -1) selectedIconIndex = 0; 
+    if (selectedIconIndex == -1) selectedIconIndex = 0;
 
     // Tìm index của color hiện tại, nếu không có thì mặc định là 0
     final currentColorHex = widget.category.colorHex.toUpperCase();
     final foundColorIndex = categoryColors.indexWhere(
-      (c) => CategoryHelper.colorToHex(c).toUpperCase() == currentColorHex
+      (c) => CategoryHelper.colorToHex(c).toUpperCase() == currentColorHex,
     );
     selectedColorIndex = foundColorIndex != -1 ? foundColorIndex : 0;
   }
@@ -68,7 +80,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập tên danh mục')),
+        const SnackBar(content: Text(CategoryMessages.requiredCategoryName)),
       );
       return;
     }
@@ -78,8 +90,12 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     try {
       final repo = await ref.read(categoryRepositoryProvider.future);
 
-      final iconCode = CategoryHelper.getStringFromIcon(categoryIcons[selectedIconIndex]);
-      final colorHex = CategoryHelper.colorToHex(categoryColors[selectedColorIndex]);
+      final iconCode = CategoryHelper.getStringFromIcon(
+        categoryIcons[selectedIconIndex],
+      );
+      final colorHex = CategoryHelper.colorToHex(
+        categoryColors[selectedColorIndex],
+      );
 
       await repo.updateCategory(widget.category.id, name, iconCode, colorHex);
 
@@ -89,7 +105,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi cập nhật danh mục: $e')),
+        SnackBar(content: Text('${CategoryMessages.categoryUpdateFailed}: $e')),
       );
     } finally {
       if (mounted) {
@@ -108,15 +124,23 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Edit Category',
-          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
-      
+
       body: Column(
         children: [
           // --- MAIN CONTENT ---
@@ -127,7 +151,10 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 children: [
                   // 1. Tên Category
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 24,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -143,34 +170,59 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                         const SizedBox(height: 8),
                         TextField(
                           controller: _nameController,
-                          style: const TextStyle(fontSize: 16, color: Color(0xFF111218)),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF111218),
+                          ),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: surfaceLight,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                            suffixIcon: Icon(Icons.edit, color: primaryColor, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 15,
+                            ),
+                            suffixIcon: Icon(
+                              Icons.edit,
+                              color: primaryColor,
+                              size: 20,
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade200),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade200,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.5), width: 2),
+                              borderSide: BorderSide(
+                                color: primaryColor.withValues(alpha: 0.5),
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  Divider(height: 1, thickness: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.grey.shade100,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
                   // 2. Chọn Icon
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                     child: const Text(
                       'Select Symbol',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111218)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111218),
+                      ),
                     ),
                   ),
                   Padding(
@@ -178,33 +230,47 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 1,
+                          ),
                       itemCount: categoryIcons.length,
                       itemBuilder: (context, index) {
                         final isSelected = index == selectedIconIndex;
                         return GestureDetector(
-                          onTap: () => setState(() => selectedIconIndex = index),
+                          onTap: () =>
+                              setState(() => selectedIconIndex = index),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               color: isSelected ? primaryColor : surfaceLight,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSelected ? primaryColor : Colors.transparent,
+                                color: isSelected
+                                    ? primaryColor
+                                    : Colors.transparent,
                                 width: 2,
                               ),
                               boxShadow: isSelected
-                                  ? [BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                                  ? [
+                                      BoxShadow(
+                                        color: primaryColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
                                   : [],
                             ),
                             child: Icon(
                               categoryIcons[index],
-                              color: isSelected ? Colors.white : const Color(0xFF64748B),
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                               size: 32,
                             ),
                           ),
@@ -214,14 +280,24 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  Divider(height: 1, thickness: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.grey.shade100,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
                   // 3. Chọn Màu
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                     child: const Text(
                       'Label Color',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111218)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111218),
+                      ),
                     ),
                   ),
                   Padding(
@@ -232,24 +308,40 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                       children: List.generate(categoryColors.length, (index) {
                         final isSelected = index == selectedColorIndex;
                         return GestureDetector(
-                          onTap: () => setState(() => selectedColorIndex = index),
+                          onTap: () =>
+                              setState(() => selectedColorIndex = index),
                           child: Container(
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
                               color: categoryColors[index],
                               shape: BoxShape.circle,
-                              border: isSelected ? Border.all(color: categoryColors[index], width: 2) : null,
+                              border: isSelected
+                                  ? Border.all(
+                                      color: categoryColors[index],
+                                      width: 2,
+                                    )
+                                  : null,
                               // Giả lập ring offset của Tailwind
                               boxShadow: isSelected
                                   ? [
-                                      const BoxShadow(color: Colors.white, spreadRadius: 2),
-                                      BoxShadow(color: categoryColors[index], spreadRadius: 4),
+                                      const BoxShadow(
+                                        color: Colors.white,
+                                        spreadRadius: 2,
+                                      ),
+                                      BoxShadow(
+                                        color: categoryColors[index],
+                                        spreadRadius: 4,
+                                      ),
                                     ]
                                   : [],
                             ),
                             child: isSelected
-                                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 20,
+                                  )
                                 : null,
                           ),
                         );
@@ -280,15 +372,21 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                     onPressed: _isLoading ? null : _updateCategory,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 4,
                       shadowColor: primaryColor.withValues(alpha: 0.4),
                     ),
-                    child: _isLoading 
+                    child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
                             'Save Changes',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                   ),
                 ),

@@ -1,9 +1,15 @@
 package com.vocaflipbackend.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vocaflipbackend.constants.CloudinaryConstants;
+import com.vocaflipbackend.constants.FlipMatchConstants;
 import com.vocaflipbackend.dto.request.CardRequest;
+import com.vocaflipbackend.dto.request.FlipMatchGameResultRequest;
 import com.vocaflipbackend.dto.response.CardResponse;
+import com.vocaflipbackend.dto.response.FlipMatchDeckResponse;
+import com.vocaflipbackend.dto.response.FlipMatchGameHistoryResponse;
+import com.vocaflipbackend.dto.response.FlipMatchGameSummaryResponse;
 import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Deck;
@@ -27,8 +33,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,9 +49,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CardServiceImpl implements CardService {
 
-    private static final int DEFAULT_FLIP_MATCH_LIMIT = 32;
-    private static final int MAX_FLIP_MATCH_LIMIT = 120;
-
     private final CardRepository cardRepository;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
@@ -49,6 +56,8 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final CloudinaryService cloudinaryService;
     private final RestTemplate restTemplate;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     public CardResponse createCard(CardRequest request, MultipartFile image, String userId, String deckId) {
@@ -145,12 +154,165 @@ public class CardServiceImpl implements CardService {
         }
 
         int resolvedLimit = limit <= 0
-                ? DEFAULT_FLIP_MATCH_LIMIT
-                : Math.min(limit, MAX_FLIP_MATCH_LIMIT);
+            ? FlipMatchConstants.DEFAULT_CARD_FETCH_LIMIT
+            : Math.min(limit, FlipMatchConstants.MAX_CARD_FETCH_LIMIT);
 
         return cardRepository.findRandomCardsByUserId(userId, resolvedLimit).stream()
                 .map(cardMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CardResponse> getFlipMatchCardsByDeckForCurrentUser(String deckId, int limit) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        long validCardCount = cardRepository.countValidCardsByUserIdAndDeckId(userId, deckId);
+        if (validCardCount < FlipMatchConstants.DEFAULT_MIN_DECK_CARDS) {
+            throw new AppException(ErrorCode.DECK_NOT_FOUND);
+        }
+
+        int resolvedLimit = limit <= 0
+            ? FlipMatchConstants.DEFAULT_CARD_FETCH_LIMIT
+            : Math.min(limit, FlipMatchConstants.MAX_CARD_FETCH_LIMIT);
+
+        return cardRepository.findRandomCardsByUserIdAndDeckId(userId, deckId, resolvedLimit).stream()
+                .map(cardMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FlipMatchDeckResponse> getEligibleFlipMatchDecksForCurrentUser(int minCards) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        int resolvedMinCards = Math.max(FlipMatchConstants.DEFAULT_MIN_DECK_CARDS, minCards);
+        return deckRepository.findEligibleDecksByUserId(userId, resolvedMinCards)
+                .stream()
+                .map(deck -> FlipMatchDeckResponse.builder()
+                        .id(deck.getId())
+                        .title(deck.getTitle())
+                        .coverImageUrl(deck.getCoverImageUrl())
+                        .totalCards(deck.getTotalCards() != null ? deck.getTotalCards() : 0)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FlipMatchGameSummaryResponse saveFlipMatchResultForCurrentUser(FlipMatchGameResultRequest request) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        int score = request.getScore() != null ? Math.max(0, request.getScore()) : 0;
+        int seconds = request.getSeconds() != null ? Math.max(0, request.getSeconds()) : 0;
+        int cardCount = request.getCardCount() != null ? Math.max(0, request.getCardCount()) : 0;
+        int moves = request.getMoves() != null ? Math.max(0, request.getMoves()) : 0;
+        String deckId = request.getDeckId();
+        String deckTitle = null;
+
+        if (StringUtils.hasText(deckId)) {
+            deckTitle = deckRepository.findByIdAndIsRemovedFalse(deckId)
+                    .filter(deck -> deck.getUser() != null && userId.equals(deck.getUser().getId()))
+                    .map(Deck::getTitle)
+                    .orElse(null);
+        }
+
+        FlipMatchGameHistoryResponse historyItem = FlipMatchGameHistoryResponse.builder()
+                .deckId(deckId)
+                .deckTitle(deckTitle)
+                .score(score)
+                .seconds(seconds)
+                .cardCount(cardCount)
+                .moves(moves)
+                .playedAt(resolvePlayedAt(request.getPlayedAt()))
+                .build();
+
+        try {
+            String historyJson = objectMapper.writeValueAsString(historyItem);
+            redisTemplate.opsForList().leftPush(getHistoryKey(userId), historyJson);
+            redisTemplate.opsForList().trim(getHistoryKey(userId), 0, FlipMatchConstants.MAX_HISTORY_LIMIT - 1);
+            redisTemplate.opsForValue().increment(getTotalScoreKey(userId), score);
+        } catch (Exception e) {
+            throw new RuntimeException(FlipMatchConstants.SAVE_HISTORY_ERROR_MESSAGE, e);
+        }
+
+        return getFlipMatchSummaryForCurrentUser();
+    }
+
+    @Override
+    public List<FlipMatchGameHistoryResponse> getFlipMatchHistoryForCurrentUser(int limit) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        int resolvedLimit = limit <= 0
+            ? FlipMatchConstants.DEFAULT_HISTORY_LIMIT
+            : Math.min(limit, FlipMatchConstants.MAX_HISTORY_LIMIT);
+
+        List<String> rawItems = redisTemplate.opsForList().range(getHistoryKey(userId), 0, resolvedLimit - 1);
+        if (rawItems == null || rawItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<FlipMatchGameHistoryResponse> parsed = new ArrayList<>();
+        for (String raw : rawItems) {
+            try {
+                parsed.add(objectMapper.readValue(raw, FlipMatchGameHistoryResponse.class));
+            } catch (Exception ignored) {
+                // Ignore malformed records.
+            }
+        }
+        return parsed;
+    }
+
+    @Override
+    public FlipMatchGameSummaryResponse getFlipMatchSummaryForCurrentUser() {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        String totalRaw = redisTemplate.opsForValue().get(getTotalScoreKey(userId));
+        long totalScore = 0L;
+        if (StringUtils.hasText(totalRaw)) {
+            try {
+                totalScore = Long.parseLong(totalRaw);
+            } catch (NumberFormatException ignored) {
+                totalScore = 0L;
+            }
+        }
+
+        Long totalGamesRaw = redisTemplate.opsForList().size(getHistoryKey(userId));
+        long totalGames = totalGamesRaw != null ? totalGamesRaw : 0L;
+
+        int bestScore = 0;
+        List<String> allItems = redisTemplate.opsForList().range(getHistoryKey(userId), 0, FlipMatchConstants.MAX_HISTORY_LIMIT - 1);
+        if (allItems != null) {
+            for (String raw : allItems) {
+                try {
+                    FlipMatchGameHistoryResponse item = objectMapper.readValue(raw, FlipMatchGameHistoryResponse.class);
+                    int score = item.getScore() != null ? item.getScore() : 0;
+                    if (score > bestScore) {
+                        bestScore = score;
+                    }
+                } catch (Exception ignored) {
+                    // Ignore malformed records.
+                }
+            }
+        }
+
+        return FlipMatchGameSummaryResponse.builder()
+                .totalScore(totalScore)
+                .totalGames(totalGames)
+                .bestScore(bestScore)
+                .build();
     }
 
     @Override
@@ -293,6 +455,25 @@ public class CardServiceImpl implements CardService {
                 CloudinaryConstants.COVER_HEIGHT // Custom height for cards
         );
         return (String) uploadResult.get("secure_url");
+    }
+
+    private String getHistoryKey(String userId) {
+        return FlipMatchConstants.REDIS_HISTORY_KEY_PREFIX + userId;
+    }
+
+    private String getTotalScoreKey(String userId) {
+        return FlipMatchConstants.REDIS_TOTAL_SCORE_KEY_PREFIX + userId;
+    }
+
+    private String resolvePlayedAt(String playedAtRaw) {
+        if (StringUtils.hasText(playedAtRaw)) {
+            try {
+                return LocalDateTime.parse(playedAtRaw).toString();
+            } catch (DateTimeParseException ignored) {
+                // Fall through to now.
+            }
+        }
+        return LocalDateTime.now().toString();
     }
 
 }

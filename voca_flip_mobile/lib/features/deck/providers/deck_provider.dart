@@ -44,7 +44,7 @@ final currentUserIdProvider = FutureProvider<String>((ref) async {
   final prefs = await SharedPreferences.getInstance();
   final userId = prefs.getString(AppConfig.userIdKey);
   if (userId == null || userId.isEmpty) {
-    throw Exception('Chưa đăng nhập hoặc userId chưa được lưu');
+    throw Exception('User is not logged in or userId is missing.');
   }
   return userId;
 });

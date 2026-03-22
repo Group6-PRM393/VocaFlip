@@ -24,6 +24,37 @@ public interface CardRepository extends JpaRepository<Card, String> {
                 "limit :limit", nativeQuery = true)
             List<Card> findRandomCardsByUserId(@Param("userId") String userId, @Param("limit") int limit);
 
+            @Query(value = "select c.* " +
+                "from cards c " +
+                "join decks d on c.deck_id = d.id " +
+                "where d.user_id = :userId " +
+                "and d.id = :deckId " +
+                "and c.is_removed = false " +
+                "and d.is_removed = false " +
+                "and c.front is not null " +
+                "and c.back is not null " +
+                "order by random() " +
+                "limit :limit", nativeQuery = true)
+            List<Card> findRandomCardsByUserIdAndDeckId(
+                @Param("userId") String userId,
+                @Param("deckId") String deckId,
+                @Param("limit") int limit
+            );
+
+            @Query(value = "select count(*) " +
+                "from cards c " +
+                "join decks d on c.deck_id = d.id " +
+                "where d.user_id = :userId " +
+                "and d.id = :deckId " +
+                "and c.is_removed = false " +
+                "and d.is_removed = false " +
+                "and c.front is not null " +
+                "and c.back is not null", nativeQuery = true)
+            long countValidCardsByUserIdAndDeckId(
+                @Param("userId") String userId,
+                @Param("deckId") String deckId
+            );
+
     @Query(value = "select * from cards where deck_id = :deckId and is_removed = false order by random() limit :limit", nativeQuery = true)
     List<Card> findRandomCardsByDeckId(@Param("deckId") String deckId, @Param("limit") int limit);
 
