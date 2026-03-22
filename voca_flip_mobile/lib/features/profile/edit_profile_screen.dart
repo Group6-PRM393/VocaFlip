@@ -62,7 +62,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Không thể chọn ảnh: $e')));
+      ).showSnackBar(SnackBar(content: Text('Unable to select image: $e')));
     }
   }
 
@@ -90,7 +90,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ),
               Text(
-                'Chọn ảnh đại diện',
+                'Choose profile picture',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -103,7 +103,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   backgroundColor: primaryColor.withValues(alpha: 0.1),
                   child: Icon(Icons.photo_library_rounded, color: primaryColor),
                 ),
-                title: const Text('Thư viện ảnh'),
+                title: const Text('Photo library'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -117,7 +117,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     child: Icon(Icons.delete_outline, color: Colors.red),
                   ),
                   title: const Text(
-                    'Huỷ ảnh vừa chọn',
+                    'Cancel selected image',
                     style: TextStyle(color: Colors.red),
                   ),
                   onTap: () {
@@ -162,7 +162,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Lỗi cập nhật: $e')));
+      ).showSnackBar(SnackBar(content: Text('Update error: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -314,7 +314,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Ảnh sẽ được lưu khi bạn nhấn "Save Changes"',
+                      'Image will be saved when you press "Save Changes"',
                       style: TextStyle(
                         color: Colors.orange.shade700,
                         fontSize: 12,

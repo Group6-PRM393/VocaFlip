@@ -96,9 +96,15 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
             builder: (_) => StudyScreen(sessionData: _sessionData),
           ),
         )
-        .then((_) {
-          if (mounted)
-            Navigator.of(context).pop(true); // Pop back to home and refresh
+        .then((result) {
+          if (mounted) {
+            // Always refetch data when returning from study screen
+            _loadData();
+            // Pop back to home with refresh flag if study was completed
+            if (result == true) {
+              Navigator.of(context).pop(true);
+            }
+          }
         });
   }
 
@@ -139,7 +145,7 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Không thể tải danh sách ôn tập',
+              'Unable to load review list',
               style: GoogleFonts.lexend(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -159,12 +165,12 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Thử lại'),
+              child: const Text('Try again'),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Quay lại'),
+              child: const Text('Return'),
             ),
           ],
         ),
@@ -254,9 +260,6 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
                 Icons.arrow_back_rounded,
                 () => Navigator.of(context).pop(),
               ),
-              _buildHeaderIconButton(Icons.tune_rounded, () {
-                // Filter action (placeholder)
-              }),
             ],
           ),
           const SizedBox(height: 16),
@@ -653,7 +656,7 @@ class _DueForReviewListScreenState extends State<DueForReviewListScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Start Review',
+                'Start Review Session',
                 style: GoogleFonts.lexend(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

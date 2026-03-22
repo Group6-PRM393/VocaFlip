@@ -35,14 +35,14 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     Icons.home,
     Icons.fitness_center,
     Icons.shopping_cart,
-    Icons.pets,
   ];
   late int selectedIconIndex;
 
   final List<Color> categoryColors = [
-    const Color(0xFF1337EC), // Blue (Primary)
+    const Color(0xFF135BEC), // Blue (Primary)
     const Color(0xFFEF4444), // Red
     const Color(0xFFF59E0B), // Amber
+    const Color(0xFFFEF08A), // Yellow
     const Color(0xFF10B981), // Emerald
     const Color(0xFF8B5CF6), // Violet
     const Color(0xFFEC4899), // Pink

@@ -34,10 +34,7 @@ class QuizService {
       },
     );
 
-    final response = await http.post(
-      uri,
-      headers: await _getHeaders(),
-    );
+    final response = await http.post(uri, headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
@@ -75,10 +72,7 @@ class QuizService {
 
   Future<QuizReview> getReview(String attemptId) async {
     final url = Uri.parse('$baseUrl/$attemptId/review');
-    final response = await http.get(
-      url,
-      headers: await _getHeaders(),
-    );
+    final response = await http.get(url, headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));

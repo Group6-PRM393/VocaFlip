@@ -76,17 +76,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      _showSnackBar('Vui lòng nhập đầy đủ thông tin', Colors.redAccent);
+      _showSnackBar('Please fill in all information', Colors.redAccent);
       return;
     }
 
     if (newPassword != confirmPassword) {
-      setState(() => _confirmPasswordError = 'Mật khẩu xác nhận không khớp');
+      setState(() => _confirmPasswordError = 'Confirmation password does not match');
       return;
     }
 
     if (!_hasMinLength || !_hasUppercase || !_hasSpecialCharacter) {
-      _showSnackBar('Mật khẩu mới chưa đạt yêu cầu', Colors.redAccent);
+      _showSnackBar('New password does not meet requirements', Colors.redAccent);
       return;
     }
 
@@ -100,11 +100,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       );
 
       if (!mounted) return;
-      _showSnackBar('Đổi mật khẩu thành công', Colors.green);
+      _showSnackBar('Password changed successfully', Colors.green);
       Navigator.pop(context, true); // Quay về và kèm kết quả
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('Lỗi: $e', Colors.redAccent);
+      _showSnackBar('Error: $e', Colors.redAccent);
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
