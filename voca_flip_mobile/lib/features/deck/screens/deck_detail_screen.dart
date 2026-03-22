@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/deck_provider.dart';
-import '../../providers/card_provider.dart';
-import '../../models/card_model.dart';
+import '../providers/deck_provider.dart';
+import '../../card/providers/card_provider.dart';
+import '../../card/models/card_model.dart';
+import '../../card/screens/create_card_screen.dart';
+import '../../card/screens/edit_card_screen.dart';
+import '../../study/study_screen.dart';
+import '../../quiz/screens/quiz_settings_screen.dart';
 import 'edit_deck_screen.dart';
-import '../../modules/study/study_screen.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -465,6 +468,9 @@ class DeckDetailScreen extends ConsumerWidget {
                   /// Nếu sửa thành công → reload lại list
                   if (updated == true) {
                     ref.invalidate(cardListProvider(card.deckId));
+                    try {
+                      await ref.read(cardListProvider(card.deckId).future);
+                    } catch (_) {}
                   }
                 },
                 icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
@@ -621,6 +627,11 @@ Future<void> _showDeleteCardDialog(
 
     ref.invalidate(cardListProvider(card.deckId));
     ref.invalidate(deckDetailProvider(card.deckId));
+
+    try {
+      await ref.read(cardListProvider(card.deckId).future);
+      await ref.read(deckDetailProvider(card.deckId).future);
+    } catch (_) {}
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(

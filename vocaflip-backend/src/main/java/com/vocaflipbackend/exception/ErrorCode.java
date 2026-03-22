@@ -38,6 +38,9 @@ public enum ErrorCode {
     SESSION_NOT_FOUND(1019, "Study session not found", HttpStatus.NOT_FOUND),
     DECK_EMPTY(1020, "Deck has no cards to study", HttpStatus.BAD_REQUEST),
     NO_CARDS_DUE(1021, "No cards are due for review", HttpStatus.OK),
+    // Profile modifications
+    WRONG_PASSWORD(1024, "Incorrect current password", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_SET(1025, "Password is not set (registered via Google)", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

@@ -28,10 +28,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       MaterialPageRoute(
         builder: (context) => EditProfileScreen(user: currentUser),
       ),
-    ).then((updated) {
+    ).then((updated) async {
       if (updated == true) {
         // Refresh API lại sau khi sửa xong Profile
         ref.invalidate(currentUserProfileProvider);
+        try {
+          await ref.read(currentUserProfileProvider.future);
+        } catch (_) {}
       }
     });
   }

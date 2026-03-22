@@ -37,6 +37,9 @@ class _CategoryManagementScreenState
     );
     if (result == true) {
       ref.invalidate(categoryListProvider);
+      try {
+        await ref.read(categoryListProvider.future);
+      } catch (_) {}
     }
   }
 
@@ -49,6 +52,9 @@ class _CategoryManagementScreenState
     );
     if (result == true) {
       ref.invalidate(categoryListProvider);
+      try {
+        await ref.read(categoryListProvider.future);
+      } catch (_) {}
     }
   }
 
@@ -80,6 +86,9 @@ class _CategoryManagementScreenState
         await repo.deleteCategory(category.id);
 
         ref.invalidate(categoryListProvider);
+        try {
+          await ref.read(categoryListProvider.future);
+        } catch (_) {}
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +116,7 @@ class _CategoryManagementScreenState
         elevation: 2,
         centerTitle: true,
         title: const Text(
-          'My Decks',
+          'Category',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
