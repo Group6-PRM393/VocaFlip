@@ -1,16 +1,25 @@
 package com.vocaflipbackend.service.impl;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.vocaflipbackend.config.CustomUserDetails;
-import com.vocaflipbackend.config.JwtUtils;
+import com.vocaflipbackend.dto.request.GoogleLoginRequest;
+import com.vocaflipbackend.entity.SocialAccount;
+import com.vocaflipbackend.enums.Provider;
+import com.vocaflipbackend.repository.SocialAccountRepository;
+import com.vocaflipbackend.service.GoogleOAuthService;
+import com.vocaflipbackend.service.IRedisOtpService;
+import com.vocaflipbackend.utils.JwtUtils;
 import com.vocaflipbackend.dto.request.LoginRequest;
 import com.vocaflipbackend.dto.request.RefreshTokenRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.AuthResponse;
 import com.vocaflipbackend.dto.response.UserResponse;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.UserMapper;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.AuthService;
 import com.vocaflipbackend.service.RefreshTokenService;
@@ -26,6 +35,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 /**
@@ -42,7 +54,11 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final UserMapper userMapper;
+    private final UserProgressRepository userProgressRepository;
     private final RefreshTokenService refreshTokenService;
+    private final GoogleOAuthService googleOAuthService;
+    private final SocialAccountRepository socialAccountRepository;
+    private final IRedisOtpService redisOtpService;
 
     @Override
     @Transactional
@@ -94,6 +110,9 @@ public class AuthServiceImpl implements AuthService {
         // Load user
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (!user.getIsConfirmedEmail()){
+            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
 
         // Generate tokens
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -107,6 +126,98 @@ public class AuthServiceImpl implements AuthService {
         log.info("User logged in successfully: {}", user.getEmail());
 
         return buildAuthResponse(accessToken, refreshTokenString, user);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse authenticateGoogle(GoogleLoginRequest request) throws Exception {
+        log.info("Attempting Google authentication");
+
+        try {
+            //Verify ID Token with Google
+//            GoogleIdToken.Payload payload = googleOAuthService.verifyIdToken(request.getIdToken());
+
+            //Verify ID Token / Access Token with Google
+            GoogleIdToken.Payload payload = googleOAuthService.verifyToken(request.getIdToken());
+
+            //Extract information from payload
+            String googleId = payload.getSubject();      // Google User ID (unique)
+            String email = payload.getEmail();           // Email
+            String name = (String) payload.get("name");  // Tên đầy đủ
+            String pictureUrl = (String) payload.get("picture"); // Avatar URL
+            Boolean emailVerified = payload.getEmailVerified();  // Email verified?
+
+            log.info("Google token verified for email: {}", email);
+
+            // find social account base on Google ID
+            SocialAccount socialAccount = socialAccountRepository
+                    .findByProviderAndProviderId(Provider.GOOGLE, googleId)
+                    .orElse(null);
+
+            User user = new User();
+
+            if (socialAccount != null) {
+                // User đã từng đăng nhập bằng Google
+                user = socialAccount.getUser();
+                log.info("Existing Google user found: {}", user.getEmail());
+
+            } else {
+                //Lần đầu đăng nhập bằng Google
+                //Kiểm tra email đã tồn tại trong hệ thống chưa
+                user = userRepository.findByEmail(email).orElse(null);
+
+                if (user != null) {
+                    // Email đã tồn tại (đã đăng ký bằng email/password)
+                    // Link Google account vào user hiện tại
+                    log.info("Email exists, linking Google account to: {}", email);
+
+                } else {
+                    // SUB-CASE B: User hoàn toàn mới
+                    // Tạo user mới
+                    log.info("Creating new user from Google: {}", email);
+                    user = User.builder()
+                            .email(email)
+                            .name(name)
+                            .avatarUrl(pictureUrl)
+                            .passwordHash(passwordEncoder.encode("GOOGLE_OAUTH_NO_PASSWORD")) // Placeholder cho Google users
+                            .totalWords(0)
+                            .masteredWords(0)
+                            .learningWords(0)
+                            .streakDays(0)
+                            .isConfirmedEmail(emailVerified) // Lấy từ Google
+                            .build();
+                    user = userRepository.save(user);
+                }
+
+                // Tạo và link social account
+                socialAccount = SocialAccount.builder()
+                        .provider(Provider.GOOGLE)
+                        .providerId(googleId)  // Lưu Google User ID
+                        .user(user)
+                        .build();
+                socialAccountRepository.save(socialAccount);
+
+                log.info("Google social account created and linked");
+            }
+
+            // Generate JWT tokens của hệ thống VocaFlip
+            UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+            String accessToken = jwtUtils.generateAccessToken(userDetails);
+            String refreshTokenString = jwtUtils.generateRefreshToken(userDetails);
+
+            // Lưu refresh token vào DB
+            refreshTokenService.deleteAllUserTokens(user); // Xóa token cũ
+            refreshTokenService.createRefreshToken(user, refreshTokenString);
+
+            log.info("Google authentication successful for: {}", user.getEmail());
+
+            // Return auth response
+            return buildAuthResponse(accessToken, refreshTokenString, user);
+
+        } catch (Exception e) {
+            log.error("Google authentication failed: {}", e.getMessage());
+            throw new AppException(ErrorCode.GOOGLE_AUTH_FAILED);
+        }
     }
 
     @Override
@@ -140,7 +251,66 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
-        return userMapper.toUserResponse(user);
+
+        List<Object[]> statusCounts = userProgressRepository.countByStatusWithActiveCards(user.getId());
+        Map<LearningStatus, Long> statusMap = new EnumMap<>(LearningStatus.class);
+        for (Object[] row : statusCounts) {
+            LearningStatus status = (LearningStatus) row[0];
+            Long count = (Long) row[1];
+            statusMap.put(status, count);
+        }
+
+        int totalWords = statusMap.values().stream().mapToInt(Long::intValue).sum();
+        int masteredWords = statusMap.getOrDefault(LearningStatus.MASTERED, 0L).intValue();
+        int learningWords =
+                statusMap.getOrDefault(LearningStatus.LEARNING, 0L).intValue()
+                        + statusMap.getOrDefault(LearningStatus.REVIEW, 0L).intValue();
+
+        UserResponse response = userMapper.toUserResponse(user);
+        response.setTotalWords(totalWords);
+        response.setMasteredWords(masteredWords);
+        response.setLearningWords(learningWords);
+        response.setStreakDays(response.getStreakDays() == null ? 0 : response.getStreakDays());
+        return response;
+    }
+
+    @Override
+    public void resetPassword(String email, String otpCode, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        String savedOtp = redisOtpService.getOtp(email);
+        if (savedOtp != null && savedOtp.equals(otpCode)) {
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            redisOtpService.deleteOtp(email);
+            log.info("Password reset successful for email: {}", email);
+        } else {
+            log.warn("Invalid OTP code provided for email: {}", email);
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+
+    }
+
+    @Override
+    public boolean verifyEmail(String email, String otpCode) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (user.getIsConfirmedEmail()) {
+            log.info("Email already verified for email: {}", email);
+            return true;
+        }
+
+        String savedOtp = redisOtpService.getOtp(email);
+        if (savedOtp != null && savedOtp.equals(otpCode)) {
+            user.setIsConfirmedEmail(true);
+            userRepository.save(user);
+            redisOtpService.deleteOtp(email);
+            log.info("Email verified successfully for email: {}", email);
+            return true;
+        } else {
+            log.warn("Invalid OTP code provided for email verification: {}", email);
+            return false;
+        }
     }
 
     /**

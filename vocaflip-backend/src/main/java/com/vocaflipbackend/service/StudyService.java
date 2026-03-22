@@ -1,6 +1,9 @@
 package com.vocaflipbackend.service;
 
 import com.vocaflipbackend.dto.response.StudySessionResponse;
+import com.vocaflipbackend.dto.response.StudyCardResponse;
+
+import java.util.List;
 
 public interface StudyService {
     StudySessionResponse startSession(String deckId);
@@ -12,6 +15,8 @@ public interface StudyService {
     StudySessionResponse completeSession(String sessionId);
 
     int getDueCardsCount();
+
+    List<StudyCardResponse> getUpcomingDueCards(int withinHours);
 
     int cleanupAbandonedSessions();
 }

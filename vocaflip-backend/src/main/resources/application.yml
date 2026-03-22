@@ -1,4 +1,37 @@
 spring:
+  data:
+    redis:
+      url: ${REDIS_URL}
+  #  data:
+#    redis:
+#      username: ${REDIS_USERNAME}
+#      host: ${REDIS_HOST}
+#      port: ${REDIS_PORT}
+#      password: ${REDIS_PASSWORD}
+#      ssl:
+#        enable: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dotuananh2516@gmail.com
+    password: ${GOOGLE_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  security:
+    oauth2:
+      client:
+         registration:
+           google:
+             client-id: ${GOOGLE_CLIENT_ID:}
+             client-secret: ${GOOGLE_CLIENT_SECRET:}
+             scope:
+               - openid
+               - email
+               - profile
   application:
     name: vocaflip-backend
 
@@ -9,8 +42,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
-    username: postgres.toesjpoqupllxjeopalh
-    password: Uniquepass123@@.
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-test-query: SELECT 1
@@ -34,9 +67,9 @@ server:
 
 # Cloudinary Configuration
 cloudinary:
-  cloud-name: dwo1zbn0c
-  api-key: 696844879617656
-  api-secret: -Z-WlZMbEaTQD0q0O3fWthYcE7c
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
 
 # Actuator Configuration for Health Check
 management:

@@ -1,6 +1,7 @@
 package com.vocaflipbackend.controller;
 
 import com.vocaflipbackend.dto.response.ApiResponse;
+import com.vocaflipbackend.dto.response.StudyCardResponse;
 import com.vocaflipbackend.dto.response.StudySessionResponse;
 import com.vocaflipbackend.service.StudyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/study")
@@ -45,6 +48,18 @@ public class StudyController {
         return ApiResponse.<Integer>builder()
                 .message("Số thẻ đến hạn ôn tập")
                 .result(studyService.getDueCardsCount())
+                .build();
+    }
+
+    @Operation(summary = "Lấy danh sách thẻ sắp đến hạn",
+            description = "Trả về danh sách thẻ sẽ đến hạn trong N giờ tới")
+    @GetMapping("/upcoming-cards")
+    public ApiResponse<List<StudyCardResponse>> getUpcomingCards(
+            @Parameter(description = "Khoảng giờ sắp tới", example = "3")
+            @RequestParam(defaultValue = "3") int withinHours) {
+        return ApiResponse.<List<StudyCardResponse>>builder()
+                .message("Danh sách thẻ sắp đến hạn")
+                .result(studyService.getUpcomingDueCards(withinHours))
                 .build();
     }
 

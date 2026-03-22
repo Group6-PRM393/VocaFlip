@@ -1,7 +1,8 @@
 package com.vocaflipbackend.service;
 
-import com.vocaflipbackend.dto.response.DashboardStatsResponse;
+import com.vocaflipbackend.dto.response.LearningProgressStatsResponse;
 
 public interface ProgressService {
-    DashboardStatsResponse getDashboardStats(String userId);
+    LearningProgressStatsResponse getLearningProgressStats(String userId);
+
 }

@@ -8,21 +8,27 @@ import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.entity.UserProgress;
+import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.CardMapper;
 import com.vocaflipbackend.repository.CardRepository;
 import com.vocaflipbackend.repository.DeckRepository;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CardService;
 import com.vocaflipbackend.service.CloudinaryService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,9 +39,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CardServiceImpl implements CardService {
 
+    private static final int DEFAULT_FLIP_MATCH_LIMIT = 32;
+    private static final int MAX_FLIP_MATCH_LIMIT = 120;
+
     private final CardRepository cardRepository;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
+    private final UserProgressRepository userProgressRepository;
     private final CardMapper cardMapper;
     private final CloudinaryService cloudinaryService;
     private final RestTemplate restTemplate;
@@ -62,6 +72,25 @@ public class CardServiceImpl implements CardService {
         Card card = cardMapper.toEntity(request);
         card.setDeck(deck);
 
+        // Auto-fill missing fields from dictionary API (including audio URL)
+        if (StringUtils.hasText(request.getFront())) {
+            TranslationResponse translation = fetchDictionaryData(request.getFront().trim());
+            if (translation != null) {
+                if (!StringUtils.hasText(card.getBack()) && StringUtils.hasText(translation.getMeaning())) {
+                    card.setBack(translation.getMeaning());
+                }
+                if (!StringUtils.hasText(card.getPhonetic()) && StringUtils.hasText(translation.getPhonetic())) {
+                    card.setPhonetic(translation.getPhonetic());
+                }
+                if (!StringUtils.hasText(card.getExampleSentence()) && StringUtils.hasText(translation.getExampleSentence())) {
+                    card.setExampleSentence(translation.getExampleSentence());
+                }
+                if (!StringUtils.hasText(card.getAudioUrl()) && StringUtils.hasText(translation.getAudioUrl())) {
+                    card.setAudioUrl(translation.getAudioUrl());
+                }
+            }
+        }
+
         // Upload image if provided
         if (image != null && !image.isEmpty()) {
             String imageUrl = uploadCardImage(image);
@@ -69,6 +98,20 @@ public class CardServiceImpl implements CardService {
         }
 
         Card savedCard = cardRepository.save(card);
+
+        userProgressRepository.findByUserIdAndCardId(userId, savedCard.getId())
+            .orElseGet(() -> userProgressRepository.save(
+                UserProgress.builder()
+                    .user(user)
+                    .card(savedCard)
+                    .status(LearningStatus.NEW)
+                    .reviewCount(0)
+                    .intervalDays(0)
+                    .easeFactor(BigDecimal.valueOf(2.5))
+                    .correctCount(0)
+                    .incorrectCount(0)
+                    .build()
+            ));
 
         // Update deck total cards & update by user
         int currentTotal = deck.getTotalCards() != null ? deck.getTotalCards() : 0;
@@ -90,6 +133,22 @@ public class CardServiceImpl implements CardService {
             throw new AppException(ErrorCode.DECK_NOT_FOUND);
         }
         return cardRepository.findByDeckIdAndIsRemovedFalse(deckId).stream()
+                .map(cardMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CardResponse> getFlipMatchCardsForCurrentUser(int limit) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        int resolvedLimit = limit <= 0
+                ? DEFAULT_FLIP_MATCH_LIMIT
+                : Math.min(limit, MAX_FLIP_MATCH_LIMIT);
+
+        return cardRepository.findRandomCardsByUserId(userId, resolvedLimit).stream()
                 .map(cardMapper::toResponse)
                 .collect(Collectors.toList());
     }

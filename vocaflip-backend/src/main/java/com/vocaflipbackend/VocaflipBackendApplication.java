@@ -9,7 +9,7 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableScheduling
-public class VocaflipBackendApplication {
+public class    VocaflipBackendApplication {
 
     @PostConstruct
     void started() {

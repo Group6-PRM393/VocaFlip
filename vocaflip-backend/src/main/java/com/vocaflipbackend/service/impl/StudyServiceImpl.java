@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -176,6 +178,14 @@ public class StudyServiceImpl implements StudyService {
 
         userProgressRepository.save(progress);
 
+        long masteredWords = userProgressRepository.countByUserIdAndStatus(
+                session.getUser().getId(),
+                LearningStatus.MASTERED
+        );
+        User currentUser = session.getUser();
+        currentUser.setMasteredWords((int) masteredWords);
+        userRepository.save(currentUser);
+
         //Lưu lịch sử phiên học (SessionCard)
         SessionCard sessionCard = SessionCard.builder()
                 .session(session)
@@ -216,6 +226,8 @@ public class StudyServiceImpl implements StudyService {
             session.setDurationSeconds((int) durationSeconds);
         }
 
+                syncUserStreakDays(session.getUser().getId());
+
         StudySession savedSession = studySessionRepository.save(session);
         return studyMapper.toResponse(savedSession);
     }
@@ -232,6 +244,9 @@ public class StudyServiceImpl implements StudyService {
                 .audioUrl(card.getAudioUrl())
                 .imageUrl(card.getImageUrl())
                 .orderIndex(card.getOrderIndex())
+                .nextReviewAt(progress != null && progress.getNextReviewAt() != null
+                        ? progress.getNextReviewAt().toString()
+                        : null)
                 .learningStatus(progress != null ? progress.getStatus() : LearningStatus.NEW)
                 .currentInterval(progress != null ? progress.getIntervalDays() : 0)
                 .reviewCount(progress != null ? progress.getReviewCount() : 0)
@@ -245,6 +260,26 @@ public class StudyServiceImpl implements StudyService {
         List<UserProgress> dueProgress = userProgressRepository
                 .findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(userId, LocalDateTime.now());
         return dueProgress.size();
+    }
+
+    @Override
+    public List<StudyCardResponse> getUpcomingDueCards(int withinHours) {
+        String userId = SecurityUtils.getCurrentUserId();
+
+        int safeHours = withinHours <= 0 ? 3 : withinHours;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime upperBound = now.plusHours(safeHours);
+
+        List<UserProgress> upcomingProgress = userProgressRepository
+                .findByUserIdAndNextReviewAtAfterAndNextReviewAtBeforeAndCard_IsRemovedFalseOrderByNextReviewAtAsc(
+                        userId,
+                        now,
+                        upperBound
+                );
+
+        return upcomingProgress.stream()
+                .map(progress -> buildStudyCardResponse(progress.getCard(), progress))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -276,5 +311,26 @@ public class StudyServiceImpl implements StudyService {
         studySessionRepository.saveAll(abandonedSessions);
         return abandonedSessions.size();
     }
+
+        private void syncUserStreakDays(String userId) {
+                List<StudySession> sessions = studySessionRepository.findAllByUserIdDesc(userId);
+
+                Set<LocalDate> completedDates = sessions.stream()
+                                .filter(s -> s.getCompletedAt() != null)
+                                .map(s -> s.getCompletedAt().toLocalDate())
+                                .collect(Collectors.toSet());
+
+                LocalDate currentDate = LocalDate.now();
+                int streak = 0;
+                while (completedDates.contains(currentDate)) {
+                        streak++;
+                        currentDate = currentDate.minusDays(1);
+                }
+
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                user.setStreakDays(streak);
+                userRepository.save(user);
+        }
 }
 

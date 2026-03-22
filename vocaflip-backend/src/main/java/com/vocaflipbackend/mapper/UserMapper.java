@@ -1,10 +1,13 @@
 package com.vocaflipbackend.mapper;
 
+import com.vocaflipbackend.dto.request.UpdateProfileRequest;
 import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.UserResponse;
 import com.vocaflipbackend.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -16,4 +19,7 @@ public interface UserMapper {
     UserResponse toResponse(User user);
 
     UserResponse toUserResponse(User user);
+
+    @Mapping(target = "avatarUrl", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntity(UpdateProfileRequest request, @MappingTarget User user);
 }

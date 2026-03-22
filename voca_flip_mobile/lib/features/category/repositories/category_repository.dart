@@ -1,0 +1,94 @@
+import 'package:voca_flip_mobile/features/category/models/category_model.dart';
+import 'package:voca_flip_mobile/core/services/api_service.dart';
+
+/// Repository quản lý các thao tác liên quan đến Category.
+/// Sử dụng ApiService (có JWT Interceptor) thay vì raw Dio.
+class CategoryRepository {
+  final ApiService _apiService;
+  CategoryRepository(this._apiService);
+
+  /// Lấy danh sách Category theo userId
+  Future<List<CategoryModel>> getCategories(String userId) async {
+    final res = await _apiService.get(
+      '/api/categories',
+      queryParameters: {'userId': userId},
+    );
+    final body = res.data;
+
+    // Trường hợp backend trả list thuần
+    if (body is List) {
+      return body
+          .map(
+            (e) => CategoryModel.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
+    }
+
+    // Trường hợp backend bọc trong {code: ..., result: ...}
+    if (body is Map<String, dynamic>) {
+      final list = body['result'] ?? body['data'] ?? body['items'];
+      if (list is List) {
+        return list
+            .map(
+              (e) =>
+                  CategoryModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
+      }
+    }
+
+    throw Exception('Invalid categories response: ${body.runtimeType} - $body');
+  }
+
+  /// Tạo Category mới
+  Future<CategoryModel> createCategory(
+    String userId,
+    String categoryName,
+    String iconCode,
+    String colorHex,
+  ) async {
+    final res = await _apiService.post(
+      '/api/categories',
+      queryParameters: {'userId': userId},
+      data: {
+        'categoryName': categoryName,
+        'iconCode': iconCode,
+        'colorHex': colorHex,
+      },
+    );
+    
+    final body = res.data;
+    if (body is Map<String, dynamic> && body['result'] != null) {
+      return CategoryModel.fromJson(body['result']);
+    }
+    throw Exception('Failed to create category');
+  }
+
+  /// Cập nhật Category
+  Future<CategoryModel> updateCategory(
+    String id,
+    String categoryName,
+    String iconCode,
+    String colorHex,
+  ) async {
+    final res = await _apiService.put(
+      '/api/categories/$id',
+      data: {
+        'categoryName': categoryName,
+        'iconCode': iconCode,
+        'colorHex': colorHex,
+      },
+    );
+    
+    final body = res.data;
+    if (body is Map<String, dynamic> && body['result'] != null) {
+      return CategoryModel.fromJson(body['result']);
+    }
+    throw Exception('Failed to update category');
+  }
+
+  /// Xóa Category
+  Future<void> deleteCategory(String id) async {
+    await _apiService.delete('/api/categories/$id');
+  }
+}

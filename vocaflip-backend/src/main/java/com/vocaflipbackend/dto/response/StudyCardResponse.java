@@ -23,6 +23,7 @@ public class StudyCardResponse {
     private String audioUrl;
     private String imageUrl;
     private Integer orderIndex;
+    private String nextReviewAt;
 
     // Trạng thái tiến độ hiện tại
     private LearningStatus learningStatus;

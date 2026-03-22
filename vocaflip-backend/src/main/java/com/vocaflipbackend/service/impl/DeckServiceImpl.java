@@ -12,6 +12,7 @@ import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.DeckMapper;
 import com.vocaflipbackend.repository.CategoryRepository;
 import com.vocaflipbackend.repository.DeckRepository;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CloudinaryService;
 import com.vocaflipbackend.service.DeckService;
@@ -37,6 +38,7 @@ public class DeckServiceImpl implements DeckService {
     private final CategoryRepository categoryRepository;
     private final DeckMapper deckMapper;
     private final CloudinaryService cloudinaryService;
+    private final UserProgressRepository userProgressRepository;
 
 
     @Override
@@ -61,7 +63,7 @@ public class DeckServiceImpl implements DeckService {
         }
 
         Deck savedDeck = deckRepository.save(deck);
-        return deckMapper.toResponse(savedDeck);
+        return toDeckResponseWithProgress(savedDeck, userId);
     }
 
     @Override
@@ -71,7 +73,7 @@ public class DeckServiceImpl implements DeckService {
         return deckRepository.findById(id)
                 .filter(deck -> !deck.isRemoved())
                 .filter(deck -> deck.getUser().getId().equals(currentUserId))
-                .map(deckMapper::toResponse)
+            .map(deck -> toDeckResponseWithProgress(deck, currentUserId))
                 .orElseThrow(() -> new AppException(ErrorCode.DECK_NOT_FOUND));
     }
 
@@ -107,7 +109,7 @@ public class DeckServiceImpl implements DeckService {
         }
 
         Deck updatedDeck = deckRepository.save(deck);
-        return deckMapper.toResponse(updatedDeck);
+        return toDeckResponseWithProgress(updatedDeck, currentUserId);
     }
 
     @Override
@@ -117,7 +119,19 @@ public class DeckServiceImpl implements DeckService {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
         return deckRepository.findByUserIdAndIsRemovedFalse(userId).stream()
-                .map(deckMapper::toResponse)
+            .map(deck -> toDeckResponseWithProgress(deck, userId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DeckResponse> getMyDecksByCategory(String categoryId) {
+        String userId = SecurityUtils.getCurrentUserId();
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        return deckRepository.findByUserIdAndCategoryIdAndIsRemovedFalse(userId, categoryId).stream()
+            .map(deck -> toDeckResponseWithProgress(deck, userId))
                 .collect(Collectors.toList());
     }
 
@@ -149,7 +163,7 @@ public class DeckServiceImpl implements DeckService {
         }
 
         List<DeckResponse> content = deckPage.getContent().stream()
-                .map(deckMapper::toResponse)
+            .map(deck -> toDeckResponseWithProgress(deck, currentUserId))
                 .collect(Collectors.toList());
 
         return PageResponse.<DeckResponse>builder()
@@ -171,6 +185,22 @@ public class DeckServiceImpl implements DeckService {
                 CloudinaryConstants.COVER_WIDTH,
                 CloudinaryConstants.COVER_HEIGHT);
         return (String) uploadResult.get("secure_url");
+    }
+
+    private DeckResponse toDeckResponseWithProgress(Deck deck, String userId) {
+        DeckResponse response = deckMapper.toResponse(deck);
+
+        int totalCards = response.getTotalCards() == null ? 0 : response.getTotalCards();
+        long learnedCards = userProgressRepository.countLearnedCardsByUserAndDeck(userId, deck.getId());
+
+        double progress = 0.0;
+        if (totalCards > 0) {
+            progress = Math.min(1.0, Math.max(0.0, learnedCards / (double) totalCards));
+        }
+
+        response.setLearnedCards((int) learnedCards);
+        response.setProgress(progress);
+        return response;
     }
 }
 

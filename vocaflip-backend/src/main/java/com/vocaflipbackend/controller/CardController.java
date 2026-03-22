@@ -5,6 +5,7 @@ import com.vocaflipbackend.dto.response.ApiResponse;
 import com.vocaflipbackend.dto.response.CardResponse;
 import com.vocaflipbackend.dto.response.TranslationResponse;
 import com.vocaflipbackend.service.CardService;
+import com.vocaflipbackend.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +48,7 @@ public class CardController {
                 .imageUrl(imageUrl)
                 .build();
 
-        String userId = "u001"; // Hardcoded user ID for demonstration
+        String userId = SecurityUtils.getCurrentUserId();
         return ApiResponse.<CardResponse>builder()
                 .message("Card created successfully")
                 .result(cardService.createCard(request, image, userId, deckId))
@@ -60,6 +61,19 @@ public class CardController {
             @Parameter(description = "ID của Deck") @PathVariable String deckId) {
         return ApiResponse.<List<CardResponse>>builder()
                 .result(cardService.getCardsByDeckId(deckId))
+                .build();
+    }
+
+    @Operation(
+            summary = "Lấy dữ liệu game Flip Match",
+            description = "Trả về danh sách card ngẫu nhiên từ toàn bộ deck của user hiện tại để FE chỉ cần gọi 1 request"
+    )
+    @GetMapping("/game/flip-match")
+    public ApiResponse<List<CardResponse>> getFlipMatchCards(
+            @Parameter(description = "Số card tối đa cần lấy")
+            @RequestParam(required = false, defaultValue = "32") int limit) {
+        return ApiResponse.<List<CardResponse>>builder()
+                .result(cardService.getFlipMatchCardsForCurrentUser(limit))
                 .build();
     }
 

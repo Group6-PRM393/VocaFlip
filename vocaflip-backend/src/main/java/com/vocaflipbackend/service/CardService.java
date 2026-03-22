@@ -12,6 +12,8 @@ public interface CardService {
 
     List<CardResponse> getCardsByDeckId(String deckId);
 
+    List<CardResponse> getFlipMatchCardsForCurrentUser(int limit);
+
     CardResponse updateCard(String id, CardRequest request, MultipartFile image);
 
     void deleteCard(String id);
