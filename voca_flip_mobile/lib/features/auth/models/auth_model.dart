@@ -21,27 +21,35 @@ class UserModel {
     this.streakDays,
   });
 
+  static int? _toNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        avatarUrl: json['avatarUrl'] as String?,
-        totalWords: json['totalWords'] as int?,
-        masteredWords: json['masteredWords'] as int?,
-        learningWords: json['learningWords'] as int?,
-        streakDays: json['streakDays'] as int?,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    email: json['email'] as String,
+    avatarUrl: json['avatarUrl'] as String?,
+    totalWords: _toNullableInt(json['totalWords']),
+    masteredWords: _toNullableInt(json['masteredWords']),
+    learningWords: _toNullableInt(json['learningWords']),
+    streakDays: _toNullableInt(json['streakDays']),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'avatarUrl': avatarUrl,
-        'totalWords': totalWords,
-        'masteredWords': masteredWords,
-        'learningWords': learningWords,
-        'streakDays': streakDays,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'avatarUrl': avatarUrl,
+    'totalWords': totalWords,
+    'masteredWords': masteredWords,
+    'learningWords': learningWords,
+    'streakDays': streakDays,
+  };
 }
 
 class AuthResponseModel {
