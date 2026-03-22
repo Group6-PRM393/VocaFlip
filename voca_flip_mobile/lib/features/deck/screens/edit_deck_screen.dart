@@ -271,7 +271,12 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
                         (c) => c.categoryName == (widget.deck.category ?? ''),
                         orElse: () => cats.isNotEmpty
                             ? cats.first
-                            : CategoryModel(id: '', categoryName: '', iconCode: '', colorHex: ''),
+                            : CategoryModel(
+                                id: '',
+                                categoryName: '',
+                                iconCode: '',
+                                colorHex: '',
+                              ),
                       );
                       if (_selectedCategory?.id == '') _selectedCategory = null;
 
