@@ -101,9 +101,9 @@ class _CategoryManagementScreenState
         );
       } catch (e) {
         if (!mounted) return;
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi xóa: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting: $e')));
       }
     }
   }
@@ -121,7 +121,7 @@ class _CategoryManagementScreenState
         elevation: 2,
         centerTitle: true,
         title: const Text(
-          'Category',
+          'My Decks',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
@@ -138,14 +138,14 @@ class _CategoryManagementScreenState
               Text('Error: $err'),
               ElevatedButton(
                 onPressed: () => ref.invalidate(categoryListProvider),
-                child: const Text('Thử lại'),
-              )
+                child: const Text('Try again'),
+              ),
             ],
           ),
         ),
         data: (categories) {
           if (categories.isEmpty) {
-             return const Center(child: Text('Chưa có danh mục nào. Hãy tạo mới.'));
+            return const Center(child: Text('No categories yet. Create one.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.only(
@@ -211,19 +211,17 @@ class _CategoryManagementScreenState
                   height: 48,
                   decoration: BoxDecoration(
                     color: CategoryHelper.hexToColor(
-                      
-                  item.colorHex,
-                ).withValues(alpha: 0.1),
+                      item.colorHex,
+                    ).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    
-                CategoryHelper.getIconFromString(item.iconCode),
-                   
-                color: CategoryHelper.hexToColor(item.colorHex),
-                   
-                size: 24,
-              ),
+                    CategoryHelper.getIconFromString(item.iconCode),
+
+                    color: CategoryHelper.hexToColor(item.colorHex),
+
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

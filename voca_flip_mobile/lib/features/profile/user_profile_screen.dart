@@ -114,7 +114,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             child: CircularProgressIndicator(color: Colors.white),
           ),
         ),
-        error: (err, stack) => Center(child: Text('Lỗi: $err')),
+        error: (err, stack) => Center(child: Text('Error: $err')),
         data: (user) {
           final avatarUrl =
               user.avatarUrl ??

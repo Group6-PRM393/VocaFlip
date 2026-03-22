@@ -70,16 +70,18 @@ class DeleteCategoryDialog extends StatelessWidget {
             const SizedBox(height: 20),
 
             // --- Nút bấm (Xếp dọc) ---
-            
+
             // Nút Delete (Đỏ)
             SizedBox(
               width: double.infinity,
               height: 48, // h-12
               child: ElevatedButton(
                 onPressed: () {
-                  debugPrint("Đã xóa danh mục: $categoryName");
+                  debugPrint(
+                    "$categoryName is deleted",
+                  ); // Thêm log để kiểm tra
                   // Đóng Dialog và truyền về kết quả 'true' để báo là đã xóa
-                  Navigator.of(context).pop(true); 
+                  Navigator.of(context).pop(true);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red.shade600, // bg-red-600
@@ -96,7 +98,6 @@ class DeleteCategoryDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12), // gap-3
-
             // Nút Cancel (Xám)
             SizedBox(
               width: double.infinity,
