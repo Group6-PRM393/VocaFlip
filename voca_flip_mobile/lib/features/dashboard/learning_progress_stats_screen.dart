@@ -18,9 +18,6 @@ class LearningProgressStatsScreen extends StatefulWidget {
 
 class _LearningProgressStatsScreenState
     extends State<LearningProgressStatsScreen> {
-  static DateTime? _lastCacheAt;
-  static Map<String, dynamic>? _cachedSnapshot;
-
   bool _loading = true;
   String? _error;
 
@@ -47,22 +44,13 @@ class _LearningProgressStatsScreenState
     _loadData();
   }
 
-  Future<void> _loadData({bool force = false}) async {
+  Future<void> _loadData() async {
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      if (!force && _cachedSnapshot != null && _lastCacheAt != null) {
-        final age = DateTime.now().difference(_lastCacheAt!);
-        if (age.inSeconds <= 45) {
-          _applySnapshot(_cachedSnapshot!);
-          setState(() => _loading = false);
-          return;
-        }
-      }
-
       final prefs = await SharedPreferences.getInstance();
       final api = ApiService(prefs);
 
@@ -83,8 +71,6 @@ class _LearningProgressStatsScreenState
       };
 
       _applySnapshot(snapshot);
-      _cachedSnapshot = snapshot;
-      _lastCacheAt = DateTime.now();
 
       setState(() => _loading = false);
     } catch (e) {
@@ -203,7 +189,7 @@ class _LearningProgressStatsScreenState
     }
 
     return RefreshIndicator(
-      onRefresh: () => _loadData(force: true),
+      onRefresh: _loadData,
       color: AppColors.primary,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
