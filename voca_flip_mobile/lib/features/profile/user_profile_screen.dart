@@ -25,11 +25,16 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   void _navigateToEditProfile(UserModel currentUser) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => EditProfileScreen(user: currentUser)),
-    ).then((updated) {
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(user: currentUser),
+      ),
+    ).then((updated) async {
       if (updated == true) {
         // Refresh API lại sau khi sửa xong Profile
         ref.invalidate(currentUserProfileProvider);
+        try {
+          await ref.read(currentUserProfileProvider.future);
+        } catch (_) {}
       }
     });
   }
@@ -53,21 +58,6 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leadingWidth: 70, // Đảm bảo icon back có đủ không gian
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0, top: 4.0, bottom: 4.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-              onPressed: () => Navigator.maybePop(context),
-              splashRadius: 24,
-            ),
-          ),
-        ),
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -126,7 +116,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         ),
         error: (err, stack) => Center(child: Text('Lỗi: $err')),
         data: (user) {
-          final avatarUrl = user.avatarUrl ??
+          final avatarUrl =
+              user.avatarUrl ??
               'https://ui-avatars.com/api/?name=${user.name.replaceAll(' ', '+')}&background=random';
 
           return SingleChildScrollView(
@@ -136,7 +127,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 32, // Khoảng cách từ Appbar
+                    top:
+                        MediaQuery.of(context).padding.top +
+                        32, // Khoảng cách từ Appbar
                     bottom: 80, // pb-20
                   ),
                   decoration: BoxDecoration(
@@ -184,7 +177,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF4ADE80), // bg-green-400
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -221,146 +217,178 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
-                      constraints: const BoxConstraints(maxWidth: 448), // max-w-md
+                      constraints: const BoxConstraints(
+                        maxWidth: 448,
+                      ), // max-w-md
                       child: Column(
                         children: [
                           // 1. STATS GRID (3 Cột)
                           Row(
                             children: [
                               Expanded(
-                                child: _buildStatCard('${user.totalWords ?? 0}', 'Total Words'),
+                                child: _buildStatCard(
+                                  '${user.totalWords ?? 0}',
+                                  'Total Words',
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildDayStreakCard('${user.streakDays ?? 0}'),
+                                child: _buildDayStreakCard(
+                                  '${user.streakDays ?? 0}',
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildStatCard('${user.masteredWords ?? 0}', 'Mastered'),
+                                child: _buildStatCard(
+                                  '${user.masteredWords ?? 0}',
+                                  'Mastered',
+                                ),
                               ),
                             ],
                           ),
-                      const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                      // 2. CHANGE PASSWORD BUTTON
-                      InkWell(
-                        onTap: _navigateToChangePassword,
-                        borderRadius: BorderRadius.circular(16), // rounded-2xl
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                          // 2. CHANGE PASSWORD BUTTON
+                          InkWell(
+                            onTap: _navigateToChangePassword,
+                            borderRadius: BorderRadius.circular(
+                              16,
+                            ), // rounded-2xl
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade100),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: 0.05,
+                                    ), // shadow-sm
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 48, // size-12
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50, // bg-blue-50
+                                      borderRadius: BorderRadius.circular(
+                                        12,
+                                      ), // rounded-xl
+                                    ),
+                                    child: Icon(
+                                      Icons.lock,
+                                      color: primaryColor,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Change Password',
+                                          style: TextStyle(
+                                            color: textDark,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Update your security credentials',
+                                          style: TextStyle(
+                                            color: Colors
+                                                .grey
+                                                .shade500, // text-gray-500
+                                            fontSize: 12, // text-xs
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color:
+                                        Colors.grey.shade400, // text-gray-400
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // 3. LOG OUT BUTTON
+                          InkWell(
+                            onTap: () async {
+                              await ref.read(authProvider.notifier).logout();
+                              if (!context.mounted) return;
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginScreen(),
+                                ),
+                                (_) => false,
+                              );
+                            },
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade100),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05), // shadow-sm
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48, // size-12
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50, // bg-blue-50
-                                  borderRadius: BorderRadius.circular(12), // rounded-xl
-                                ),
-                                child: Icon(Icons.lock, color: primaryColor, size: 24),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Change Password',
-                                      style: TextStyle(
-                                        color: textDark,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Update your security credentials',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500, // text-gray-500
-                                        fontSize: 12, // text-xs
-                                      ),
-                                    ),
-                                  ],
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16), // p-4
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50, // bg-red-50
+                                borderRadius: BorderRadius.circular(
+                                  16,
+                                ), // rounded-2xl
+                                border: Border.all(
+                                  color: Colors.red.shade100, // border-red-100
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey.shade400, // text-gray-400
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.logout,
+                                    color: Colors.red.shade600,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Log Out',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.red.shade600, // text-red-600
+                                      fontSize: 16,
+                                      fontWeight:
+                                          FontWeight.w600, // font-semibold
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // 3. LOG OUT BUTTON
-                      InkWell(
-                        onTap: () async {
-                          await ref.read(authProvider.notifier).logout();
-                          if (!context.mounted) return;
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                            (_) => false,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16), // p-4
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50, // bg-red-50
-                            borderRadius: BorderRadius.circular(16), // rounded-2xl
-                            border: Border.all(
-                              color: Colors.red.shade100, // border-red-100
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.logout, color: Colors.red.shade600, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Log Out',
-                                style: TextStyle(
-                                  color: Colors.red.shade600, // text-red-600
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600, // font-semibold
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
 
-                      const SizedBox(height: 16),
-                      // Version Text
-                      Text(
-                        'VocaFlip Version 1.0.0',
-                        style: TextStyle(
-                          color: Colors.grey.shade400, // text-gray-400
-                          fontSize: 12, // text-xs
-                        ),
+                          const SizedBox(height: 16),
+                          // Version Text
+                          Text(
+                            'VocaFlip Version 1.0.0',
+                            style: TextStyle(
+                              color: Colors.grey.shade400, // text-gray-400
+                              fontSize: 12, // text-xs
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
                       ),
-                      const SizedBox(height: 40),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
               ],
             ),
           );
@@ -368,6 +396,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       ),
     );
   }
+
   // Card bình thường
   Widget _buildStatCard(String value, String label) {
     return Container(

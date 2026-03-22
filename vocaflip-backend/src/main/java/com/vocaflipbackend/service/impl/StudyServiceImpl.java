@@ -244,6 +244,9 @@ public class StudyServiceImpl implements StudyService {
                 .audioUrl(card.getAudioUrl())
                 .imageUrl(card.getImageUrl())
                 .orderIndex(card.getOrderIndex())
+                .nextReviewAt(progress != null && progress.getNextReviewAt() != null
+                        ? progress.getNextReviewAt().toString()
+                        : null)
                 .learningStatus(progress != null ? progress.getStatus() : LearningStatus.NEW)
                 .currentInterval(progress != null ? progress.getIntervalDays() : 0)
                 .reviewCount(progress != null ? progress.getReviewCount() : 0)
@@ -257,6 +260,26 @@ public class StudyServiceImpl implements StudyService {
         List<UserProgress> dueProgress = userProgressRepository
                 .findByUserIdAndNextReviewAtBeforeAndCard_IsRemovedFalse(userId, LocalDateTime.now());
         return dueProgress.size();
+    }
+
+    @Override
+    public List<StudyCardResponse> getUpcomingDueCards(int withinHours) {
+        String userId = SecurityUtils.getCurrentUserId();
+
+        int safeHours = withinHours <= 0 ? 3 : withinHours;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime upperBound = now.plusHours(safeHours);
+
+        List<UserProgress> upcomingProgress = userProgressRepository
+                .findByUserIdAndNextReviewAtAfterAndNextReviewAtBeforeAndCard_IsRemovedFalseOrderByNextReviewAtAsc(
+                        userId,
+                        now,
+                        upperBound
+                );
+
+        return upcomingProgress.stream()
+                .map(progress -> buildStudyCardResponse(progress.getCard(), progress))
+                .collect(Collectors.toList());
     }
 
     @Override

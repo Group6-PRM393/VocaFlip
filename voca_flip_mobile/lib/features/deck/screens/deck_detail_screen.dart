@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
-import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
-import 'package:voca_flip_mobile/features/card/models/card_model.dart';
-import 'package:voca_flip_mobile/features/deck/screens/edit_deck_screen.dart';
-import 'package:voca_flip_mobile/features/study/study_screen.dart';
-import 'package:voca_flip_mobile/features/card/screens/create_card_screen.dart';
-import 'package:voca_flip_mobile/features/card/screens/edit_card_screen.dart';
+import '../providers/deck_provider.dart';
+import '../../card/providers/card_provider.dart';
+import '../../card/models/card_model.dart';
+import '../../card/screens/create_card_screen.dart';
+import '../../card/screens/edit_card_screen.dart';
+import '../../study/study_screen.dart';
+import '../../quiz/screens/quiz_settings_screen.dart';
+import 'edit_deck_screen.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -64,27 +65,27 @@ class DeckDetailScreen extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () async {
-                 final result = await Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => EditDeckScreen(deck: deck),
-  ),
-);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditDeckScreen(deck: deck),
+                    ),
+                  );
 
-if (result is String) {
-  if (!context.mounted) return;
-  Navigator.pop(context, result); 
-  return;
-}
+                  if (result is String) {
+                    if (!context.mounted) return;
+                    Navigator.pop(context, result);
+                    return;
+                  }
 
-if (result == true) {
-  final id = deck.id;
+                  if (result == true) {
+                    final id = deck.id;
 
-  ref.invalidate(deckDetailProvider(id));
-  ref.invalidate(deckListProvider);
+                    ref.invalidate(deckDetailProvider(id));
+                    ref.invalidate(deckListProvider);
 
-  await ref.read(deckDetailProvider(id).future);
-}
+                    await ref.read(deckDetailProvider(id).future);
+                  }
                 },
 
                 child: const Text(
@@ -196,23 +197,15 @@ if (result == true) {
 
                       // FLASHCARDS header
                       const SizedBox(height: 14),
-                      Row(
+                      const Row(
                         children: [
-                          const Text(
+                          Text(
                             'FLASHCARDS',
                             style: TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
                             ),
-                          ),
-                          const Spacer(),
-                          TextButton.icon(
-                            onPressed: () {
-                              // TODO: sort
-                            },
-                            icon: const Icon(Icons.sort, size: 18),
-                            label: const Text('Sort by'),
                           ),
                         ],
                       ),
@@ -282,25 +275,25 @@ if (result == true) {
                   right: 18,
                   bottom: 98,
                   child: FloatingActionButton(
-  backgroundColor: const Color(0xFF1E5EFF),
-  onPressed: () async {
-    final created = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateCardScreen(deckId: deckId),
-      ),
-    );
+                    backgroundColor: const Color(0xFF1E5EFF),
+                    onPressed: () async {
+                      final created = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateCardScreen(deckId: deckId),
+                        ),
+                      );
 
-    if (created == true) {
-      ref.invalidate(cardListProvider(deckId));
-      ref.invalidate(deckDetailProvider(deckId));
+                      if (created == true) {
+                        ref.invalidate(cardListProvider(deckId));
+                        ref.invalidate(deckDetailProvider(deckId));
 
-      await ref.read(cardListProvider(deckId).future);
-      await ref.read(deckDetailProvider(deckId).future);
-    }
-  },
-  child: const Icon(Icons.add, color: Colors.white),
-),
+                        await ref.read(cardListProvider(deckId).future);
+                        await ref.read(deckDetailProvider(deckId).future);
+                      }
+                    },
+                    child: const Icon(Icons.add, color: Colors.white),
+                  ),
                 ),
 
                 // Bottom actions
@@ -362,7 +355,13 @@ if (result == true) {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // TODO: Test
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          QuizSettingsScreen(deckId: deckId),
+                                    ),
+                                  );
                                 },
                                 icon: const Icon(
                                   Icons.school,
@@ -458,30 +457,33 @@ if (result == true) {
           Column(
             children: [
               IconButton(
-  onPressed: () async {
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditCardScreen(card: card),
-      ),
-    );
+                onPressed: () async {
+                  final updated = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditCardScreen(card: card),
+                    ),
+                  );
 
-    /// Nếu sửa thành công → reload lại list
-    if (updated == true) {
-      ref.invalidate(cardListProvider(card.deckId));
-    }
-  },
-  icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
-),
+                  /// Nếu sửa thành công → reload lại list
+                  if (updated == true) {
+                    ref.invalidate(cardListProvider(card.deckId));
+                    try {
+                      await ref.read(cardListProvider(card.deckId).future);
+                    } catch (_) {}
+                  }
+                },
+                icon: const Icon(Icons.edit, color: Color(0xFF1E5EFF)),
+              ),
               IconButton(
-  onPressed: () {
-    _showDeleteCardDialog(context, ref, card);
-  },
-  icon: const Icon(
-    Icons.delete_outline,
-    color: Color(0xFF1E5EFF),
-  ),
-),
+                onPressed: () {
+                  _showDeleteCardDialog(context, ref, card);
+                },
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFF1E5EFF),
+                ),
+              ),
             ],
           ),
         ],
@@ -489,6 +491,7 @@ if (result == true) {
     );
   }
 }
+
 Future<void> _showDeleteCardDialog(
   BuildContext context,
   WidgetRef ref,
@@ -625,14 +628,19 @@ Future<void> _showDeleteCardDialog(
     ref.invalidate(cardListProvider(card.deckId));
     ref.invalidate(deckDetailProvider(card.deckId));
 
+    try {
+      await ref.read(cardListProvider(card.deckId).future);
+      await ref.read(deckDetailProvider(card.deckId).future);
+    } catch (_) {}
+
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Card deleted successfully')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Card deleted successfully')));
   } catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Delete card failed: $e')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Delete card failed: $e')));
   }
 }

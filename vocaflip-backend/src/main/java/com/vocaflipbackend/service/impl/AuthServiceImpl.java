@@ -15,9 +15,11 @@ import com.vocaflipbackend.dto.request.UserRegisterRequest;
 import com.vocaflipbackend.dto.response.AuthResponse;
 import com.vocaflipbackend.dto.response.UserResponse;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.enums.LearningStatus;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.UserMapper;
+import com.vocaflipbackend.repository.UserProgressRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.AuthService;
 import com.vocaflipbackend.service.RefreshTokenService;
@@ -33,6 +35,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 /**
@@ -49,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final UserMapper userMapper;
+    private final UserProgressRepository userProgressRepository;
     private final RefreshTokenService refreshTokenService;
     private final GoogleOAuthService googleOAuthService;
     private final SocialAccountRepository socialAccountRepository;
@@ -245,7 +251,27 @@ public class AuthServiceImpl implements AuthService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
-        return userMapper.toUserResponse(user);
+
+        List<Object[]> statusCounts = userProgressRepository.countByStatusWithActiveCards(user.getId());
+        Map<LearningStatus, Long> statusMap = new EnumMap<>(LearningStatus.class);
+        for (Object[] row : statusCounts) {
+            LearningStatus status = (LearningStatus) row[0];
+            Long count = (Long) row[1];
+            statusMap.put(status, count);
+        }
+
+        int totalWords = statusMap.values().stream().mapToInt(Long::intValue).sum();
+        int masteredWords = statusMap.getOrDefault(LearningStatus.MASTERED, 0L).intValue();
+        int learningWords =
+                statusMap.getOrDefault(LearningStatus.LEARNING, 0L).intValue()
+                        + statusMap.getOrDefault(LearningStatus.REVIEW, 0L).intValue();
+
+        UserResponse response = userMapper.toUserResponse(user);
+        response.setTotalWords(totalWords);
+        response.setMasteredWords(masteredWords);
+        response.setLearningWords(learningWords);
+        response.setStreakDays(response.getStreakDays() == null ? 0 : response.getStreakDays());
+        return response;
     }
 
     @Override

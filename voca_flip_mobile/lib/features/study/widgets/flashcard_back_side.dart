@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/services/audio_playback_service.dart';
 import 'package:voca_flip_mobile/features/study/models/responses/study_card_response.dart';
 import 'package:voca_flip_mobile/core/services/tts_service.dart';
 
@@ -72,7 +73,7 @@ class FlashcardBackSide extends StatelessWidget {
       color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap: () => TtsService().speak(card.front),
+        onTap: _handleAudioTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
           width: 40,
@@ -100,6 +101,19 @@ class FlashcardBackSide extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleAudioTap() async {
+    final audioUrl = card.audioUrl?.trim();
+
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      try {
+        await AudioPlaybackService().playFromUrl(audioUrl);
+        return;
+      } catch (_) {}
+    }
+
+    await TtsService().speak(card.front);
   }
 
   Widget _buildContent() {
@@ -185,10 +199,7 @@ class FlashcardBackSide extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFDBEAFE),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
       ),
       child: RichText(
         textAlign: TextAlign.center,

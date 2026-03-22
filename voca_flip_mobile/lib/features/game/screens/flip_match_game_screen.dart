@@ -106,7 +106,7 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
         throw Exception(
           'No eligible decks found (minimum 12 cards required to start).',
         );
-      }
+  
 
       final safeSelectedIndex = _selectedDeckIndex
           .clamp(0, decks.length - 1)
@@ -431,6 +431,38 @@ class _FlipMatchGameScreenState extends State<FlipMatchGameScreen> {
     setState(() {
       _scoreHistory = updatedHistory;
     });
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Completed!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Time: ${_formatDuration(seconds)}'),
+              const SizedBox(height: 6),
+              Text('Score: $_lastScore'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _startNewGame();
+              },
+              child: const Text('Play again'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _formatDuration(int seconds) {

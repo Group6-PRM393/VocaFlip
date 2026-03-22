@@ -24,6 +24,12 @@ final deckListProvider = FutureProvider<List<DeckModel>>((ref) async {
   return repo.getMyDecks();
 });
 
+final deckListByCategoryProvider =
+    FutureProvider.family<List<DeckModel>, String>((ref, categoryId) async {
+      final repo = await ref.watch(deckRepositoryProvider.future);
+      return repo.getMyDecksByCategory(categoryId);
+    });
+
 /// Lấy chi tiết Deck theo deckId
 final deckDetailProvider = FutureProvider.family<DeckModel, String>((
   ref,

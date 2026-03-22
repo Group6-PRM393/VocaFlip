@@ -7,7 +7,14 @@ import 'package:voca_flip_mobile/features/deck/screens/create_deck_screen.dart';
 import 'package:voca_flip_mobile/features/deck/screens/deck_detail_screen.dart';
 
 class DeckListScreen extends ConsumerStatefulWidget {
-  const DeckListScreen({super.key});
+  final String? filterCategoryId;
+  final String? filterCategoryName;
+
+  const DeckListScreen({
+    super.key,
+    this.filterCategoryId,
+    this.filterCategoryName,
+  });
 
   @override
   ConsumerState<DeckListScreen> createState() => _DeckListScreenState();
@@ -16,16 +23,47 @@ class DeckListScreen extends ConsumerStatefulWidget {
 class _DeckListScreenState extends ConsumerState<DeckListScreen> {
   List<DeckModel>? _localDecks;
 
+  String get _screenTitle {
+    final categoryName = widget.filterCategoryName?.trim();
+    if (categoryName == null || categoryName.isEmpty) return 'My Decks';
+    return categoryName;
+  }
+
+  bool get _hasCategoryFilter {
+    final categoryId = widget.filterCategoryId?.trim();
+    return categoryId != null && categoryId.isNotEmpty;
+  }
+
+  Future<List<DeckModel>> _readCurrentDecks() {
+    if (_hasCategoryFilter) {
+      return ref.read(
+        deckListByCategoryProvider(widget.filterCategoryId!.trim()).future,
+      );
+    }
+    return ref.read(deckListProvider.future);
+  }
+
+  void _invalidateCurrentDecks() {
+    ref.invalidate(deckListProvider);
+    if (_hasCategoryFilter) {
+      ref.invalidate(
+        deckListByCategoryProvider(widget.filterCategoryId!.trim()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final asyncDecks = ref.watch(deckListProvider);
+    final asyncDecks = _hasCategoryFilter
+        ? ref.watch(deckListByCategoryProvider(widget.filterCategoryId!.trim()))
+        : ref.watch(deckListProvider);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E5EFF),
         elevation: 0,
-        title: const Text(
-          'My Decks',
+        title: Text(
+          _screenTitle,
           style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
         ),
         leading: const BackButton(color: Colors.white),
@@ -39,8 +77,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
           );
 
           if (created == true) {
-            ref.invalidate(deckListProvider);
-            final refreshed = await ref.read(deckListProvider.future);
+            _invalidateCurrentDecks();
+            final refreshed = await _readCurrentDecks();
 
             if (!mounted) return;
             setState(() {
@@ -52,10 +90,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
       ),
       body: asyncDecks.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          text: e.toString(),
-          onRetry: () => ref.invalidate(deckListProvider),
-        ),
+        error: (e, _) =>
+            _ErrorState(text: e.toString(), onRetry: _invalidateCurrentDecks),
         data: (decks) {
           final visibleDecks = _localDecks ?? decks;
 
@@ -65,8 +101,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
 
           return RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(deckListProvider);
-              final refreshed = await ref.read(deckListProvider.future);
+              _invalidateCurrentDecks();
+              final refreshed = await _readCurrentDecks();
 
               if (!mounted) return;
               setState(() {
@@ -105,9 +141,8 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                           }
 
                           if (result == true) {
-                            ref.invalidate(deckListProvider);
-                            final refreshed =
-                                await ref.read(deckListProvider.future);
+                            _invalidateCurrentDecks();
+                            final refreshed = await _readCurrentDecks();
 
                             if (!mounted) return;
                             setState(() {
