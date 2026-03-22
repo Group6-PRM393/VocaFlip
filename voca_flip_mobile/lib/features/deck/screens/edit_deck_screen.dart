@@ -101,7 +101,10 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _DeleteDeckDialog(title: widget.deck.title),
+      builder: (_) => _DeleteDeckDialog(
+        title: widget.deck.title,
+        cardCount: widget.deck.totalCards,
+      ),
     );
 
     if (confirmed != true) return;
@@ -112,8 +115,7 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       final repo = await ref.read(deckRepositoryProvider.future);
       await repo.deleteDeck(widget.deck.id);
 
-     ref.invalidate(deckListProvider);
-      await repo.deleteDeck(widget.deck.id);
+      ref.invalidate(deckListProvider);
 
       if (!mounted) return;
 
@@ -382,7 +384,9 @@ class _Label extends StatelessWidget {
 
 class _DeleteDeckDialog extends StatelessWidget {
   final String title;
-  const _DeleteDeckDialog({required this.title});
+  final int cardCount;
+
+  const _DeleteDeckDialog({required this.title, required this.cardCount});
 
   @override
   Widget build(BuildContext context) {
@@ -414,8 +418,9 @@ class _DeleteDeckDialog extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Are you sure you want to delete the deck "$title"? '
-              'This action will permanently remove all cards within it and cannot be undone.',
+              cardCount > 0
+                  ? 'Deck "$title" currently has $cardCount card(s). If you continue, all cards in this deck will be deleted.'
+                  : 'Are you sure you want to delete the deck "$title"?',
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.black54, height: 1.35),
             ),

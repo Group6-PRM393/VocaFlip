@@ -5,11 +5,13 @@ import com.vocaflipbackend.dto.request.DeckRequest;
 import com.vocaflipbackend.dto.response.DeckResponse;
 import com.vocaflipbackend.dto.response.PageResponse;
 import com.vocaflipbackend.entity.Category;
+import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
 import com.vocaflipbackend.exception.AppException;
 import com.vocaflipbackend.exception.ErrorCode;
 import com.vocaflipbackend.mapper.DeckMapper;
+import com.vocaflipbackend.repository.CardRepository;
 import com.vocaflipbackend.repository.CategoryRepository;
 import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserProgressRepository;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
+    private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final DeckMapper deckMapper;
@@ -145,6 +148,11 @@ public class DeckServiceImpl implements DeckService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        List<Card> cardsInDeck = cardRepository.findByDeckIdAndIsRemovedFalse(id);
+        cardsInDeck.forEach(card -> card.setRemoved(true));
+        cardRepository.saveAll(cardsInDeck);
+
+        deck.setTotalCards(0);
         deck.setRemoved(true);
         deckRepository.save(deck);
     }

@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class DeleteCategoryDialog extends StatelessWidget {
   final String categoryName;
+  final int deckCount;
 
-  const DeleteCategoryDialog({super.key, required this.categoryName});
+  const DeleteCategoryDialog({
+    super.key,
+    required this.categoryName,
+    required this.deckCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +64,9 @@ class DeleteCategoryDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Deleting this category will move all associated decks to "Uncategorized".',
+              deckCount > 0
+                  ? 'Category "$categoryName" currently has $deckCount deck(s). Deleting this category will also delete all those decks.'
+                  : 'Are you sure you want to delete category "$categoryName"?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: const Color(0xFF616889),

@@ -2,9 +2,13 @@ package com.vocaflipbackend.service.impl;
 
 import com.vocaflipbackend.dto.request.CategoryRequest;
 import com.vocaflipbackend.dto.response.CategoryResponse;
+import com.vocaflipbackend.entity.Card;
 import com.vocaflipbackend.entity.Category;
+import com.vocaflipbackend.entity.Deck;
 import com.vocaflipbackend.entity.User;
+import com.vocaflipbackend.repository.CardRepository;
 import com.vocaflipbackend.repository.CategoryRepository;
+import com.vocaflipbackend.repository.DeckRepository;
 import com.vocaflipbackend.repository.UserRepository;
 import com.vocaflipbackend.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +22,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
+    private final CardRepository cardRepository;
     private final CategoryRepository categoryRepository;
+    private final DeckRepository deckRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -69,6 +75,17 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        List<Deck> decksInCategory = deckRepository.findByCategoryIdAndIsRemovedFalse(categoryId);
+        for (Deck deck : decksInCategory) {
+            List<Card> cardsInDeck = cardRepository.findByDeckIdAndIsRemovedFalse(deck.getId());
+            cardsInDeck.forEach(card -> card.setRemoved(true));
+            cardRepository.saveAll(cardsInDeck);
+
+            deck.setTotalCards(0);
+            deck.setRemoved(true);
+        }
+        deckRepository.saveAll(decksInCategory);
 
         category.setRemoved(true);
         categoryRepository.save(category);

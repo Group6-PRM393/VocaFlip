@@ -77,7 +77,10 @@ class _CategoryManagementScreenState
       context: context,
       barrierColor: const Color(0xFF111218).withValues(alpha: 0.6),
       builder: (BuildContext context) {
-        return DeleteCategoryDialog(categoryName: category.categoryName);
+        return DeleteCategoryDialog(
+          categoryName: category.categoryName,
+          deckCount: category.deckCount,
+        );
       },
     );
 

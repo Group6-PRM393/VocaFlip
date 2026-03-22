@@ -18,6 +18,8 @@ public interface DeckRepository extends JpaRepository<Deck, String> {
 
     List<Deck> findByUserIdAndCategoryIdAndIsRemovedFalse(String userId, String categoryId);
 
+    List<Deck> findByCategoryIdAndIsRemovedFalse(String categoryId);
+
     Optional<Deck> findByIdAndIsRemovedFalse(String id);
 
     @Query("SELECT d FROM Deck d WHERE d.isRemoved = false " +
