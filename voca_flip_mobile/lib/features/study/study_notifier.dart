@@ -112,7 +112,9 @@ class StudyNotifier extends ChangeNotifier {
 
   /// Sync card side state from UI flip callback.
   void onCardFlip(bool isFront) {
-    _isFlipped = !isFront;
+    final shouldShowRatingButtons = _isFlipped || !isFront;
+    if (shouldShowRatingButtons == _isFlipped) return;
+    _isFlipped = shouldShowRatingButtons;
     notifyListeners();
   }
 
