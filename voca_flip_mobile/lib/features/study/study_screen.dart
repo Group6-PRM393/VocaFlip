@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
 import 'package:voca_flip_mobile/core/constants/app_messages.dart';
 import 'package:voca_flip_mobile/core/constants/app_text_styles.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/study/study_notifier.dart';
 import 'package:voca_flip_mobile/features/study/study_result_screen.dart';
 import 'package:voca_flip_mobile/features/study/widgets/flashcard_front_side.dart';
@@ -77,6 +78,7 @@ class _StudyScreenState extends State<StudyScreen> {
 
   void _navigateToResult(StudyNotifier n) {
     final canStudyAgain = widget.deckId != null;
+    dataRefreshNotifier.bump();
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -142,6 +144,7 @@ class _StudyScreenState extends State<StudyScreen> {
 
     if (shouldExit == true && mounted) {
       await n.forceCompleteSession();
+      dataRefreshNotifier.bump();
       if (mounted) Navigator.of(context).pop();
     }
   }

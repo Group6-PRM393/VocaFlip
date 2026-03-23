@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
 
 class CreateCardScreen extends ConsumerStatefulWidget {
@@ -100,6 +101,7 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
       }
 
       ref.invalidate(cardListProvider(widget.deckId));
+      dataRefreshNotifier.bump();
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
@@ -114,9 +116,9 @@ class _CreateCardScreenState extends ConsumerState<CreateCardScreen> {
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Create card failed: $e'),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Create card failed: $e'),
           backgroundColor: Colors.red,
         ),
       );

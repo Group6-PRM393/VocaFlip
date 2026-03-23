@@ -5,16 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/card/models/card_model.dart';
 import 'package:voca_flip_mobile/features/card/providers/card_provider.dart';
 
 class EditCardScreen extends ConsumerStatefulWidget {
   final CardModel card;
 
-  const EditCardScreen({
-    super.key,
-    required this.card,
-  });
+  const EditCardScreen({super.key, required this.card});
 
   @override
   ConsumerState<EditCardScreen> createState() => _EditCardScreenState();
@@ -38,8 +36,9 @@ class _EditCardScreenState extends ConsumerState<EditCardScreen> {
     _frontController = TextEditingController(text: widget.card.front);
     _backController = TextEditingController(text: widget.card.back);
     _phoneticController = TextEditingController(text: widget.card.phonetic);
-    _exampleController =
-        TextEditingController(text: widget.card.exampleSentence);
+    _exampleController = TextEditingController(
+      text: widget.card.exampleSentence,
+    );
   }
 
   @override
@@ -105,6 +104,7 @@ class _EditCardScreenState extends ConsumerState<EditCardScreen> {
       }
 
       ref.invalidate(cardListProvider(widget.card.deckId));
+      dataRefreshNotifier.bump();
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
@@ -116,9 +116,9 @@ class _EditCardScreenState extends ConsumerState<EditCardScreen> {
       ref.read(cardActionLoadingProvider.notifier).state = false;
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Update card failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Update card failed: $e')));
     }
   }
 
@@ -268,10 +268,7 @@ class _EditCardScreenState extends ConsumerState<EditCardScreen> {
     return const Center(
       child: Text(
         'Tap to upload image',
-        style: TextStyle(
-          color: Color(0xFF6B7280),
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w600),
       ),
     );
   }

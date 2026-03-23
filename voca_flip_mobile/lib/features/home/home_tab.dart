@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voca_flip_mobile/core/constants/app_colors.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/study/models/responses/study_session_response.dart';
 import 'package:voca_flip_mobile/core/services/api_service.dart';
 import 'package:voca_flip_mobile/features/study/study_screen.dart';
@@ -32,10 +33,29 @@ class _HomeTabState extends State<HomeTab> {
   int _dueCount = 0;
 
   List<Map<String, dynamic>> _decks = [];
+  int _lastRefreshVersion = 0;
 
   @override
   void initState() {
     super.initState();
+    _lastRefreshVersion = dataRefreshNotifier.version;
+    dataRefreshNotifier.addListener(_onGlobalDataChanged);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    dataRefreshNotifier.removeListener(_onGlobalDataChanged);
+    super.dispose();
+  }
+
+  void _onGlobalDataChanged() {
+    if (!mounted) return;
+
+    final latestVersion = dataRefreshNotifier.version;
+    if (latestVersion == _lastRefreshVersion) return;
+
+    _lastRefreshVersion = latestVersion;
     _loadData();
   }
 

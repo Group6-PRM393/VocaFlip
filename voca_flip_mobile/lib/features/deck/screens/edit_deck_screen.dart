@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 
 import 'package:voca_flip_mobile/features/deck/models/deck_model.dart';
 import 'package:voca_flip_mobile/features/category/models/category_model.dart';
@@ -84,6 +85,7 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       // refresh
       ref.invalidate(deckDetailProvider(widget.deck.id));
       ref.invalidate(deckListProvider);
+      dataRefreshNotifier.bump();
 
       if (!mounted) return;
       Navigator.pop(context, true);
@@ -116,6 +118,7 @@ class _EditDeckScreenState extends ConsumerState<EditDeckScreen> {
       await repo.deleteDeck(widget.deck.id);
 
       ref.invalidate(deckListProvider);
+      dataRefreshNotifier.bump();
 
       if (!mounted) return;
 

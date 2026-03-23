@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/auth/login_screen.dart';
 import 'package:voca_flip_mobile/features/auth/providers/auth_provider.dart';
 import 'package:voca_flip_mobile/features/profile/edit_profile_screen.dart';
@@ -20,6 +21,34 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   final Color textDark = const Color(0xFF111318);
   final Color surfaceLight = const Color(0xFFf6f6f8);
   final Color backgroundLight = const Color(0xFFffffff);
+  int _lastRefreshVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastRefreshVersion = dataRefreshNotifier.version;
+    dataRefreshNotifier.addListener(_onGlobalDataChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(currentUserProfileProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    dataRefreshNotifier.removeListener(_onGlobalDataChanged);
+    super.dispose();
+  }
+
+  void _onGlobalDataChanged() {
+    if (!mounted) return;
+
+    final latestVersion = dataRefreshNotifier.version;
+    if (latestVersion == _lastRefreshVersion) return;
+
+    _lastRefreshVersion = latestVersion;
+    ref.invalidate(currentUserProfileProvider);
+  }
 
   // Các hàm điều hướng
   void _navigateToEditProfile(UserModel currentUser) {

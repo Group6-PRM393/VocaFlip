@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 
 import '../providers/deck_provider.dart';
 import '../../card/providers/card_provider.dart';
@@ -627,6 +628,7 @@ Future<void> _showDeleteCardDialog(
 
     ref.invalidate(cardListProvider(card.deckId));
     ref.invalidate(deckDetailProvider(card.deckId));
+    dataRefreshNotifier.bump();
 
     try {
       await ref.read(cardListProvider(card.deckId).future);

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
 import 'package:voca_flip_mobile/features/category/models/category_model.dart';
 import 'package:voca_flip_mobile/features/category/providers/category_provider.dart';
@@ -60,8 +61,9 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
     if (!ok) return;
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please select a category')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
@@ -80,13 +82,15 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
 
       // ✅ refresh danh sách deck
       ref.invalidate(deckListProvider);
+      dataRefreshNotifier.bump();
 
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -104,7 +108,10 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
             elevation: 0,
             title: const Text(
               'Create New Deck',
-              style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
             leading: const BackButton(color: Colors.white),
           ),
@@ -197,7 +204,8 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
                           const SizedBox(width: 8),
                           const Expanded(child: Text('Load categories failed')),
                           TextButton(
-                            onPressed: () => ref.invalidate(categoryListProvider),
+                            onPressed: () =>
+                                ref.invalidate(categoryListProvider),
                             child: const Text('Retry'),
                           ),
                         ],
@@ -207,10 +215,12 @@ class _CreateDeckScreenState extends ConsumerState<CreateDeckScreen> {
                       return DropdownButtonFormField<CategoryModel>(
                         initialValue: _selectedCategory,
                         items: cats
-                            .map((c) => DropdownMenuItem<CategoryModel>(
-                                  value: c,
-                                  child: Text(c.categoryName),
-                                ))
+                            .map(
+                              (c) => DropdownMenuItem<CategoryModel>(
+                                value: c,
+                                child: Text(c.categoryName),
+                              ),
+                            )
                             .toList(),
                         onChanged: (v) => setState(() => _selectedCategory = v),
                         decoration: InputDecoration(
@@ -323,10 +333,7 @@ class _CoverUploadBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xFF1E5EFF),
-            width: 1.2,
-          ),
+          border: Border.all(color: const Color(0xFF1E5EFF), width: 1.2),
         ),
         child: hasImage
             ? ClipRRect(
@@ -336,16 +343,24 @@ class _CoverUploadBox extends StatelessWidget {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.add_a_photo_outlined,
-                      color: Color(0xFF1E5EFF), size: 28),
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    color: Color(0xFF1E5EFF),
+                    size: 28,
+                  ),
                   SizedBox(height: 10),
-                  Text('Tap to upload cover image',
-                      style: TextStyle(
-                          color: Color(0xFF1E5EFF),
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    'Tap to upload cover image',
+                    style: TextStyle(
+                      color: Color(0xFF1E5EFF),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   SizedBox(height: 6),
-                  Text('PNG, JPG up to 5MB',
-                      style: TextStyle(color: Colors.black45, fontSize: 12)),
+                  Text(
+                    'PNG, JPG up to 5MB',
+                    style: TextStyle(color: Colors.black45, fontSize: 12),
+                  ),
                 ],
               ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voca_flip_mobile/core/providers/data_refresh_notifier.dart';
 import 'package:voca_flip_mobile/features/deck/models/deck_model.dart';
 import 'package:voca_flip_mobile/features/deck/providers/deck_provider.dart';
 import 'package:voca_flip_mobile/features/deck/widgets/deck_item_card.dart';
@@ -21,11 +22,34 @@ class DeckListScreen extends ConsumerStatefulWidget {
 }
 
 class _DeckListScreenState extends ConsumerState<DeckListScreen> {
-  List<DeckModel>? _localDecks;
+  int _lastRefreshVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastRefreshVersion = dataRefreshNotifier.version;
+    dataRefreshNotifier.addListener(_onGlobalDataChanged);
+  }
+
+  @override
+  void dispose() {
+    dataRefreshNotifier.removeListener(_onGlobalDataChanged);
+    super.dispose();
+  }
+
+  void _onGlobalDataChanged() {
+    if (!mounted) return;
+
+    final latestVersion = dataRefreshNotifier.version;
+    if (latestVersion == _lastRefreshVersion) return;
+
+    _lastRefreshVersion = latestVersion;
+    _invalidateCurrentDecks();
+  }
 
   String get _screenTitle {
     final categoryName = widget.filterCategoryName?.trim();
-    if (categoryName == null || categoryName.isEmpty) return 'My Decks';
+    if (categoryName == null || categoryName.isEmpty) return 'List Decks';
     return categoryName;
   }
 
@@ -78,12 +102,7 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
 
           if (created == true) {
             _invalidateCurrentDecks();
-            final refreshed = await _readCurrentDecks();
-
-            if (!mounted) return;
-            setState(() {
-              _localDecks = List<DeckModel>.from(refreshed);
-            });
+            await _readCurrentDecks();
           }
         },
         child: const Icon(Icons.add, color: Colors.white),
@@ -93,21 +112,12 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
         error: (e, _) =>
             _ErrorState(text: e.toString(), onRetry: _invalidateCurrentDecks),
         data: (decks) {
-          final visibleDecks = _localDecks ?? decks;
-
-          if (_localDecks == null) {
-            _localDecks = List<DeckModel>.from(decks);
-          }
+          final visibleDecks = decks;
 
           return RefreshIndicator(
             onRefresh: () async {
               _invalidateCurrentDecks();
-              final refreshed = await _readCurrentDecks();
-
-              if (!mounted) return;
-              setState(() {
-                _localDecks = List<DeckModel>.from(refreshed);
-              });
+              await _readCurrentDecks();
             },
             child: visibleDecks.isEmpty
                 ? const _EmptyState()
@@ -132,22 +142,14 @@ class _DeckListScreenState extends ConsumerState<DeckListScreen> {
                           );
 
                           if (result is String) {
-                            setState(() {
-                              _localDecks = (_localDecks ?? [])
-                                  .where((deck) => deck.id != result)
-                                  .toList();
-                            });
+                            _invalidateCurrentDecks();
+                            await _readCurrentDecks();
                             return;
                           }
 
                           if (result == true) {
                             _invalidateCurrentDecks();
-                            final refreshed = await _readCurrentDecks();
-
-                            if (!mounted) return;
-                            setState(() {
-                              _localDecks = List<DeckModel>.from(refreshed);
-                            });
+                            await _readCurrentDecks();
                           }
                         },
                       );
